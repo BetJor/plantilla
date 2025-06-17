@@ -6,7 +6,6 @@ import { Badge } from '@/components/ui/badge';
 import { 
   Home, 
   FileText, 
-  AlertTriangle, 
   Users, 
   BarChart3, 
   Settings,
@@ -24,7 +23,6 @@ const Navigation = () => {
 
   const navigationItems = [
     { href: '/', label: 'Dashboard', icon: Home },
-    { href: '/incidents', label: 'Incidències', icon: AlertTriangle },
     { href: '/actions', label: 'Accions Correctives', icon: FileText },
     { href: '/reports', label: 'Informes', icon: BarChart3 },
     ...(user?.role === 'admin' ? [{ href: '/users', label: 'Usuaris', icon: Users }] : []),
@@ -32,21 +30,21 @@ const Navigation = () => {
   ];
 
   return (
-    <nav className="bg-white shadow-sm border-b">
+    <nav className="bg-white shadow-lg border-b border-blue-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           <div className="flex items-center">
             <div className="flex-shrink-0 flex items-center">
-              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                <FileText className="w-5 h-5 text-white" />
+              <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-800 rounded-xl flex items-center justify-center shadow-lg">
+                <FileText className="w-6 h-6 text-white" />
               </div>
-              <span className="ml-2 text-xl font-bold text-gray-900">
-                Gestió Accions Correctives
+              <span className="ml-3 text-xl font-bold text-gray-800">
+                Accions Correctives
               </span>
             </div>
             
             {/* Desktop Navigation */}
-            <div className="hidden md:ml-6 md:flex md:space-x-8">
+            <div className="hidden md:ml-8 md:flex md:space-x-6">
               {navigationItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = location.pathname === item.href;
@@ -55,10 +53,10 @@ const Navigation = () => {
                     key={item.href}
                     to={item.href}
                     className={cn(
-                      "inline-flex items-center px-1 pt-1 text-sm font-medium border-b-2 transition-colors",
+                      "inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200",
                       isActive
-                        ? "border-blue-500 text-blue-600"
-                        : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                        ? "bg-blue-50 text-blue-700 border border-blue-200"
+                        : "text-gray-600 hover:text-blue-700 hover:bg-blue-50"
                     )}
                   >
                     <Icon className="w-4 h-4 mr-2" />
@@ -73,17 +71,17 @@ const Navigation = () => {
           <div className="flex items-center space-x-4">
             <div className="hidden md:flex md:items-center md:space-x-4">
               <div className="flex flex-col text-right">
-                <span className="text-sm font-medium text-gray-900">{user?.name}</span>
+                <span className="text-sm font-semibold text-gray-800">{user?.name}</span>
                 <span className="text-xs text-gray-500">{user?.centre}</span>
               </div>
-              <Badge variant="outline" className="capitalize">
+              <Badge variant="outline" className="capitalize bg-blue-50 text-blue-700 border-blue-200">
                 {user?.role}
               </Badge>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={logout}
-                className="text-gray-500 hover:text-gray-700"
+                className="text-gray-500 hover:text-red-600 hover:bg-red-50"
               >
                 <LogOut className="w-4 h-4" />
               </Button>
@@ -104,7 +102,7 @@ const Navigation = () => {
 
         {/* Mobile Navigation */}
         {isMobileMenuOpen && (
-          <div className="md:hidden">
+          <div className="md:hidden border-t border-blue-100">
             <div className="pt-2 pb-3 space-y-1">
               {navigationItems.map((item) => {
                 const Icon = item.icon;
@@ -116,8 +114,8 @@ const Navigation = () => {
                     className={cn(
                       "flex items-center px-3 py-2 text-base font-medium rounded-md transition-colors",
                       isActive
-                        ? "bg-blue-50 text-blue-600"
-                        : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+                        ? "bg-blue-50 text-blue-700"
+                        : "text-gray-600 hover:text-blue-700 hover:bg-blue-50"
                     )}
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
@@ -126,10 +124,10 @@ const Navigation = () => {
                   </Link>
                 );
               })}
-              <div className="px-3 py-2 border-t border-gray-200 mt-2">
+              <div className="px-3 py-2 border-t border-blue-100 mt-2">
                 <div className="flex items-center justify-between">
                   <div>
-                    <div className="text-base font-medium text-gray-900">{user?.name}</div>
+                    <div className="text-base font-medium text-gray-800">{user?.name}</div>
                     <div className="text-sm text-gray-500">{user?.centre}</div>
                   </div>
                   <Button variant="ghost" size="sm" onClick={logout}>

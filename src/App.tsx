@@ -7,8 +7,8 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import Navigation from "@/components/Navigation";
 import Index from "./pages/Index";
-import Incidents from "./pages/Incidents";
 import Actions from "./pages/Actions";
+import ActionDetail from "./pages/ActionDetail";
 import Reports from "./pages/Reports";
 import Users from "./pages/Users";
 import Settings from "./pages/Settings";
@@ -23,13 +23,13 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <div className="min-h-screen bg-gray-50">
+          <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
             <Navigation />
             <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
               <Routes>
                 <Route path="/" element={<Index />} />
-                <Route path="/incidents" element={<Incidents />} />
                 <Route path="/actions" element={<Actions />} />
+                <Route path="/actions/:id" element={<ActionDetail />} />
                 <Route path="/reports" element={<Reports />} />
                 <Route path="/users" element={<Users />} />
                 <Route path="/settings" element={<Settings />} />

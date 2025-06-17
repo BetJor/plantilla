@@ -8,21 +8,6 @@ export interface User {
   department?: string;
 }
 
-export interface Incident {
-  id: string;
-  title: string;
-  description: string;
-  origin: 'Auditoria' | 'Incidencias' | 'Otros' | 'Revisión del Sistema' | 'Seguimiento Indicadores/Objetivos';
-  centre: string;
-  department: string;
-  detectionDate: string;
-  severity: 'baixa' | 'mitjana' | 'alta' | 'crítica';
-  status: 'oberta' | 'en_proces' | 'tancada';
-  attachments: string[];
-  createdBy: string;
-  createdAt: string;
-}
-
 export interface CorrectiveAction {
   id: string;
   title: string;
@@ -32,7 +17,6 @@ export interface CorrectiveAction {
   status: 'Borrador' | 'Pendiente de Análisis' | 'Pendiente de Comprobación' | 'Pendiente de Cierre' | 'Cerrado' | 'Anulada';
   dueDate: string;
   assignedTo: string;
-  incidentId?: string;
   priority: 'baixa' | 'mitjana' | 'alta' | 'crítica';
   centre: string;
   department: string;

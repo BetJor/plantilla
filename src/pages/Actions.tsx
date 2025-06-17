@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -7,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Plus, Search, Filter, FileText, Eye } from 'lucide-react';
+import { Plus, Search, Filter, Eye } from 'lucide-react';
 import { useCorrectiveActions } from '@/hooks/useCorrectiveActions';
 
 const Actions = () => {
@@ -82,100 +83,109 @@ const Actions = () => {
           <h1 className="text-3xl font-bold text-gray-900">Accions Correctives</h1>
           <p className="text-gray-600">Gestiona les accions correctives i preventives</p>
         </div>
-        <Button onClick={() => setShowCreateForm(true)}>
+        <Button onClick={() => setShowCreateForm(true)} className="bg-blue-600 hover:bg-blue-700">
           <Plus className="w-4 h-4 mr-2" />
           Nova Acció
         </Button>
       </div>
 
       {showCreateForm && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Crear Nova Acció Correctiva</CardTitle>
+        <Card className="border-blue-200">
+          <CardHeader className="bg-blue-50">
+            <CardTitle className="text-blue-800">Crear Nova Acció Correctiva</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-6">
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="title">Títol</Label>
+                  <Label htmlFor="title" className="text-gray-700 font-medium">Títol</Label>
                   <Input
                     id="title"
                     value={formData.title}
                     onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                     required
+                    className="mt-1"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="dueDate">Data Límit</Label>
+                  <Label htmlFor="dueDate" className="text-gray-700 font-medium">Data Límit</Label>
                   <Input
                     id="dueDate"
                     type="date"
                     value={formData.dueDate}
                     onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
                     required
+                    className="mt-1"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="assignedTo">Assignat a</Label>
+                  <Label htmlFor="assignedTo" className="text-gray-700 font-medium">Assignat a</Label>
                   <Input
                     id="assignedTo"
                     value={formData.assignedTo}
                     onChange={(e) => setFormData({ ...formData, assignedTo: e.target.value })}
                     required
+                    className="mt-1"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="centre">Centre</Label>
+                  <Label htmlFor="centre" className="text-gray-700 font-medium">Centre</Label>
                   <Input
                     id="centre"
                     value={formData.centre}
                     onChange={(e) => setFormData({ ...formData, centre: e.target.value })}
                     required
+                    className="mt-1"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="department">Departament</Label>
+                  <Label htmlFor="department" className="text-gray-700 font-medium">Departament</Label>
                   <Input
                     id="department"
                     value={formData.department}
                     onChange={(e) => setFormData({ ...formData, department: e.target.value })}
                     required
+                    className="mt-1"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="subCategory">Subcategoria</Label>
+                  <Label htmlFor="subCategory" className="text-gray-700 font-medium">Subcategoria</Label>
                   <Input
                     id="subCategory"
                     value={formData.subCategory}
                     onChange={(e) => setFormData({ ...formData, subCategory: e.target.value })}
                     required
+                    className="mt-1"
                   />
                 </div>
               </div>
               <div>
-                <Label htmlFor="description">Descripció</Label>
+                <Label htmlFor="description" className="text-gray-700 font-medium">Descripció</Label>
                 <Textarea
                   id="description"
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   required
+                  className="mt-1"
                 />
               </div>
               <div className="flex gap-4 justify-end">
                 <Button type="button" variant="outline" onClick={() => setShowCreateForm(false)}>
                   Cancel·lar
                 </Button>
-                <Button type="submit">Crear Acció</Button>
+                <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
+                  Crear Acció
+                </Button>
               </div>
             </form>
           </CardContent>
         </Card>
       )}
 
-      <Card>
-        <CardHeader>
+      <Card className="border-blue-200">
+        <CardHeader className="bg-blue-50">
           <div className="flex justify-between items-center">
-            <CardTitle>Llistat d'Accions Correctives</CardTitle>
+            <CardTitle className="text-blue-800">Llistat d'Accions Correctives</CardTitle>
             <div className="flex gap-2">
               <div className="relative">
                 <Search className="w-4 h-4 absolute left-3 top-3 text-gray-400" />
@@ -208,7 +218,7 @@ const Actions = () => {
             </TableHeader>
             <TableBody>
               {filteredActions.map((action) => (
-                <TableRow key={action.id}>
+                <TableRow key={action.id} className="hover:bg-blue-50">
                   <TableCell className="font-medium">{action.title}</TableCell>
                   <TableCell>{action.type}</TableCell>
                   <TableCell>{action.assignedTo}</TableCell>
@@ -224,8 +234,10 @@ const Actions = () => {
                   </TableCell>
                   <TableCell>{new Date(action.dueDate).toLocaleDateString()}</TableCell>
                   <TableCell>
-                    <Button variant="ghost" size="sm">
-                      <Eye className="w-4 h-4" />
+                    <Button variant="ghost" size="sm" asChild>
+                      <Link to={`/actions/${action.id}`}>
+                        <Eye className="w-4 h-4" />
+                      </Link>
                     </Button>
                   </TableCell>
                 </TableRow>

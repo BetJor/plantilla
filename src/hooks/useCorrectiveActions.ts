@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { CorrectiveAction, Incident, Comment, DashboardMetrics } from '@/types';
+import { CorrectiveAction, Comment, DashboardMetrics } from '@/types';
 
 // Dades de mostra per al prototipus
 const mockActions: CorrectiveAction[] = [
@@ -13,7 +13,6 @@ const mockActions: CorrectiveAction[] = [
     status: 'Pendiente de Análisis',
     dueDate: '2024-07-15',
     assignedTo: 'Dr. Maria García',
-    incidentId: '1',
     priority: 'alta',
     centre: 'Hospital Central Barcelona',
     department: 'Cirurgia',
@@ -58,26 +57,8 @@ const mockActions: CorrectiveAction[] = [
   }
 ];
 
-const mockIncidents: Incident[] = [
-  {
-    id: '1',
-    title: 'Incident d\'infecció post-operatòria',
-    description: 'S\'ha detectat un augment en les infeccions post-operatòries al departament de cirurgia',
-    origin: 'Seguimiento Indicadores/Objetivos',
-    centre: 'Hospital Central Barcelona',
-    department: 'Cirurgia',
-    detectionDate: '2024-06-15',
-    severity: 'alta',
-    status: 'en_proces',
-    attachments: [],
-    createdBy: 'user1',
-    createdAt: '2024-06-15'
-  }
-];
-
 export const useCorrectiveActions = () => {
   const [actions, setActions] = useState<CorrectiveAction[]>(mockActions);
-  const [incidents, setIncidents] = useState<Incident[]>(mockIncidents);
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -98,16 +79,6 @@ export const useCorrectiveActions = () => {
         ? { ...action, ...updates, updatedAt: new Date().toISOString() }
         : action
     ));
-  };
-
-  const addIncident = (incident: Omit<Incident, 'id' | 'createdAt'>) => {
-    const newIncident: Incident = {
-      ...incident,
-      id: Date.now().toString(),
-      createdAt: new Date().toISOString()
-    };
-    setIncidents(prev => [...prev, newIncident]);
-    return newIncident;
   };
 
   const addComment = (comment: Omit<Comment, 'id' | 'createdAt'>) => {
@@ -167,12 +138,10 @@ export const useCorrectiveActions = () => {
 
   return {
     actions,
-    incidents,
     comments,
     loading,
     addAction,
     updateAction,
-    addIncident,
     addComment,
     getDashboardMetrics
   };
