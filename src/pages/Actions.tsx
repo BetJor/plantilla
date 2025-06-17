@@ -29,6 +29,32 @@ const Actions = () => {
     department: ''
   });
 
+  // Debug logging for form data changes
+  const updateFormData = (updates: Partial<typeof formData>) => {
+    console.log('🔄 Updating formData:', updates);
+    console.log('📊 Current formData before update:', formData);
+    
+    const newFormData = { ...formData, ...updates };
+    console.log('📊 New formData after update:', newFormData);
+    
+    setFormData(newFormData);
+  };
+
+  const handleTypeChange = (type: string) => {
+    console.log('🎯 Type changed to:', type);
+    updateFormData({ type, category: '', subCategory: '' });
+  };
+
+  const handleCategoryChange = (category: string) => {
+    console.log('🎯 Category changed to:', category);
+    updateFormData({ category, subCategory: '' });
+  };
+
+  const handleSubcategoryChange = (subCategory: string) => {
+    console.log('🎯 Subcategory changed to:', subCategory);
+    updateFormData({ subCategory });
+  };
+
   const getStatusVariant = (status: string) => {
     switch (status) {
       case 'Borrador': return 'secondary';
@@ -58,6 +84,7 @@ const Actions = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('📝 Submitting form with data:', formData);
     addAction({
       ...formData,
       status: 'Borrador',
@@ -83,6 +110,9 @@ const Actions = () => {
     action.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     action.description.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  // Debug current form state
+  console.log('🏠 Actions component render - formData:', formData);
 
   return (
     <div className="space-y-6">
@@ -114,13 +144,21 @@ const Actions = () => {
           </CardHeader>
           <CardContent className="p-6">
             <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Debug section - remove in production */}
+              {process.env.NODE_ENV === 'development' && (
+                <div className="p-3 bg-gray-50 border border-gray-200 rounded text-xs">
+                  <strong>🐛 Debug Form State:</strong><br/>
+                  Type: "{formData.type}" | Category: "{formData.category}" | Subcategory: "{formData.subCategory}"
+                </div>
+              )}
+              
               <CategorySelectors
                 selectedType={formData.type}
                 selectedCategory={formData.category}
                 selectedSubcategory={formData.subCategory}
-                onTypeChange={(type) => setFormData({ ...formData, type, category: '', subCategory: '' })}
-                onCategoryChange={(category) => setFormData({ ...formData, category, subCategory: '' })}
-                onSubcategoryChange={(subCategory) => setFormData({ ...formData, subCategory })}
+                onTypeChange={handleTypeChange}
+                onCategoryChange={handleCategoryChange}
+                onSubcategoryChange={handleSubcategoryChange}
                 currentStatus="Borrador"
               />
               

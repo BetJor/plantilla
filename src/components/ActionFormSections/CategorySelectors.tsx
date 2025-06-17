@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -25,6 +24,15 @@ const CategorySelectors = ({
   readOnly = false,
   currentStatus = 'Borrador'
 }: CategorySelectorsProps) => {
+  // Debug logging for props received
+  console.log('📥 CategorySelectors props received:', {
+    selectedType,
+    selectedCategory,
+    selectedSubcategory,
+    currentStatus,
+    readOnly
+  });
+
   const selectedTypeData = ACTION_TYPES.find(type => type.code === selectedType);
   const selectedCategoryData = selectedTypeData?.categories.find(cat => cat.code === selectedCategory);
 
@@ -32,25 +40,22 @@ const CategorySelectors = ({
   const canEdit = !readOnly && ['Borrador', 'Pendiente de Análisis'].includes(currentStatus);
 
   const handleTypeChange = (typeCode: string) => {
-    console.log('Type changed to:', typeCode);
+    console.log('🔧 CategorySelectors handleTypeChange called with:', typeCode);
     onTypeChange(typeCode);
-    onCategoryChange('');
-    onSubcategoryChange('');
   };
 
   const handleCategoryChange = (categoryCode: string) => {
-    console.log('Category changed to:', categoryCode);
+    console.log('🔧 CategorySelectors handleCategoryChange called with:', categoryCode);
     onCategoryChange(categoryCode);
-    onSubcategoryChange('');
   };
 
   const handleSubcategoryChange = (subcategoryCode: string) => {
-    console.log('Subcategory changed to:', subcategoryCode);
+    console.log('🔧 CategorySelectors handleSubcategoryChange called with:', subcategoryCode);
     onSubcategoryChange(subcategoryCode);
   };
 
   // Enhanced debug information
-  console.log('CategorySelectors render:', {
+  console.log('🔍 CategorySelectors detailed state:', {
     selectedType,
     selectedCategory,
     selectedSubcategory,
@@ -58,7 +63,8 @@ const CategorySelectors = ({
     canEdit,
     selectedTypeData: selectedTypeData?.name,
     categoriesAvailable: selectedTypeData?.categories.length || 0,
-    subcategoriesAvailable: selectedCategoryData?.subcategories.length || 0
+    subcategoriesAvailable: selectedCategoryData?.subcategories.length || 0,
+    actionTypesTotal: ACTION_TYPES.length
   });
 
   if (readOnly) {
@@ -114,6 +120,12 @@ const CategorySelectors = ({
             ))}
           </SelectContent>
         </Select>
+        {/* Debug info for type selector */}
+        {process.env.NODE_ENV === 'development' && (
+          <div className="mt-1 text-xs text-gray-500">
+            Debug: selectedType="{selectedType}", canEdit={canEdit.toString()}, types available: {ACTION_TYPES.length}
+          </div>
+        )}
       </div>
 
       {/* Category Selector - Only show if type is selected */}
@@ -138,13 +150,21 @@ const CategorySelectors = ({
               ))}
             </SelectContent>
           </Select>
+          {/* Debug info for category selector */}
+          {process.env.NODE_ENV === 'development' && (
+            <div className="mt-1 text-xs text-gray-500">
+              Debug: selectedCategory="{selectedCategory}", categories: {selectedTypeData.categories.length}
+            </div>
+          )}
+        </div>
+      ) : selectedType === '' ? (
+        <div className="p-3 bg-blue-50 border border-blue-200 rounded-md text-blue-700 text-sm">
+          ℹ️ Primer selecciona un tipus d'acció per veure les categories disponibles
         </div>
       ) : (
-        selectedType === '' && (
-          <div className="p-3 bg-blue-50 border border-blue-200 rounded-md text-blue-700 text-sm">
-            ℹ️ Primer selecciona un tipus d'acció per veure les categories disponibles
-          </div>
-        )
+        <div className="p-3 bg-red-50 border border-red-200 rounded-md text-red-700 text-sm">
+          ⚠️ No s'ha trobat el tipus seleccionat: "{selectedType}"
+        </div>
       )}
 
       {/* Subcategory Selector - Only show if category is selected and has subcategories */}
@@ -191,13 +211,15 @@ const CategorySelectors = ({
         </div>
       </div>
 
-      {/* Debug information in development */}
+      {/* Enhanced debug information in development */}
       {process.env.NODE_ENV === 'development' && (
         <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded text-xs">
-          <strong>Debug Status:</strong> {currentStatus} | <strong>Can Edit:</strong> {canEdit ? 'Sí' : 'No'}<br/>
-          <strong>Valors:</strong> Type: {selectedType} | Category: {selectedCategory} | Subcategory: {selectedSubcategory}<br/>
-          <strong>Categories disponibles:</strong> {selectedTypeData?.categories.length || 0} | 
-          <strong>Subcategories disponibles:</strong> {selectedCategoryData?.subcategories.length || 0}
+          <strong>🐛 Debug Status:</strong> {currentStatus} | <strong>Can Edit:</strong> {canEdit ? 'Sí' : 'No'}<br/>
+          <strong>Valors rebuts:</strong> Type: "{selectedType}" | Category: "{selectedCategory}" | Subcategory: "{selectedSubcategory}"<br/>
+          <strong>Dades trobades:</strong> TypeData: {selectedTypeData ? selectedTypeData.name : 'null'} | 
+          Categories disponibles: {selectedTypeData?.categories.length || 0} | 
+          Subcategories disponibles: {selectedCategoryData?.subcategories.length || 0}<br/>
+          <strong>Handlers:</strong> onTypeChange: {typeof onTypeChange}, onCategoryChange: {typeof onCategoryChange}
         </div>
       )}
     </div>
