@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,6 +12,8 @@ import DescriptionSection from '@/components/ActionFormSections/DescriptionSecti
 import AnalysisSection from '@/components/ActionFormSections/AnalysisSection';
 import VerificationSection from '@/components/ActionFormSections/VerificationSection';
 import ClosureSection from '@/components/ActionFormSections/ClosureSection';
+import StatusProgress from '@/components/ActionFormSections/StatusProgress';
+import StatusControls from '@/components/ActionFormSections/StatusControls';
 
 const ActionDetail = () => {
   const { id } = useParams();
@@ -85,44 +86,74 @@ const ActionDetail = () => {
     updateAction(action.id, updates);
   };
 
-  const renderStatusSection = () => {
-    switch (action.status) {
-      case 'Borrador':
-        return <DescriptionSection action={action} onUpdate={handleActionUpdate} />;
-      case 'Pendiente de Análisis':
-        return <AnalysisSection action={action} onUpdate={handleActionUpdate} />;
-      case 'Pendiente de Comprobación':
-        return <VerificationSection action={action} onUpdate={handleActionUpdate} />;
-      case 'Pendiente de Cierre':
-        return <ClosureSection action={action} onUpdate={handleActionUpdate} />;
-      case 'Cerrado':
-      case 'Anulada':
-        return (
-          <Card>
-            <CardContent className="p-8 text-center">
-              <AlertCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                Acció {action.status === 'Cerrado' ? 'Tancada' : 'Anul·lada'}
-              </h3>
-              <p className="text-gray-600">
-                Aquesta acció ja està {action.status === 'Cerrado' ? 'tancada' : 'anul·lada'} i no es pot modificar.
-              </p>
-            </CardContent>
-          </Card>
-        );
-      default:
-        return null;
-    }
-  };
+  const renderCumulativeSections = () => {
+    const sections = [];
+    
+    // Always show description section
+    sections.push(
+      <DescriptionSection 
+        key="description"
+        action={action} 
+        onUpdate={handleActionUpdate}
+        readOnly={action.status !== 'Borrador'}
+      />
+    );
 
-  const statusOptions: CorrectiveAction['status'][] = [
-    'Borrador',
-    'Pendiente de Análisis',
-    'Pendiente de Comprobación',
-    'Pendiente de Cierre',
-    'Cerrado',
-    'Anulada'
-  ];
+    // Show analysis section if status is beyond Borrador
+    if (['Pendiente de Análisis', 'Pendiente de Comprobación', 'Pendiente de Cierre', 'Cerrado'].includes(action.status)) {
+      sections.push(
+        <AnalysisSection 
+          key="analysis"
+          action={action} 
+          onUpdate={handleActionUpdate}
+          readOnly={action.status !== 'Pendiente de Análisis'}
+        />
+      );
+    }
+
+    // Show verification section if status is beyond Pendiente de Análisis
+    if (['Pendiente de Comprobación', 'Pendiente de Cierre', 'Cerrado'].includes(action.status)) {
+      sections.push(
+        <VerificationSection 
+          key="verification"
+          action={action} 
+          onUpdate={handleActionUpdate}
+          readOnly={action.status !== 'Pendiente de Comprobación'}
+        />
+      );
+    }
+
+    // Show closure section if status is Pendiente de Cierre or Cerrado
+    if (['Pendiente de Cierre', 'Cerrado'].includes(action.status)) {
+      sections.push(
+        <ClosureSection 
+          key="closure"
+          action={action} 
+          onUpdate={handleActionUpdate}
+          readOnly={action.status !== 'Pendiente de Cierre'}
+        />
+      );
+    }
+
+    // Show closed message if action is closed or annulled
+    if (['Cerrado', 'Anulada'].includes(action.status)) {
+      sections.push(
+        <Card key="status-message">
+          <CardContent className="p-8 text-center">
+            <AlertCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              Acció {action.status === 'Cerrado' ? 'Tancada' : 'Anul·lada'}
+            </h3>
+            <p className="text-gray-600">
+              Aquesta acció ja està {action.status === 'Cerrado' ? 'tancada' : 'anul·lada'} i no es pot modificar.
+            </p>
+          </CardContent>
+        </Card>
+      );
+    }
+
+    return sections;
+  };
 
   return (
     <div className="space-y-6">
@@ -149,28 +180,7 @@ const ActionDetail = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
-          {renderStatusSection()}
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Gestió d'Estat</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-wrap gap-2">
-                {statusOptions.map((status) => (
-                  <Button
-                    key={status}
-                    variant={action.status === status ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => handleStatusChange(status)}
-                    className="text-xs"
-                  >
-                    {status}
-                  </Button>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+          {renderCumulativeSections()}
 
           <Card>
             <CardHeader>
@@ -194,6 +204,13 @@ const ActionDetail = () => {
         </div>
 
         <div className="space-y-6">
+          <StatusProgress action={action} />
+          
+          <StatusControls 
+            action={action} 
+            onStatusChange={handleStatusChange}
+          />
+
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center">
