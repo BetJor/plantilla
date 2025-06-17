@@ -7,6 +7,11 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import Navigation from "@/components/Navigation";
 import Index from "./pages/Index";
+import Incidents from "./pages/Incidents";
+import Actions from "./pages/Actions";
+import Reports from "./pages/Reports";
+import Users from "./pages/Users";
+import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -23,6 +28,11 @@ const App = () => (
             <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
               <Routes>
                 <Route path="/" element={<Index />} />
+                <Route path="/incidents" element={<Incidents />} />
+                <Route path="/actions" element={<Actions />} />
+                <Route path="/reports" element={<Reports />} />
+                <Route path="/users" element={<Users />} />
+                <Route path="/settings" element={<Settings />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
