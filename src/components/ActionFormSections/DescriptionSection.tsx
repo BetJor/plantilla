@@ -67,6 +67,7 @@ const DescriptionSection = ({ action, onUpdate, readOnly = false }: DescriptionS
           onCategoryChange={setSelectedCategory}
           onSubcategoryChange={setSelectedSubcategory}
           readOnly={readOnly}
+          currentStatus={action.status}
         />
         
         <div>

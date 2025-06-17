@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -101,7 +100,17 @@ const Actions = () => {
       {showCreateForm && (
         <Card className="border-blue-200">
           <CardHeader className="bg-blue-50">
-            <CardTitle className="text-blue-800">Crear Nova Acció Correctiva</CardTitle>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <CardTitle className="text-blue-800">Crear Nova Acció Correctiva</CardTitle>
+                <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 border-yellow-300">
+                  Estat: Borrador
+                </Badge>
+              </div>
+              <div className="text-sm text-blue-600">
+                Pas 1: Selecciona tipus → Pas 2: Categoria → Pas 3: Subcategoria
+              </div>
+            </div>
           </CardHeader>
           <CardContent className="p-6">
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -112,6 +121,7 @@ const Actions = () => {
                 onTypeChange={(type) => setFormData({ ...formData, type, category: '', subCategory: '' })}
                 onCategoryChange={(category) => setFormData({ ...formData, category, subCategory: '' })}
                 onSubcategoryChange={(subCategory) => setFormData({ ...formData, subCategory })}
+                currentStatus="Borrador"
               />
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
