@@ -1,5 +1,5 @@
 
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User } from '@/types';
 
 interface AuthContextType {
@@ -7,6 +7,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
   isAuthenticated: boolean;
+  mockUsers: User[];
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -47,13 +48,22 @@ const mockUsers: User[] = [
 ];
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<User | null>(mockUsers[0]); // Per defecte loguejat com a Dr. Maria García
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    // Check if user is stored in localStorage
+    const storedUser = localStorage.getItem('auth-user');
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
+  }, []);
 
   const login = async (email: string, password: string): Promise<boolean> => {
     // Simulació de login
     const foundUser = mockUsers.find(u => u.email === email);
     if (foundUser && password === 'demo') {
       setUser(foundUser);
+      localStorage.setItem('auth-user', JSON.stringify(foundUser));
       return true;
     }
     return false;
@@ -61,12 +71,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const logout = () => {
     setUser(null);
+    localStorage.removeItem('auth-user');
   };
 
   const isAuthenticated = !!user;
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, isAuthenticated }}>
+    <AuthContext.Provider value={{ user, login, logout, isAuthenticated, mockUsers }}>
       {children}
     </AuthContext.Provider>
   );

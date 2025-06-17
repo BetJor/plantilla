@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,6 +9,10 @@ import { Label } from '@/components/ui/label';
 import { ArrowLeft, MessageSquare, Paperclip, Calendar, User, Building, AlertCircle } from 'lucide-react';
 import { useCorrectiveActions } from '@/hooks/useCorrectiveActions';
 import { CorrectiveAction } from '@/types';
+import DescriptionSection from '@/components/ActionFormSections/DescriptionSection';
+import AnalysisSection from '@/components/ActionFormSections/AnalysisSection';
+import VerificationSection from '@/components/ActionFormSections/VerificationSection';
+import ClosureSection from '@/components/ActionFormSections/ClosureSection';
 
 const ActionDetail = () => {
   const { id } = useParams();
@@ -76,6 +81,40 @@ const ActionDetail = () => {
     }
   };
 
+  const handleActionUpdate = (updates: Partial<CorrectiveAction>) => {
+    updateAction(action.id, updates);
+  };
+
+  const renderStatusSection = () => {
+    switch (action.status) {
+      case 'Borrador':
+        return <DescriptionSection action={action} onUpdate={handleActionUpdate} />;
+      case 'Pendiente de Análisis':
+        return <AnalysisSection action={action} onUpdate={handleActionUpdate} />;
+      case 'Pendiente de Comprobación':
+        return <VerificationSection action={action} onUpdate={handleActionUpdate} />;
+      case 'Pendiente de Cierre':
+        return <ClosureSection action={action} onUpdate={handleActionUpdate} />;
+      case 'Cerrado':
+      case 'Anulada':
+        return (
+          <Card>
+            <CardContent className="p-8 text-center">
+              <AlertCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                Acció {action.status === 'Cerrado' ? 'Tancada' : 'Anul·lada'}
+              </h3>
+              <p className="text-gray-600">
+                Aquesta acció ja està {action.status === 'Cerrado' ? 'tancada' : 'anul·lada'} i no es pot modificar.
+              </p>
+            </CardContent>
+          </Card>
+        );
+      default:
+        return null;
+    }
+  };
+
   const statusOptions: CorrectiveAction['status'][] = [
     'Borrador',
     'Pendiente de Análisis',
@@ -110,30 +149,7 @@ const ActionDetail = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <MessageSquare className="w-5 h-5 mr-2" />
-                Detalls de l'Acció
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label className="text-sm font-medium text-gray-700">Descripció</Label>
-                <p className="mt-1 text-gray-900">{action.description}</p>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-sm font-medium text-gray-700">Tipus</Label>
-                  <p className="mt-1 text-gray-900">{action.type}</p>
-                </div>
-                <div>
-                  <Label className="text-sm font-medium text-gray-700">Subcategoria</Label>
-                  <p className="mt-1 text-gray-900">{action.subCategory}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          {renderStatusSection()}
 
           <Card>
             <CardHeader>

@@ -24,6 +24,25 @@ export interface CorrectiveAction {
   createdBy: string;
   createdAt: string;
   updatedAt: string;
+  // New fields for different status sections
+  analysisData?: {
+    rootCauses: string;
+    proposedAction: string;
+    analysisDate?: string;
+    analysisBy?: string;
+  };
+  verificationData?: {
+    implementationCheck: string;
+    verificationDate?: string;
+    verificationBy?: string;
+    evidenceAttachments: string[];
+  };
+  closureData?: {
+    closureNotes: string;
+    closureDate?: string;
+    closureBy?: string;
+    effectivenessEvaluation: string;
+  };
 }
 
 export interface Comment {
