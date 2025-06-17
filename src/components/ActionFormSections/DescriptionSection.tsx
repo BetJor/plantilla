@@ -6,6 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { FileText, Clock, User } from 'lucide-react';
 import { CorrectiveAction } from '@/types';
+import CategorySelectors from './CategorySelectors';
 
 interface DescriptionSectionProps {
   action: CorrectiveAction;
@@ -15,13 +16,28 @@ interface DescriptionSectionProps {
 
 const DescriptionSection = ({ action, onUpdate, readOnly = false }: DescriptionSectionProps) => {
   const [description, setDescription] = React.useState(action.description);
+  const [selectedType, setSelectedType] = React.useState(action.type || '');
+  const [selectedCategory, setSelectedCategory] = React.useState(action.category || '');
+  const [selectedSubcategory, setSelectedSubcategory] = React.useState(action.subCategory || '');
 
   const handleSave = () => {
-    onUpdate({ description });
+    onUpdate({ 
+      description,
+      type: selectedType,
+      category: selectedCategory,
+      subCategory: selectedSubcategory
+    });
   };
 
-  const isComplete = action.description.trim().length > 0;
-  const hasChanges = description !== action.description;
+  const isComplete = action.description.trim().length > 0 && 
+                    action.type && 
+                    (action.category || selectedCategory) && 
+                    action.subCategory.trim().length > 0;
+  
+  const hasChanges = description !== action.description ||
+                    selectedType !== action.type ||
+                    selectedCategory !== (action.category || '') ||
+                    selectedSubcategory !== action.subCategory;
 
   return (
     <Card className={`${readOnly ? 'bg-gray-50' : ''} ${isComplete ? 'border-green-200' : ''}`}>
@@ -43,6 +59,16 @@ const DescriptionSection = ({ action, onUpdate, readOnly = false }: DescriptionS
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
+        <CategorySelectors
+          selectedType={selectedType}
+          selectedCategory={selectedCategory}
+          selectedSubcategory={selectedSubcategory}
+          onTypeChange={setSelectedType}
+          onCategoryChange={setSelectedCategory}
+          onSubcategoryChange={setSelectedSubcategory}
+          readOnly={readOnly}
+        />
+        
         <div>
           <Label htmlFor="description">Descripció detallada</Label>
           <Textarea

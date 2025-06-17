@@ -54,7 +54,10 @@ const StatusControls = ({ action, onStatusChange }: StatusControlsProps) => {
   const canAdvance = (): boolean => {
     switch (action.status) {
       case 'Borrador':
-        return action.description.trim().length > 0;
+        return action.description.trim().length > 0 && 
+               !!action.type && 
+               !!action.category && 
+               action.subCategory.trim().length > 0;
       case 'Pendiente de Análisis':
         return !!(action.analysisData?.rootCauses && action.analysisData?.proposedAction);
       case 'Pendiente de Comprobación':
@@ -69,7 +72,12 @@ const StatusControls = ({ action, onStatusChange }: StatusControlsProps) => {
   const getValidationMessage = (): string => {
     switch (action.status) {
       case 'Borrador':
-        return 'Cal completar la descripció abans de continuar';
+        const missing = [];
+        if (!action.description.trim()) missing.push('descripció');
+        if (!action.type) missing.push('tipus d\'acció');
+        if (!action.category) missing.push('categoria');
+        if (!action.subCategory.trim()) missing.push('subcategoria');
+        return `Cal completar: ${missing.join(', ')}`;
       case 'Pendiente de Análisis':
         return 'Cal completar l\'anàlisi de causes i l\'acció proposada';
       case 'Pendiente de Comprobación':

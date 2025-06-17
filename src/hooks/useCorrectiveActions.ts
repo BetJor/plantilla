@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { CorrectiveAction, Comment, DashboardMetrics } from '@/types';
 
@@ -8,8 +7,9 @@ const mockActions: CorrectiveAction[] = [
     id: '1',
     title: 'Revisió protocol higiene quirúrgica',
     description: 'Implementar millores en el protocol de higiene per reduir infeccions post-operatòries',
-    type: 'Calidad Total',
-    subCategory: 'Protocols assistencials',
+    type: 'calidad-total',
+    category: '1',
+    subCategory: '1.14',
     status: 'Pendiente de Análisis',
     dueDate: '2024-07-15',
     assignedTo: 'Dr. Maria García',
@@ -25,8 +25,9 @@ const mockActions: CorrectiveAction[] = [
     id: '2',
     title: 'Actualització sistema informàtic',
     description: 'Migració del sistema de gestió de pacients a la nova versió',
-    type: 'Sistemas de Información',
-    subCategory: 'Infraestructura TI',
+    type: 'sistemas-informacion',
+    category: '1',
+    subCategory: '1.6',
     status: 'Pendiente de Comprobación',
     dueDate: '2024-07-30',
     assignedTo: 'Joan Martínez',
@@ -42,8 +43,9 @@ const mockActions: CorrectiveAction[] = [
     id: '3',
     title: 'Formació en prevenció de riscos',
     description: 'Programa de formació per al personal sobre nous protocols de seguretat',
-    type: 'Sistema de gestión de la prevención',
-    subCategory: 'Formació',
+    type: 'medioambiental-hospitales',
+    category: '5',
+    subCategory: '',
     status: 'Cerrado',
     dueDate: '2024-06-30',
     assignedTo: 'Anna López',

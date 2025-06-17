@@ -10,6 +10,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Plus, Search, Filter, Eye } from 'lucide-react';
 import { useCorrectiveActions } from '@/hooks/useCorrectiveActions';
+import { ACTION_TYPES } from '@/types/categories';
+import CategorySelectors from '@/components/ActionFormSections/CategorySelectors';
 
 const Actions = () => {
   const { actions, addAction } = useCorrectiveActions();
@@ -18,7 +20,8 @@ const Actions = () => {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    type: 'Calidad Total' as const,
+    type: '',
+    category: '',
     subCategory: '',
     dueDate: '',
     assignedTo: '',
@@ -49,6 +52,11 @@ const Actions = () => {
     }
   };
 
+  const getTypeDisplayName = (typeCode: string) => {
+    const type = ACTION_TYPES.find(t => t.code === typeCode);
+    return type?.name || typeCode;
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     addAction({
@@ -60,7 +68,8 @@ const Actions = () => {
     setFormData({
       title: '',
       description: '',
-      type: 'Calidad Total',
+      type: '',
+      category: '',
       subCategory: '',
       dueDate: '',
       assignedTo: '',
@@ -96,6 +105,15 @@ const Actions = () => {
           </CardHeader>
           <CardContent className="p-6">
             <form onSubmit={handleSubmit} className="space-y-4">
+              <CategorySelectors
+                selectedType={formData.type}
+                selectedCategory={formData.category}
+                selectedSubcategory={formData.subCategory}
+                onTypeChange={(type) => setFormData({ ...formData, type, category: '', subCategory: '' })}
+                onCategoryChange={(category) => setFormData({ ...formData, category, subCategory: '' })}
+                onSubcategoryChange={(subCategory) => setFormData({ ...formData, subCategory })}
+              />
+              
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="title" className="text-gray-700 font-medium">Títol</Label>
@@ -144,16 +162,6 @@ const Actions = () => {
                     id="department"
                     value={formData.department}
                     onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-                    required
-                    className="mt-1"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="subCategory" className="text-gray-700 font-medium">Subcategoria</Label>
-                  <Input
-                    id="subCategory"
-                    value={formData.subCategory}
-                    onChange={(e) => setFormData({ ...formData, subCategory: e.target.value })}
                     required
                     className="mt-1"
                   />
@@ -220,7 +228,7 @@ const Actions = () => {
               {filteredActions.map((action) => (
                 <TableRow key={action.id} className="hover:bg-blue-50">
                   <TableCell className="font-medium">{action.title}</TableCell>
-                  <TableCell>{action.type}</TableCell>
+                  <TableCell>{getTypeDisplayName(action.type)}</TableCell>
                   <TableCell>{action.assignedTo}</TableCell>
                   <TableCell>
                     <Badge variant={getPriorityVariant(action.priority)}>

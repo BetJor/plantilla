@@ -1,4 +1,3 @@
-
 export interface User {
   id: string;
   name: string;
@@ -12,7 +11,8 @@ export interface CorrectiveAction {
   id: string;
   title: string;
   description: string;
-  type: 'Calidad Total' | 'Gestión de riesgos' | 'Sistema de gestión de seguridad de la información' | 'Sistema de gestión de la prevención' | 'Medioambiental ISL' | 'Medioambiental Organización Territorial' | 'Sistemas de Información' | 'Medioambientales Hospitales' | 'SAU' | 'Responsabilidad Social Corporativa';
+  type: string;
+  category?: string;
   subCategory: string;
   status: 'Borrador' | 'Pendiente de Análisis' | 'Pendiente de Comprobación' | 'Pendiente de Cierre' | 'Cerrado' | 'Anulada';
   dueDate: string;
