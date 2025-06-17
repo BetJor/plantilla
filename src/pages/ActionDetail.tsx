@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { ArrowLeft, MessageSquare, Paperclip, Calendar, User, Building, AlertCircle } from 'lucide-react';
 import { useCorrectiveActions } from '@/hooks/useCorrectiveActions';
+import { CorrectiveAction } from '@/types';
 
 const ActionDetail = () => {
   const { id } = useParams();
@@ -59,7 +59,7 @@ const ActionDetail = () => {
     }
   };
 
-  const handleStatusChange = (newStatus: string) => {
+  const handleStatusChange = (newStatus: CorrectiveAction['status']) => {
     updateAction(action.id, { status: newStatus });
   };
 
@@ -76,7 +76,7 @@ const ActionDetail = () => {
     }
   };
 
-  const statusOptions = [
+  const statusOptions: CorrectiveAction['status'][] = [
     'Borrador',
     'Pendiente de Análisis',
     'Pendiente de Comprobación',
