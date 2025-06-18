@@ -35,41 +35,38 @@ const AppSidebar = () => {
   return (
     <Sidebar className="border-r border-blue-200">
       <SidebarContent className="bg-white">
-        {/* Afegir padding-top per evitar que el header cobreixi el sidebar */}
-        <div className="pt-20">
-          <SidebarGroup>
-            <SidebarGroupLabel className="text-blue-800 font-semibold">
-              Àrea de trabajo
-            </SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {navigationItems.map((item) => {
-                  const Icon = item.icon;
-                  const isActive = location.pathname === item.href;
-                  
-                  return (
-                    <SidebarMenuItem key={item.href}>
-                      <SidebarMenuButton 
-                        asChild
-                        className={cn(
-                          "transition-all duration-200",
-                          isActive
-                            ? "bg-blue-100 text-blue-800 border-r-2 border-blue-600"
-                            : "text-gray-700 hover:bg-blue-50 hover:text-blue-700"
-                        )}
-                      >
-                        <Link to={item.href}>
-                          <Icon className="w-4 h-4" />
-                          <span className="font-medium">{item.label}</span>
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  );
-                })}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        </div>
+        <SidebarGroup>
+          <SidebarGroupLabel className="text-blue-800 font-semibold">
+            Àrea de trabajo
+          </SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {navigationItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = location.pathname === item.href;
+                
+                return (
+                  <SidebarMenuItem key={item.href}>
+                    <SidebarMenuButton 
+                      asChild
+                      className={cn(
+                        "transition-all duration-200",
+                        isActive
+                          ? "bg-blue-100 text-blue-800 border-r-2 border-blue-600"
+                          : "text-gray-700 hover:bg-blue-50 hover:text-blue-700"
+                      )}
+                    >
+                      <Link to={item.href}>
+                        <Icon className="w-4 h-4" />
+                        <span className="font-medium">{item.label}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
       </SidebarContent>
     </Sidebar>
   );
