@@ -1,4 +1,3 @@
-
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { SidebarTrigger } from '@/components/ui/sidebar';
@@ -59,7 +58,7 @@ const Header = () => {
   const breadcrumbs = getBreadcrumbs();
 
   return (
-    <header className="bg-blue-600 shadow-lg border-b border-blue-700 px-6 py-4">
+    <header className="relative z-20 bg-blue-600 shadow-lg border-b border-blue-700 px-6 py-4">
       <div className="flex items-center justify-between">
         {/* Left side - Logo, Sidebar trigger and Breadcrumbs */}
         <div className="flex items-center space-x-4">
