@@ -32,6 +32,10 @@ const AppSidebar = () => {
     { href: '/settings', label: 'Configuració', icon: Settings }
   ];
 
+  // Debugging: verificar que tots els items es generen correctament
+  console.log('Navigation items:', navigationItems);
+  console.log('User role:', user?.role);
+
   return (
     <Sidebar className="border-r border-blue-200">
       <SidebarContent className="bg-white">
@@ -41,9 +45,13 @@ const AppSidebar = () => {
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {navigationItems.map((item) => {
+              {navigationItems.map((item, index) => {
                 const Icon = item.icon;
                 const isActive = location.pathname === item.href;
+                
+                // Debugging per cada item
+                console.log(`Rendering item ${index}:`, item.label, item.href);
+                
                 return (
                   <SidebarMenuItem key={item.href}>
                     <SidebarMenuButton 
