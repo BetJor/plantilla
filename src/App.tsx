@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -30,7 +29,8 @@ const AppContent = () => {
     <SidebarProvider>
       <div className="min-h-screen flex flex-col w-full bg-gradient-to-br from-gray-50 to-blue-50">
         <Header />
-        <div className="flex flex-1">
+        {/* Afegir padding-top per al header fix */}
+        <div className="flex flex-1 pt-20">
           <AppSidebar />
           <main className="flex-1 p-6">
             <Routes>
