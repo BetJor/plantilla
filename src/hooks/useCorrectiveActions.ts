@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { CorrectiveAction, Comment, DashboardMetrics } from '@/types';
 import { toast } from '@/hooks/use-toast';
@@ -101,29 +102,6 @@ export const useCorrectiveActions = () => {
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // Carregar dades del localStorage a l'inici
-  useEffect(() => {
-    try {
-      const storedData = localStorage.getItem(STORAGE_KEY);
-      if (storedData) {
-        const parsedData = JSON.parse(storedData);
-        setActions(parsedData);
-      } else {
-        // Si no hi ha dades guardades, usar les dades mock
-        setActions(mockActions);
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(mockActions));
-      }
-    } catch (error) {
-      console.error('Error loading data from localStorage:', error);
-      setActions(mockActions);
-      toast({
-        title: "Avís",
-        description: "Error carregant les dades guardades. S'han carregat les dades per defecte.",
-        variant: "destructive"
-      });
-    }
-  }, []);
-
   // Funció per guardar a localStorage
   const saveToStorage = (updatedActions: CorrectiveAction[]) => {
     try {
@@ -137,6 +115,36 @@ export const useCorrectiveActions = () => {
       });
     }
   };
+
+  // Funció per carregar dades del localStorage
+  const loadActions = () => {
+    try {
+      console.log('loadActions: Carregant dades del localStorage...');
+      const storedData = localStorage.getItem(STORAGE_KEY);
+      if (storedData) {
+        const parsedData = JSON.parse(storedData);
+        console.log('loadActions: Dades trobades:', parsedData.length, 'accions');
+        setActions(parsedData);
+      } else {
+        console.log('loadActions: No hi ha dades guardades, usant dades mock');
+        setActions(mockActions);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(mockActions));
+      }
+    } catch (error) {
+      console.error('loadActions: Error loading data from localStorage:', error);
+      setActions(mockActions);
+      toast({
+        title: "Avís",
+        description: "Error carregant les dades guardades. S'han carregat les dades per defecte.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  // Carregar dades del localStorage a l'inici
+  useEffect(() => {
+    loadActions();
+  }, []);
 
   const addAction = (action: Omit<CorrectiveAction, 'id' | 'createdAt' | 'updatedAt'>) => {
     const newAction: CorrectiveAction = {
@@ -234,6 +242,7 @@ export const useCorrectiveActions = () => {
     addAction,
     updateAction,
     addComment,
-    getDashboardMetrics
+    getDashboardMetrics,
+    loadActions
   };
 };
