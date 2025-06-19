@@ -21,6 +21,10 @@ const GeminiApiKeyDialog = ({ open, onOpenChange, onApiKeySet }: GeminiApiKeyDia
     if (storedKey) {
       setApiKey('*'.repeat(20) + storedKey.slice(-4));
       setIsStored(true);
+    } else {
+      // Set default API key value
+      setApiKey('AIzaSyBTEc3ls9wF64gWwoETorO7W6WmmIUJI2M');
+      setIsStored(false);
     }
   }, [open]);
 
@@ -34,7 +38,7 @@ const GeminiApiKeyDialog = ({ open, onOpenChange, onApiKeySet }: GeminiApiKeyDia
 
   const handleClear = () => {
     localStorage.removeItem('gemini-api-key');
-    setApiKey('');
+    setApiKey('AIzaSyBTEc3ls9wF64gWwoETorO7W6WmmIUJI2M');
     setIsStored(false);
   };
 
