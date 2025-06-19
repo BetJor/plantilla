@@ -65,17 +65,50 @@ const SimilarActionsDialog = ({
     return <CheckCircle className="w-4 h-4" />;
   };
 
+  // Determinar el títol, descripció i icona segons els resultats
+  const hasResults = !isLoading && similarActions.length > 0;
+  const noResults = !isLoading && similarActions.length === 0;
+
+  const getDialogTitle = () => {
+    if (hasResults) {
+      return "Accions Correctives Similars Detectades";
+    }
+    if (noResults) {
+      return "Cap Acció Similar Trobada";
+    }
+    return "Cercant Accions Similars";
+  };
+
+  const getDialogDescription = () => {
+    if (hasResults) {
+      return "S'han trobat accions correctives existents que poden estar relacionades amb aquesta nova acció. Revisa-les per evitar duplicació d'esforços o per aprofitar solucions anteriors.";
+    }
+    if (noResults) {
+      return "No s'han trobat accions correctives similars a aquesta nova acció. Pots continuar amb la creació sense preocupacions de duplicació.";
+    }
+    return "S'estan analitzant les accions existents per trobar possibles similituds...";
+  };
+
+  const getTitleIcon = () => {
+    if (hasResults) {
+      return <AlertTriangle className="w-5 h-5 text-orange-500" />;
+    }
+    if (noResults) {
+      return <CheckCircle className="w-5 h-5 text-green-500" />;
+    }
+    return <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />;
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <AlertTriangle className="w-5 h-5 text-orange-500" />
-            Accions Correctives Similars Detectades
+            {getTitleIcon()}
+            {getDialogTitle()}
           </DialogTitle>
           <DialogDescription>
-            S'han trobat accions correctives existents que poden estar relacionades amb aquesta nova acció.
-            Revisa-les per evitar duplicació d'esforços o per aprofitar solucions anteriors.
+            {getDialogDescription()}
           </DialogDescription>
         </DialogHeader>
 
@@ -162,12 +195,20 @@ const SimilarActionsDialog = ({
         </div>
 
         <div className="flex justify-end gap-3 pt-4 border-t">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Continuar igualment
-          </Button>
-          <Button onClick={() => onOpenChange(false)}>
-            Entesos, revisar primer
-          </Button>
+          {hasResults ? (
+            <>
+              <Button variant="outline" onClick={() => onOpenChange(false)}>
+                Continuar igualment
+              </Button>
+              <Button onClick={() => onOpenChange(false)}>
+                Entesos, revisar primer
+              </Button>
+            </>
+          ) : (
+            <Button onClick={() => onOpenChange(false)}>
+              Entesos
+            </Button>
+          )}
         </div>
       </DialogContent>
     </Dialog>
