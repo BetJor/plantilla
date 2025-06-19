@@ -16,7 +16,7 @@ import SimilarActionsDialog from '@/components/SimilarActionsDialog';
 
 const Actions = () => {
   const { actions, addAction } = useCorrectiveActions();
-  const { findSimilarActions, isLoading: isFindingActions } = useSimilarActions();
+  const { findSimilarActions, isLoading: isFindingActions, error: similarActionsError } = useSimilarActions();
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [showSimilarActions, setShowSimilarActions] = useState(false);
@@ -78,11 +78,51 @@ const Actions = () => {
   };
 
   const handleFindSimilarActions = async () => {
+    console.log('handleFindSimilarActions: Botó clickat');
+    console.log('handleFindSimilarActions: Dades del formulari:', {
+      title: formData.title.trim(),
+      description: formData.description.trim(),
+      type: formData.type,
+      category: formData.category
+    });
+
+    // Validació bàsica
     if (!formData.title.trim() || !formData.description.trim()) {
+      console.warn('handleFindSimilarActions: Títol o descripció buits');
+      toast({
+        title: "Camps obligatoris",
+        description: "Cal omplir el títol i la descripció abans de buscar accions similars.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Verificar si hi ha accions existents
+    const existingActions = actions.filter(action => action.status !== 'Borrador');
+    if (existingActions.length === 0) {
+      console.warn('handleFindSimilarActions: No hi ha accions existents');
+      toast({
+        title: "Cap acció existent",
+        description: "No hi ha accions existents al sistema per comparar.",
+        variant: "default"
+      });
+      return;
+    }
+
+    // Verificar clau API
+    const apiKey = localStorage.getItem('gemini-api-key');
+    if (!apiKey) {
+      console.warn('handleFindSimilarActions: Clau API no configurada');
+      toast({
+        title: "Configuració necessària",
+        description: "Cal configurar la clau API de Gemini a Configuració per utilitzar aquesta funcionalitat.",
+        variant: "destructive"
+      });
       return;
     }
 
     try {
+      console.log('handleFindSimilarActions: Iniciant cerca...');
       const results = await findSimilarActions({
         title: formData.title,
         description: formData.description,
@@ -92,10 +132,12 @@ const Actions = () => {
         department: formData.department
       });
       
+      console.log('handleFindSimilarActions: Resultats rebuts:', results.length);
       setSimilarActions(results);
       setShowSimilarActions(true);
     } catch (error) {
-      console.error('Error finding similar actions:', error);
+      console.error('handleFindSimilarActions: Error final:', error);
+      // L'error ja s'ha gestionat al hook amb toast
     }
   };
 
@@ -127,6 +169,26 @@ const Actions = () => {
     action.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     action.description.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  // Determinar si el botó està activat
+  const canSearchSimilar = formData.title.trim().length > 0 && 
+                          formData.description.trim().length > 0 && 
+                          actions.filter(action => action.status !== 'Borrador').length > 0 &&
+                          localStorage.getItem('gemini-api-key');
+
+  // Missatge del tooltip
+  const getTooltipMessage = () => {
+    if (!formData.title.trim() || !formData.description.trim()) {
+      return "Cal omplir el títol i la descripció";
+    }
+    if (actions.filter(action => action.status !== 'Borrador').length === 0) {
+      return "No hi ha accions existents per comparar";
+    }
+    if (!localStorage.getItem('gemini-api-key')) {
+      return "Cal configurar la clau API de Gemini a Configuració";
+    }
+    return "Buscar accions similars";
+  };
 
   return (
     <div className="space-y-6">
@@ -230,16 +292,25 @@ const Actions = () => {
               </div>
               
               <div className="flex gap-4 justify-between">
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  onClick={handleFindSimilarActions}
-                  disabled={!formData.title.trim() || !formData.description.trim() || isFindingActions}
-                  className="flex items-center gap-2"
-                >
-                  <Sparkles className="w-4 h-4" />
-                  {isFindingActions ? 'Cercant...' : 'Buscar accions similars'}
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={handleFindSimilarActions}
+                    disabled={!canSearchSimilar || isFindingActions}
+                    className="flex items-center gap-2"
+                    title={getTooltipMessage()}
+                  >
+                    <Sparkles className="w-4 h-4" />
+                    {isFindingActions ? 'Cercant...' : 'Buscar accions similars'}
+                  </Button>
+                  
+                  {!canSearchSimilar && (
+                    <span className="text-sm text-gray-500">
+                      {getTooltipMessage()}
+                    </span>
+                  )}
+                </div>
                 
                 <div className="flex gap-4">
                   <Button type="button" variant="outline" onClick={() => setShowCreateForm(false)}>

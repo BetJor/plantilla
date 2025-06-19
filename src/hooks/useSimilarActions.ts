@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { CorrectiveAction } from '@/types';
 import { useCorrectiveActions } from './useCorrectiveActions';
+import { toast } from '@/hooks/use-toast';
 
 interface SimilarAction {
   action: CorrectiveAction;
@@ -60,24 +61,45 @@ export const useSimilarActions = () => {
   };
 
   const findSimilarActions = async (newAction: SimilarityRequest): Promise<SimilarAction[]> => {
+    console.log('findSimilarActions: Iniciant cerca d\'accions similars...');
+    console.log('findSimilarActions: Nova acció:', newAction);
+    
     setIsLoading(true);
     setError(null);
 
     try {
+      // Verificar clau API
       const apiKey = localStorage.getItem('gemini-api-key');
+      console.log('findSimilarActions: Clau API present:', !!apiKey);
+      
       if (!apiKey) {
-        throw new Error('Clau d\'API de Gemini no configurada. Configura-la a Configuració.');
+        const errorMsg = 'Clau d\'API de Gemini no configurada. Configura-la a Configuració.';
+        console.error('findSimilarActions:', errorMsg);
+        toast({
+          title: "Error de configuració",
+          description: errorMsg,
+          variant: "destructive"
+        });
+        throw new Error(errorMsg);
       }
-
-      const genAI = new GoogleGenerativeAI(apiKey);
-      const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
       // Preparar les accions existents per comparar
       const existingActions = actions.filter(action => action.status !== 'Borrador');
+      console.log('findSimilarActions: Accions existents per comparar:', existingActions.length);
       
       if (existingActions.length === 0) {
+        console.log('findSimilarActions: No hi ha accions existents per comparar');
+        toast({
+          title: "Cap acció per comparar",
+          description: "No hi ha accions existents per comparar amb aquesta nova acció.",
+          variant: "default"
+        });
         return [];
       }
+
+      console.log('findSimilarActions: Creant model Gemini...');
+      const genAI = new GoogleGenerativeAI(apiKey);
+      const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
       const prompt = `
 Ets un expert en qualitat sanitària. Analitza aquesta nova acció correctiva i compara-la amb les accions existents per trobar similituds.
@@ -125,42 +147,55 @@ FORMAT DE RESPOSTA (JSON vàlid sense markdown):
 
 IMPORTANT: Respon NOMÉS amb el JSON sense blocs de codi markdown, sense text addicional.`;
 
-      console.log('Enviant prompt a Gemini:', { newAction, existingActionsCount: existingActions.length });
+      console.log('findSimilarActions: Enviant prompt a Gemini...');
+      console.log('findSimilarActions: Longitud del prompt:', prompt.length);
 
       const result = await model.generateContent(prompt);
       const response = await result.response;
       const rawText = response.text();
 
-      console.log('Resposta crua de Gemini:', rawText);
+      console.log('findSimilarActions: Resposta crua de Gemini rebuda:', rawText.substring(0, 200) + '...');
 
       // Netejar la resposta abans de parsejar
       const cleanedText = cleanAIResponse(rawText);
-      console.log('Resposta netejada:', cleanedText);
+      console.log('findSimilarActions: Resposta netejada:', cleanedText.substring(0, 200) + '...');
 
       // Intentar parsejar la resposta JSON
       let parsedResponse;
       try {
         parsedResponse = JSON.parse(cleanedText);
+        console.log('findSimilarActions: Resposta parsejada correctament');
       } catch (parseError) {
-        console.error('Error parsing JSON després de netejar:', parseError);
-        console.error('Text que va fallar:', cleanedText);
+        console.error('findSimilarActions: Error parsing JSON:', parseError);
+        console.error('findSimilarActions: Text que va fallar:', cleanedText);
+        
+        toast({
+          title: "Error processant resposta",
+          description: "No s'ha pogut processar la resposta de la IA. Prova-ho de nou.",
+          variant: "destructive"
+        });
         throw new Error(`No s'ha pogut parsejar la resposta de la IA. Format rebut: ${cleanedText.substring(0, 100)}...`);
       }
 
       // Validar l'estructura de la resposta
       if (!validateAIResponse(parsedResponse)) {
-        console.error('Resposta amb estructura incorrecta:', parsedResponse);
+        console.error('findSimilarActions: Resposta amb estructura incorrecta:', parsedResponse);
+        toast({
+          title: "Error en la resposta",
+          description: "La resposta de la IA no té l'estructura esperada. Prova-ho de nou.",
+          variant: "destructive"
+        });
         throw new Error('La resposta de la IA no té l\'estructura esperada');
       }
 
-      console.log('Resposta parsejada correctament:', parsedResponse);
+      console.log('findSimilarActions: Validació superada, processant resultats...');
 
       // Convertir els resultats a SimilarAction[]
       const similarActions: SimilarAction[] = parsedResponse.similarActions
         .map((item: any) => {
           const action = existingActions.find(a => a.id === item.actionId);
           if (!action) {
-            console.warn(`Acció no trobada per ID: ${item.actionId}`);
+            console.warn(`findSimilarActions: Acció no trobada per ID: ${item.actionId}`);
             return null;
           }
           
@@ -173,13 +208,39 @@ IMPORTANT: Respon NOMÉS amb el JSON sense blocs de codi markdown, sense text ad
         .filter(Boolean)
         .sort((a: SimilarAction, b: SimilarAction) => b.similarity - a.similarity);
 
-      console.log('Accions similars trobades:', similarActions);
+      console.log('findSimilarActions: Accions similars trobades:', similarActions.length);
+      
+      // Toast informatiu sobre els resultats
+      if (similarActions.length > 0) {
+        toast({
+          title: "Accions similars trobades",
+          description: `S'han trobat ${similarActions.length} acció${similarActions.length > 1 ? 's' : ''} similar${similarActions.length > 1 ? 's' : ''}.`,
+          variant: "default"
+        });
+      } else {
+        toast({
+          title: "Cap similitud trobada",
+          description: "No s'han trobat accions similars a aquesta nova acció.",
+          variant: "default"
+        });
+      }
+      
       return similarActions;
 
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Error desconegut';
-      console.error('Error en findSimilarActions:', err);
+      console.error('findSimilarActions: Error final:', err);
       setError(errorMessage);
+      
+      // Toast d'error si no s'ha mostrat ja
+      if (!errorMessage.includes('configurada') && !errorMessage.includes('processant') && !errorMessage.includes('estructura')) {
+        toast({
+          title: "Error cercant accions similars",
+          description: errorMessage,
+          variant: "destructive"
+        });
+      }
+      
       throw new Error(errorMessage);
     } finally {
       setIsLoading(false);
