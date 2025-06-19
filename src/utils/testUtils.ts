@@ -1,4 +1,3 @@
-
 import { CorrectiveAction } from '@/types';
 import { TEST_ACTIONS } from '@/data/testData';
 
@@ -141,13 +140,27 @@ export const validateSimilarityResults = (
 // Carregar dades de prova al localStorage
 export const loadTestData = (): TestResult => {
   try {
-    const existingActions = JSON.parse(localStorage.getItem('corrective-actions') || '[]');
+    console.log('Iniciant càrrega de dades de prova...');
+    
+    const existingActionsString = localStorage.getItem('corrective-actions') || '[]';
+    console.log('Dades existents al localStorage:', existingActionsString);
+    
+    const existingActions = JSON.parse(existingActionsString);
+    console.log('Accions existents parsejades:', existingActions.length);
+    
+    // Filtrar accions de test que no existeixen ja
     const testActions = TEST_ACTIONS.filter(action => 
       !existingActions.some((existing: CorrectiveAction) => existing.id === action.id)
     );
     
+    console.log('Accions de test a afegir:', testActions.length);
+    console.log('IDs de test:', testActions.map(a => a.id));
+    
     const updatedActions = [...existingActions, ...testActions];
-    localStorage.setItem('corrective-actions', JSON.stringify(updatedActions));
+    const updatedActionsString = JSON.stringify(updatedActions);
+    
+    localStorage.setItem('corrective-actions', updatedActionsString);
+    console.log('Dades guardades al localStorage:', updatedActions.length, 'accions totals');
     
     return {
       success: true,
@@ -155,6 +168,7 @@ export const loadTestData = (): TestResult => {
       details: { addedActions: testActions.length, totalActions: updatedActions.length }
     };
   } catch (error) {
+    console.error('Error carregant dades de prova:', error);
     return {
       success: false,
       message: `Error carregant dades de prova: ${error}`,
@@ -166,12 +180,20 @@ export const loadTestData = (): TestResult => {
 // Netejar dades de prova
 export const clearTestData = (): TestResult => {
   try {
-    const existingActions = JSON.parse(localStorage.getItem('corrective-actions') || '[]');
+    console.log('Iniciant neteja de dades de prova...');
+    
+    const existingActionsString = localStorage.getItem('corrective-actions') || '[]';
+    const existingActions = JSON.parse(existingActionsString);
+    console.log('Accions existents abans de netejar:', existingActions.length);
+    
     const nonTestActions = existingActions.filter((action: CorrectiveAction) => 
       !action.id.startsWith('test-')
     );
     
+    console.log('Accions que es mantenen:', nonTestActions.length);
+    
     localStorage.setItem('corrective-actions', JSON.stringify(nonTestActions));
+    console.log('Neteja completada');
     
     return {
       success: true,
@@ -179,6 +201,7 @@ export const clearTestData = (): TestResult => {
       details: { removedActions: existingActions.length - nonTestActions.length }
     };
   } catch (error) {
+    console.error('Error eliminant dades de prova:', error);
     return {
       success: false,
       message: `Error eliminant dades de prova: ${error}`,
