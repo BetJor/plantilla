@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -13,7 +13,8 @@ import {
   XCircle, 
   AlertTriangle,
   FileText,
-  TestTube
+  TestTube,
+  RefreshCw
 } from 'lucide-react';
 import { useSimilarActions } from '@/hooks/useSimilarActions';
 import { useCorrectiveActions } from '@/hooks/useCorrectiveActions';
@@ -32,22 +33,79 @@ const TestingSuite = () => {
   const [currentTest, setCurrentTest] = useState<string>('');
   const [useRealAI, setUseRealAI] = useState(false);
   const [dataLoadResult, setDataLoadResult] = useState<any>(null);
+  const [dataRefreshKey, setDataRefreshKey] = useState(0);
   
   const { findSimilarActions, isLoading } = useSimilarActions();
-  const { actions } = useCorrectiveActions();
+  const { actions, loadActions } = useCorrectiveActions();
 
-  const handleLoadTestData = () => {
-    const result = loadTestData();
-    setDataLoadResult(result);
-    // Forçar recàrrega de la pàgina per veure les noves dades
-    setTimeout(() => window.location.reload(), 1000);
+  // Forçar recàrrega de les accions quan canvia dataRefreshKey
+  useEffect(() => {
+    if (dataRefreshKey > 0) {
+      loadActions?.();
+    }
+  }, [dataRefreshKey, loadActions]);
+
+  const handleLoadTestData = async () => {
+    console.log('Botó carregar dades clickat');
+    setDataLoadResult(null);
+    
+    try {
+      const result = loadTestData();
+      console.log('Resultat loadTestData:', result);
+      setDataLoadResult(result);
+      
+      if (result.success) {
+        // Actualitzar les dades sense recarregar la pàgina
+        console.log('Forçant actualització de dades...');
+        setDataRefreshKey(prev => prev + 1);
+        
+        // Opcional: petit delay per assegurar que localStorage s'ha actualitzat
+        setTimeout(() => {
+          if (loadActions) {
+            console.log('Cridant loadActions...');
+            loadActions();
+          }
+        }, 100);
+      }
+    } catch (error) {
+      console.error('Error en handleLoadTestData:', error);
+      setDataLoadResult({
+        success: false,
+        message: `Error inesperat: ${error}`,
+        details: error
+      });
+    }
   };
 
-  const handleClearTestData = () => {
-    const result = clearTestData();
-    setDataLoadResult(result);
-    // Forçar recàrrega de la pàgina per veure els canvis
-    setTimeout(() => window.location.reload(), 1000);
+  const handleClearTestData = async () => {
+    console.log('Botó netejar dades clickat');
+    setDataLoadResult(null);
+    
+    try {
+      const result = clearTestData();
+      console.log('Resultat clearTestData:', result);
+      setDataLoadResult(result);
+      
+      if (result.success) {
+        // Actualitzar les dades sense recarregar la pàgina
+        console.log('Forçant actualització després de netejar...');
+        setDataRefreshKey(prev => prev + 1);
+        
+        setTimeout(() => {
+          if (loadActions) {
+            console.log('Cridant loadActions després de netejar...');
+            loadActions();
+          }
+        }, 100);
+      }
+    } catch (error) {
+      console.error('Error en handleClearTestData:', error);
+      setDataLoadResult({
+        success: false,
+        message: `Error inesperat: ${error}`,
+        details: error
+      });
+    }
   };
 
   const runAllTests = async () => {
@@ -109,6 +167,8 @@ const TestingSuite = () => {
   const passedTests = testResults.filter(r => r.passed).length;
   const totalTests = testResults.length;
 
+  const testActionsInLocalStorage = actions.filter(action => action.id.startsWith('test-')).length;
+
   return (
     <div className="space-y-6">
       <Card>
@@ -119,17 +179,21 @@ const TestingSuite = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
             <div className="text-center">
               <div className="text-2xl font-bold text-blue-600">{actions.length}</div>
               <div className="text-sm text-gray-600">Accions totals</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-purple-600">{testActionsInLocalStorage}</div>
+              <div className="text-sm text-gray-600">Accions de test carregades</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-green-600">{TEST_CASES.length}</div>
               <div className="text-sm text-gray-600">Casos de prova</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-purple-600">
+              <div className="text-2xl font-bold text-orange-600">
                 {totalTests > 0 ? `${passedTests}/${totalTests}` : '0/0'}
               </div>
               <div className="text-sm text-gray-600">Tests passats</div>
@@ -137,9 +201,17 @@ const TestingSuite = () => {
           </div>
 
           {dataLoadResult && (
-            <Alert className={dataLoadResult.success ? 'border-green-200' : 'border-red-200'}>
+            <Alert className={dataLoadResult.success ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'} key={dataRefreshKey}>
               <AlertTriangle className="w-4 h-4" />
-              <AlertDescription>{dataLoadResult.message}</AlertDescription>
+              <AlertDescription className={dataLoadResult.success ? 'text-green-800' : 'text-red-800'}>
+                {dataLoadResult.message}
+                {dataLoadResult.details && (
+                  <div className="text-xs mt-1">
+                    Accions afegides: {dataLoadResult.details.addedActions || 0} | 
+                    Total: {dataLoadResult.details.totalActions || 0}
+                  </div>
+                )}
+              </AlertDescription>
             </Alert>
           )}
         </CardContent>
@@ -158,7 +230,7 @@ const TestingSuite = () => {
               <CardTitle>Preparació de Dades</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex gap-4">
+              <div className="flex gap-4 flex-wrap">
                 <Button onClick={handleLoadTestData} className="flex items-center gap-2">
                   <Database className="w-4 h-4" />
                   Carregar Dades de Prova
@@ -166,6 +238,18 @@ const TestingSuite = () => {
                 <Button onClick={handleClearTestData} variant="outline" className="flex items-center gap-2">
                   <Trash2 className="w-4 h-4" />
                   Netejar Dades de Prova
+                </Button>
+                <Button 
+                  onClick={() => {
+                    if (loadActions) loadActions();
+                    setDataRefreshKey(prev => prev + 1);
+                  }} 
+                  variant="ghost" 
+                  size="sm" 
+                  className="flex items-center gap-2"
+                >
+                  <RefreshCw className="w-4 h-4" />
+                  Actualitzar Dades
                 </Button>
               </div>
               

@@ -7,8 +7,17 @@ import { TestTube, AlertTriangle, FileText, CheckCircle } from 'lucide-react';
 import TestingSuite from '@/components/TestingSuite';
 
 const Testing = () => {
-  // Verificar si estem en mode desenvolupament
-  const isDevelopment = import.meta.env.DEV;
+  // Millor detecció del mode desenvolupament
+  const isDevelopment = import.meta.env.DEV || 
+                       import.meta.env.MODE === 'development' || 
+                       window.location.hostname === 'localhost' ||
+                       window.location.hostname === '127.0.0.1';
+  
+  console.log('Testing page - Mode desenvolupament:', isDevelopment, {
+    'import.meta.env.DEV': import.meta.env.DEV,
+    'import.meta.env.MODE': import.meta.env.MODE,
+    'hostname': window.location.hostname
+  });
 
   if (!isDevelopment) {
     return (

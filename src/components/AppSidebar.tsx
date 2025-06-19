@@ -24,7 +24,15 @@ import { cn } from '@/lib/utils';
 const AppSidebar = () => {
   const { user } = useAuth();
   const location = useLocation();
-  const isDevelopment = import.meta.env.DEV;
+  
+  // Millor detecció del mode desenvolupament
+  const isDevelopment = import.meta.env.DEV || import.meta.env.MODE === 'development' || window.location.hostname === 'localhost';
+  
+  console.log('AppSidebar - Mode desenvolupament:', isDevelopment, {
+    'import.meta.env.DEV': import.meta.env.DEV,
+    'import.meta.env.MODE': import.meta.env.MODE,
+    'hostname': window.location.hostname
+  });
 
   const navigationItems = [
     { href: '/', label: 'Dashboard', icon: Home },
@@ -34,6 +42,8 @@ const AppSidebar = () => {
     { href: '/settings', label: 'Configuració', icon: Settings },
     ...(isDevelopment ? [{ href: '/testing', label: 'Testing Suite', icon: TestTube }] : [])
   ];
+
+  console.log('Navegació items generats:', navigationItems.length, navigationItems.map(item => item.label));
 
   return (
     <Sidebar className="border-r border-blue-200 top-20 h-[calc(100vh-80px)]">
