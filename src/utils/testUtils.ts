@@ -24,6 +24,9 @@ export interface SimilarityTestResult {
   issues: string[];
 }
 
+// Clau corregida per coincidir amb useCorrectiveActions
+const STORAGE_KEY = 'corrective-actions-data';
+
 // Simular resposta de IA per proves offline
 export const mockSimilarityResponse = (testAction: any, availableActions: CorrectiveAction[]) => {
   const results = [];
@@ -140,27 +143,30 @@ export const validateSimilarityResults = (
 // Carregar dades de prova al localStorage
 export const loadTestData = (): TestResult => {
   try {
-    console.log('Iniciant càrrega de dades de prova...');
+    console.log('loadTestData: Iniciant càrrega de dades de prova...');
+    console.log('loadTestData: Utilitzant clau localStorage:', STORAGE_KEY);
     
-    const existingActionsString = localStorage.getItem('corrective-actions') || '[]';
-    console.log('Dades existents al localStorage:', existingActionsString);
+    const existingActionsString = localStorage.getItem(STORAGE_KEY) || '[]';
+    console.log('loadTestData: Dades existents al localStorage:', existingActionsString.substring(0, 100) + '...');
     
     const existingActions = JSON.parse(existingActionsString);
-    console.log('Accions existents parsejades:', existingActions.length);
+    console.log('loadTestData: Accions existents parsejades:', existingActions.length);
     
     // Filtrar accions de test que no existeixen ja
     const testActions = TEST_ACTIONS.filter(action => 
       !existingActions.some((existing: CorrectiveAction) => existing.id === action.id)
     );
     
-    console.log('Accions de test a afegir:', testActions.length);
-    console.log('IDs de test:', testActions.map(a => a.id));
+    console.log('loadTestData: Accions de test disponibles:', TEST_ACTIONS.length);
+    console.log('loadTestData: Accions de test a afegir:', testActions.length);
+    console.log('loadTestData: IDs de test a afegir:', testActions.map(a => a.id));
     
     const updatedActions = [...existingActions, ...testActions];
     const updatedActionsString = JSON.stringify(updatedActions);
     
-    localStorage.setItem('corrective-actions', updatedActionsString);
-    console.log('Dades guardades al localStorage:', updatedActions.length, 'accions totals');
+    localStorage.setItem(STORAGE_KEY, updatedActionsString);
+    console.log('loadTestData: Dades guardades al localStorage amb clau:', STORAGE_KEY);
+    console.log('loadTestData: Total accions guardades:', updatedActions.length);
     
     return {
       success: true,
@@ -168,7 +174,7 @@ export const loadTestData = (): TestResult => {
       details: { addedActions: testActions.length, totalActions: updatedActions.length }
     };
   } catch (error) {
-    console.error('Error carregant dades de prova:', error);
+    console.error('loadTestData: Error carregant dades de prova:', error);
     return {
       success: false,
       message: `Error carregant dades de prova: ${error}`,
@@ -180,20 +186,22 @@ export const loadTestData = (): TestResult => {
 // Netejar dades de prova
 export const clearTestData = (): TestResult => {
   try {
-    console.log('Iniciant neteja de dades de prova...');
+    console.log('clearTestData: Iniciant neteja de dades de prova...');
+    console.log('clearTestData: Utilitzant clau localStorage:', STORAGE_KEY);
     
-    const existingActionsString = localStorage.getItem('corrective-actions') || '[]';
+    const existingActionsString = localStorage.getItem(STORAGE_KEY) || '[]';
     const existingActions = JSON.parse(existingActionsString);
-    console.log('Accions existents abans de netejar:', existingActions.length);
+    console.log('clearTestData: Accions existents abans de netejar:', existingActions.length);
     
     const nonTestActions = existingActions.filter((action: CorrectiveAction) => 
       !action.id.startsWith('test-')
     );
     
-    console.log('Accions que es mantenen:', nonTestActions.length);
+    console.log('clearTestData: Accions que es mantenen:', nonTestActions.length);
+    console.log('clearTestData: Accions eliminades:', existingActions.length - nonTestActions.length);
     
-    localStorage.setItem('corrective-actions', JSON.stringify(nonTestActions));
-    console.log('Neteja completada');
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(nonTestActions));
+    console.log('clearTestData: Neteja completada, dades guardades amb clau:', STORAGE_KEY);
     
     return {
       success: true,
@@ -201,7 +209,7 @@ export const clearTestData = (): TestResult => {
       details: { removedActions: existingActions.length - nonTestActions.length }
     };
   } catch (error) {
-    console.error('Error eliminant dades de prova:', error);
+    console.error('clearTestData: Error eliminant dades de prova:', error);
     return {
       success: false,
       message: `Error eliminant dades de prova: ${error}`,
