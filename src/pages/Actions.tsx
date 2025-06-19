@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,6 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Plus, Search, Filter, Eye, Sparkles } from 'lucide-react';
 import { useCorrectiveActions } from '@/hooks/useCorrectiveActions';
 import { useSimilarActions } from '@/hooks/useSimilarActions';
+import { toast } from '@/hooks/use-toast';
 import { ACTION_TYPES } from '@/types/categories';
 import CategorySelectors from '@/components/ActionFormSections/CategorySelectors';
 import SimilarActionsDialog from '@/components/SimilarActionsDialog';
