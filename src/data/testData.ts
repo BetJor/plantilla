@@ -17,6 +17,7 @@ export const TEST_ACTIONS: CorrectiveAction[] = [
     centre: 'Hospital Central',
     department: 'Quiròfan',
     createdAt: '2024-01-01',
+    updatedAt: '2024-01-01',
     createdBy: 'supervisor.quirofan',
     attachments: []
   },
@@ -34,6 +35,7 @@ export const TEST_ACTIONS: CorrectiveAction[] = [
     centre: 'Hospital Central',
     department: 'Quiròfan',
     createdAt: '2024-01-10',
+    updatedAt: '2024-01-10',
     createdBy: 'supervisor.quirofan',
     attachments: []
   },
@@ -51,6 +53,7 @@ export const TEST_ACTIONS: CorrectiveAction[] = [
     centre: 'Hospital Central',
     department: 'Quiròfan',
     createdAt: '2024-01-20',
+    updatedAt: '2024-01-20',
     createdBy: 'supervisor.quirofan',
     attachments: []
   },
@@ -70,6 +73,7 @@ export const TEST_ACTIONS: CorrectiveAction[] = [
     centre: 'Hospital Central',
     department: 'Urgències',
     createdAt: '2024-01-05',
+    updatedAt: '2024-01-05',
     createdBy: 'responsable.urgencies',
     attachments: []
   },
@@ -87,6 +91,7 @@ export const TEST_ACTIONS: CorrectiveAction[] = [
     centre: 'Hospital Nord',
     department: 'Farmàcia',
     createdAt: '2024-01-12',
+    updatedAt: '2024-01-12',
     createdBy: 'farmaceutic.responsable',
     attachments: []
   },
@@ -106,6 +111,7 @@ export const TEST_ACTIONS: CorrectiveAction[] = [
     centre: 'Hospital Central',
     department: 'Recursos Humans',
     createdAt: '2024-01-25',
+    updatedAt: '2024-01-25',
     createdBy: 'rrhh.supervisor',
     attachments: []
   },
@@ -123,6 +129,7 @@ export const TEST_ACTIONS: CorrectiveAction[] = [
     centre: 'Hospital Nord',
     department: 'Urgències',
     createdAt: '2024-02-01',
+    updatedAt: '2024-02-01',
     createdBy: 'cap.urgencies',
     attachments: []
   },
@@ -142,6 +149,7 @@ export const TEST_ACTIONS: CorrectiveAction[] = [
     centre: 'Hospital Pediàtric',
     department: 'Pediatria',
     createdAt: '2024-01-08',
+    updatedAt: '2024-01-08',
     createdBy: 'infermera.pediatria',
     attachments: []
   },
@@ -159,6 +167,7 @@ export const TEST_ACTIONS: CorrectiveAction[] = [
     centre: 'Hospital Central',
     department: 'Farmàcia',
     createdAt: '2024-02-05',
+    updatedAt: '2024-02-05',
     createdBy: 'infermera.planta',
     attachments: []
   },
@@ -178,6 +187,7 @@ export const TEST_ACTIONS: CorrectiveAction[] = [
     centre: 'Hospital Central',
     department: 'Consultes Externes',
     createdAt: '2024-02-10',
+    updatedAt: '2024-02-10',
     createdBy: 'supervisor.consultes',
     attachments: []
   },
@@ -195,6 +205,7 @@ export const TEST_ACTIONS: CorrectiveAction[] = [
     centre: 'Hospital Nord',
     department: 'Rehabilitació',
     createdAt: '2024-02-15',
+    updatedAt: '2024-02-15',
     createdBy: 'cap.rehabilitacio',
     attachments: []
   },
@@ -214,6 +225,7 @@ export const TEST_ACTIONS: CorrectiveAction[] = [
     centre: 'Centre Test',
     department: 'Test Dept',
     createdAt: '2024-02-20',
+    updatedAt: '2024-02-20',
     createdBy: 'test.user',
     attachments: []
   }
