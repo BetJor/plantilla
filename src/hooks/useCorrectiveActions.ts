@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { CorrectiveAction, Comment, DashboardMetrics } from '@/types';
+import { toast } from '@/hooks/use-toast';
 
-// Dades de mostra per al prototipus
+// Dades de mostra per al prototipus amb exemples d'anàlisi
 const mockActions: CorrectiveAction[] = [
   {
     id: '1',
@@ -19,7 +20,11 @@ const mockActions: CorrectiveAction[] = [
     attachments: [],
     createdBy: 'user1',
     createdAt: '2024-06-15',
-    updatedAt: '2024-06-16'
+    updatedAt: '2024-06-16',
+    analysisData: {
+      rootCauses: 'Manca de formació actualitzada del personal sanitari sobre els nous protocols de higiene. Protocol antic que no inclou les darreres recomanacions de la OMS.',
+      proposedAction: 'Implementar programa de formació continuada en higiene quirúrgica i actualitzar el protocol seguint les guies més recents.'
+    }
   },
   {
     id: '2',
@@ -37,7 +42,19 @@ const mockActions: CorrectiveAction[] = [
     attachments: [],
     createdBy: 'user2',
     createdAt: '2024-06-10',
-    updatedAt: '2024-06-20'
+    updatedAt: '2024-06-20',
+    analysisData: {
+      rootCauses: 'Sistema informàtic obsolet amb incompatibilitats amb les noves actualitzacions de seguretat.',
+      proposedAction: 'Migració gradual a la nova versió amb proves pilot en un departament abans de la implementació general.',
+      analysisDate: '2024-06-22',
+      analysisBy: 'Joan Martínez'
+    },
+    verificationData: {
+      implementationCheck: 'Migració completada amb èxit al departament pilot. Funcionament correcte verificat.',
+      verificationDate: '2024-06-25',
+      verificationBy: 'Anna López',
+      evidenceAttachments: []
+    }
   },
   {
     id: '3',
@@ -55,14 +72,71 @@ const mockActions: CorrectiveAction[] = [
     attachments: [],
     createdBy: 'user3',
     createdAt: '2024-05-15',
-    updatedAt: '2024-06-28'
+    updatedAt: '2024-06-28',
+    analysisData: {
+      rootCauses: 'Manca de coneixement dels nous protocols de seguretat per part del personal.',
+      proposedAction: 'Organitzar sessions de formació obligatòries per a tot el personal.',
+      analysisDate: '2024-05-20',
+      analysisBy: 'Anna López'
+    },
+    verificationData: {
+      implementationCheck: 'Sessions de formació completades. Assistència del 95% del personal.',
+      verificationDate: '2024-06-15',
+      verificationBy: 'Dr. Pérez',
+      evidenceAttachments: []
+    },
+    closureData: {
+      closureNotes: 'Formació completada amb èxit. Personal format adequadament en els nous protocols.',
+      closureDate: '2024-06-28',
+      closureBy: 'Anna López',
+      effectivenessEvaluation: 'Molt efectiu - millora significativa en el compliment dels protocols de seguretat'
+    }
   }
 ];
 
+const STORAGE_KEY = 'corrective-actions-data';
+
 export const useCorrectiveActions = () => {
-  const [actions, setActions] = useState<CorrectiveAction[]>(mockActions);
+  const [actions, setActions] = useState<CorrectiveAction[]>([]);
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(false);
+
+  // Carregar dades del localStorage a l'inici
+  useEffect(() => {
+    try {
+      const storedData = localStorage.getItem(STORAGE_KEY);
+      if (storedData) {
+        const parsedData = JSON.parse(storedData);
+        setActions(parsedData);
+      } else {
+        // Si no hi ha dades guardades, usar les dades mock
+        setActions(mockActions);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(mockActions));
+      }
+    } catch (error) {
+      console.error('Error loading data from localStorage:', error);
+      setActions(mockActions);
+      toast({
+        title: "Avís",
+        description: "Error carregant les dades guardades. S'han carregat les dades per defecte.",
+        variant: "destructive"
+      });
+    }
+  }, []);
+
+  // Funció per guardar a localStorage
+  const saveToStorage = (updatedActions: CorrectiveAction[]) => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedActions));
+    } catch (error) {
+      console.error('Error saving to localStorage:', error);
+      toast({
+        title: "Error",
+        description: "No s'han pogut guardar les dades.",
+        variant: "destructive"
+      });
+    }
+  };
 
   const addAction = (action: Omit<CorrectiveAction, 'id' | 'createdAt' | 'updatedAt'>) => {
     const newAction: CorrectiveAction = {
@@ -71,16 +145,31 @@ export const useCorrectiveActions = () => {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
-    setActions(prev => [...prev, newAction]);
+    const updatedActions = [...actions, newAction];
+    setActions(updatedActions);
+    saveToStorage(updatedActions);
+    
+    toast({
+      title: "Acció creada",
+      description: "L'acció s'ha creat correctament."
+    });
+    
     return newAction;
   };
 
   const updateAction = (id: string, updates: Partial<CorrectiveAction>) => {
-    setActions(prev => prev.map(action => 
+    const updatedActions = actions.map(action => 
       action.id === id 
         ? { ...action, ...updates, updatedAt: new Date().toISOString() }
         : action
-    ));
+    );
+    setActions(updatedActions);
+    saveToStorage(updatedActions);
+    
+    toast({
+      title: "Acció actualitzada",
+      description: "Els canvis s'han guardat correctament."
+    });
   };
 
   const addComment = (comment: Omit<Comment, 'id' | 'createdAt'>) => {
