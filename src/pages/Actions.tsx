@@ -7,15 +7,20 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Plus, Search, Filter, Eye } from 'lucide-react';
+import { Plus, Search, Filter, Eye, Sparkles } from 'lucide-react';
 import { useCorrectiveActions } from '@/hooks/useCorrectiveActions';
+import { useSimilarActions } from '@/hooks/useSimilarActions';
 import { ACTION_TYPES } from '@/types/categories';
 import CategorySelectors from '@/components/ActionFormSections/CategorySelectors';
+import SimilarActionsDialog from '@/components/SimilarActionsDialog';
 
 const Actions = () => {
   const { actions, addAction } = useCorrectiveActions();
+  const { findSimilarActions, isLoading: isFindingActions } = useSimilarActions();
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [showSimilarActions, setShowSimilarActions] = useState(false);
+  const [similarActions, setSimilarActions] = useState([]);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -72,6 +77,28 @@ const Actions = () => {
     return type?.name || typeCode;
   };
 
+  const handleFindSimilarActions = async () => {
+    if (!formData.title.trim() || !formData.description.trim()) {
+      return;
+    }
+
+    try {
+      const results = await findSimilarActions({
+        title: formData.title,
+        description: formData.description,
+        type: formData.type,
+        category: formData.category,
+        centre: formData.centre,
+        department: formData.department
+      });
+      
+      setSimilarActions(results);
+      setShowSimilarActions(true);
+    } catch (error) {
+      console.error('Error finding similar actions:', error);
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     addAction({
@@ -93,6 +120,7 @@ const Actions = () => {
       department: ''
     });
     setShowCreateForm(false);
+    setSimilarActions([]);
   };
 
   const filteredActions = actions.filter(action =>
@@ -200,18 +228,39 @@ const Actions = () => {
                   className="mt-1"
                 />
               </div>
-              <div className="flex gap-4 justify-end">
-                <Button type="button" variant="outline" onClick={() => setShowCreateForm(false)}>
-                  Cancel·lar
+              
+              <div className="flex gap-4 justify-between">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={handleFindSimilarActions}
+                  disabled={!formData.title.trim() || !formData.description.trim() || isFindingActions}
+                  className="flex items-center gap-2"
+                >
+                  <Sparkles className="w-4 h-4" />
+                  {isFindingActions ? 'Cercant...' : 'Buscar accions similars'}
                 </Button>
-                <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
-                  Crear Acció
-                </Button>
+                
+                <div className="flex gap-4">
+                  <Button type="button" variant="outline" onClick={() => setShowCreateForm(false)}>
+                    Cancel·lar
+                  </Button>
+                  <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
+                    Crear Acció
+                  </Button>
+                </div>
               </div>
             </form>
           </CardContent>
         </Card>
       )}
+
+      <SimilarActionsDialog
+        open={showSimilarActions}
+        onOpenChange={setShowSimilarActions}
+        similarActions={similarActions}
+        isLoading={isFindingActions}
+      />
 
       <Card className="border-blue-200">
         <CardHeader className="bg-blue-50">
