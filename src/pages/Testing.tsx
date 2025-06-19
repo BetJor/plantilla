@@ -76,9 +76,9 @@ const Testing = () => {
                 Tipus de Tests
               </h4>
               <ul className="text-sm space-y-1 text-gray-600">
-                <li>• <strong>Similitud Alta (>80%):</strong> Accions pràcticament idèntiques</li>
+                <li>• <strong>Similitud Alta (&gt;80%):</strong> Accions pràcticament idèntiques</li>
                 <li>• <strong>Similitud Mitjana (40-80%):</strong> Accions relacionades</li>
-                <li>• <strong>Similitud Baixa (<40%):</strong> Accions diferents</li>
+                <li>• <strong>Similitud Baixa (&lt;40%):</strong> Accions diferents</li>
                 <li>• <strong>Casos Extrems:</strong> Dades mínimes, errors</li>
               </ul>
             </div>
