@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -68,18 +67,25 @@ const StatusControls = ({
                !!action.responsableAnalisis &&
                !!action.fechaLimiteAnalisis;
       case 'Pendiente de Análisis':
-        return !!(action.analysisData?.rootCauses && 
-                 (action.analysisData?.proposedActions?.length > 0 || action.analysisData?.proposedAction) &&
-                 action.responsableImplantacion &&
-                 action.fechaLimiteImplantacion);
+        // Només validar anàlisi de causes i accions proposades amb dades
+        const hasRootCauses = !!(action.analysisData?.rootCauses?.trim());
+        const proposedActions = action.analysisData?.proposedActions || [];
+        const hasValidProposedActions = proposedActions.length > 0 && 
+          proposedActions.every(proposedAction => 
+            proposedAction.description?.trim() &&
+            proposedAction.assignedTo?.trim() &&
+            proposedAction.dueDate
+          );
+        
+        return hasRootCauses && hasValidProposedActions;
       case 'Pendiente de Comprobación':
         // Verificar que totes les accions proposades han estat verificades
-        const proposedActions = action.analysisData?.proposedActions || [];
-        const allActionsVerified = proposedActions.every(proposedAction => 
+        const proposedActionsForVerification = action.analysisData?.proposedActions || [];
+        const allActionsVerified = proposedActionsForVerification.every(proposedAction => 
           proposedAction.verificationStatus && proposedAction.verificationStatus !== 'not-verified'
         );
         return !!(allActionsVerified && 
-                 proposedActions.length > 0 &&
+                 proposedActionsForVerification.length > 0 &&
                  action.responsableCierre &&
                  action.fechaLimiteCierre);
       case 'Pendiente de Cierre':
@@ -104,17 +110,29 @@ const StatusControls = ({
         return `Cal completar: ${missing.join(', ')}`;
       case 'Pendiente de Análisis':
         const missingAnalysis = [];
-        if (!action.analysisData?.rootCauses) missingAnalysis.push('anàlisi de causes');
-        if (!action.analysisData?.proposedActions?.length && !action.analysisData?.proposedAction) {
-          missingAnalysis.push('accions proposades');
+        if (!action.analysisData?.rootCauses?.trim()) {
+          missingAnalysis.push('anàlisi de causes');
         }
-        if (!action.responsableImplantacion) missingAnalysis.push('responsable d\'implantació');
-        if (!action.fechaLimiteImplantacion) missingAnalysis.push('data límit implantació');
+        
+        const proposedActions = action.analysisData?.proposedActions || [];
+        if (proposedActions.length === 0) {
+          missingAnalysis.push('almenys una acció proposada');
+        } else {
+          const incompleteActions = proposedActions.filter(proposedAction => 
+            !proposedAction.description?.trim() || 
+            !proposedAction.assignedTo?.trim() || 
+            !proposedAction.dueDate
+          );
+          if (incompleteActions.length > 0) {
+            missingAnalysis.push(`dades completes per ${incompleteActions.length} accions`);
+          }
+        }
+        
         return `Cal completar: ${missingAnalysis.join(', ')}`;
       case 'Pendiente de Comprobación':
         const missingVerification = [];
-        const proposedActions = action.analysisData?.proposedActions || [];
-        const unverifiedActions = proposedActions.filter(proposedAction => 
+        const proposedActionsForVerification = action.analysisData?.proposedActions || [];
+        const unverifiedActions = proposedActionsForVerification.filter(proposedAction => 
           !proposedAction.verificationStatus || proposedAction.verificationStatus === 'not-verified'
         );
         
