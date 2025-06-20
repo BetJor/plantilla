@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { CorrectiveAction, Comment, DashboardMetrics } from '@/types';
 import { toast } from '@/hooks/use-toast';
 import { useNotifications } from '@/hooks/useNotifications';
+import { useAuditHistory } from '@/hooks/useAuditHistory';
+import { useBisActions } from '@/hooks/useBisActions';
 
 // Dades de mostra per al prototipus amb exemples dels nous tipus d'accions
 const mockActions: CorrectiveAction[] = [
@@ -174,6 +176,13 @@ export const useCorrectiveActions = () => {
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(false);
   const { notifyStatusChange, checkOverdueAndUpcoming } = useNotifications();
+  const { 
+    logActionCreated, 
+    logActionUpdated, 
+    logStatusChanged, 
+    logActionClosed 
+  } = useAuditHistory();
+  const { createBisAction } = useBisActions();
 
   // Funció per guardar a localStorage
   const saveToStorage = (updatedActions: CorrectiveAction[]) => {
@@ -237,6 +246,9 @@ export const useCorrectiveActions = () => {
     setActions(updatedActions);
     saveToStorage(updatedActions);
     
+    // Log audit entry
+    logActionCreated(newAction, newAction.createdBy, 'System User');
+    
     // Enviar notificació si té responsable d'anàlisi assignat
     if (newAction.status === 'Pendiente de Análisis' && newAction.responsableAnalisis) {
       notifyStatusChange(newAction, 'Pendiente de Análisis');
@@ -252,6 +264,8 @@ export const useCorrectiveActions = () => {
 
   const updateAction = (id: string, updates: Partial<CorrectiveAction>) => {
     const originalAction = actions.find(action => action.id === id);
+    if (!originalAction) return;
+
     const updatedAction = { ...originalAction, ...updates, updatedAt: new Date().toISOString() } as CorrectiveAction;
     
     const updatedActions = actions.map(action => 
@@ -260,9 +274,34 @@ export const useCorrectiveActions = () => {
     setActions(updatedActions);
     saveToStorage(updatedActions);
 
+    // Log audit entries for changes
+    const changes: Record<string, { from: any; to: any }> = {};
+    Object.keys(updates).forEach(key => {
+      const oldValue = (originalAction as any)[key];
+      const newValue = (updates as any)[key];
+      if (oldValue !== newValue) {
+        changes[key] = { from: oldValue, to: newValue };
+      }
+    });
+
+    if (Object.keys(changes).length > 0) {
+      logActionUpdated(id, changes, 'current-user', 'Current User');
+    }
+
     // Enviar notificació si hi ha canvi d'estat
-    if (originalAction && updates.status && updates.status !== originalAction.status) {
+    if (updates.status && updates.status !== originalAction.status) {
+      logStatusChanged(id, originalAction.status, updates.status, 'current-user', 'Current User');
       notifyStatusChange(updatedAction, updates.status);
+      
+      // Si es tanca com NO CONFORME, crear acció BIS
+      if (updates.status === 'Cerrado' && updates.tipoCierre === 'no-conforme') {
+        createBisAction(updatedAction, addAction);
+      }
+    }
+
+    // Log closure if action is being closed
+    if (updates.status === 'Cerrado' && updates.tipoCierre) {
+      logActionClosed(id, updates.tipoCierre, 'current-user', 'Current User');
     }
     
     toast({
