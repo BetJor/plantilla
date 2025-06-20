@@ -32,7 +32,22 @@ const mockActions: CorrectiveAction[] = [
     fechaLimiteAnalisis: '2024-07-01',
     analysisData: {
       rootCauses: 'Manca de formació actualitzada del personal sanitari sobre els nous protocols de higiene. Protocol antic que no inclou les darreres recomanacions de la OMS.',
-      proposedAction: 'Implementar programa de formació continuada en higiene quirúrgica i actualitzar el protocol seguint les guies més recents.'
+      proposedActions: [
+        {
+          id: '1',
+          description: 'Implementar programa de formació continuada en higiene quirúrgica',
+          assignedTo: 'Dr. Maria García',
+          dueDate: '2024-07-10',
+          status: 'pending'
+        },
+        {
+          id: '2',
+          description: 'Actualitzar el protocol seguint les guies més recents de la OMS',
+          assignedTo: 'Coordinador Qualitat',
+          dueDate: '2024-07-05',
+          status: 'pending'
+        }
+      ]
     }
   },
   {
@@ -61,7 +76,22 @@ const mockActions: CorrectiveAction[] = [
     fechaLimiteImplantacion: '2024-07-15',
     analysisData: {
       rootCauses: 'Personal no format adequadament en la nova normativa de residus. Contenidors insuficients en algunes zones.',
-      proposedAction: 'Formació específica al personal i instal·lació de contenidors addicionals.',
+      proposedActions: [
+        {
+          id: '1',
+          description: 'Formació específica al personal sobre nova normativa de residus',
+          assignedTo: 'Responsable Formació',
+          dueDate: '2024-07-10',
+          status: 'in-progress'
+        },
+        {
+          id: '2',
+          description: 'Instal·lació de contenidors addicionals en zones deficitàries',
+          assignedTo: 'Joan Martínez',
+          dueDate: '2024-07-08',
+          status: 'completed'
+        }
+      ],
       analysisDate: '2024-06-22',
       analysisBy: 'Joan Martínez'
     },

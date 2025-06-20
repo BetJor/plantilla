@@ -5,9 +5,10 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Search, Clock, User, Sparkles, Loader2 } from 'lucide-react';
-import { CorrectiveAction } from '@/types';
+import { CorrectiveAction, ProposedActionItem } from '@/types';
 import { useGeminiSuggestions } from '@/hooks/useGeminiSuggestions';
 import GeminiApiKeyDialog from '@/components/GeminiApiKeyDialog';
+import ProposedActionsList from './ProposedActionsList';
 
 interface AnalysisSectionProps {
   action: CorrectiveAction;
@@ -17,17 +18,48 @@ interface AnalysisSectionProps {
 
 const AnalysisSection = ({ action, onUpdate, readOnly = false }: AnalysisSectionProps) => {
   const [rootCauses, setRootCauses] = React.useState(action.analysisData?.rootCauses || '');
-  const [proposedAction, setProposedAction] = React.useState(action.analysisData?.proposedAction || '');
   const [showApiKeyDialog, setShowApiKeyDialog] = React.useState(false);
   
   const { generateSuggestion, isLoading, error } = useGeminiSuggestions();
+
+  // Migrar dades existents de proposedAction a proposedActions si cal
+  const proposedActions = React.useMemo(() => {
+    if (action.analysisData?.proposedActions) {
+      return action.analysisData.proposedActions;
+    }
+    
+    // Migrar dada antiga si existeix
+    if (action.analysisData?.proposedAction) {
+      return [{
+        id: '1',
+        description: action.analysisData.proposedAction,
+        assignedTo: action.assignedTo || '',
+        dueDate: action.dueDate || '',
+        status: 'pending' as const
+      }];
+    }
+    
+    return [];
+  }, [action.analysisData, action.assignedTo, action.dueDate]);
 
   const handleSave = () => {
     onUpdate({
       analysisData: {
         ...action.analysisData,
         rootCauses,
-        proposedAction,
+        proposedActions,
+        analysisDate: new Date().toISOString(),
+        analysisBy: 'current-user'
+      }
+    });
+  };
+
+  const handleProposedActionsChange = (newActions: ProposedActionItem[]) => {
+    onUpdate({
+      analysisData: {
+        ...action.analysisData,
+        rootCauses,
+        proposedActions: newActions,
         analysisDate: new Date().toISOString(),
         analysisBy: 'current-user'
       }
@@ -40,7 +72,17 @@ const AnalysisSection = ({ action, onUpdate, readOnly = false }: AnalysisSection
         action,
         rootCauses: rootCauses.trim() || undefined
       });
-      setProposedAction(suggestion);
+      
+      // Generar una acció automàticament amb la suggerència
+      const newAction: ProposedActionItem = {
+        id: Date.now().toString(),
+        description: suggestion,
+        assignedTo: action.assignedTo || '',
+        dueDate: action.dueDate || '',
+        status: 'pending'
+      };
+      
+      handleProposedActionsChange([...proposedActions, newAction]);
     } catch (err) {
       if (err instanceof Error && err.message.includes('clau d\'API')) {
         setShowApiKeyDialog(true);
@@ -49,10 +91,10 @@ const AnalysisSection = ({ action, onUpdate, readOnly = false }: AnalysisSection
     }
   };
 
-  const isFormValid = rootCauses.trim() && proposedAction.trim();
-  const isComplete = action.analysisData?.rootCauses && action.analysisData?.proposedAction;
+  const isFormValid = rootCauses.trim() && proposedActions.length > 0;
+  const isComplete = action.analysisData?.rootCauses && (action.analysisData?.proposedActions?.length > 0 || action.analysisData?.proposedAction);
   const hasChanges = rootCauses !== (action.analysisData?.rootCauses || '') || 
-                     proposedAction !== (action.analysisData?.proposedAction || '');
+                     JSON.stringify(proposedActions) !== JSON.stringify(action.analysisData?.proposedActions || []);
 
   return (
     <>
@@ -74,7 +116,7 @@ const AnalysisSection = ({ action, onUpdate, readOnly = false }: AnalysisSection
             )}
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-6">
           <div>
             <Label htmlFor="rootCauses">Anàlisi de les causes arrel</Label>
             <Textarea
@@ -87,9 +129,10 @@ const AnalysisSection = ({ action, onUpdate, readOnly = false }: AnalysisSection
               className={readOnly ? 'bg-gray-100' : ''}
             />
           </div>
+          
           <div>
-            <div className="flex items-center justify-between mb-2">
-              <Label htmlFor="proposedAction">Acció proposada</Label>
+            <div className="flex items-center justify-between mb-4">
+              <Label>Accions proposades</Label>
               {!readOnly && (
                 <Button
                   type="button"
@@ -104,25 +147,24 @@ const AnalysisSection = ({ action, onUpdate, readOnly = false }: AnalysisSection
                   ) : (
                     <Sparkles className="w-4 h-4" />
                   )}
-                  Suggerir amb IA
+                  Generar amb IA
                 </Button>
               )}
             </div>
-            <Textarea
-              id="proposedAction"
-              value={proposedAction}
-              onChange={(e) => setProposedAction(e.target.value)}
-              placeholder="Descriure l'acció correctiva proposada per solucionar el problema..."
-              rows={4}
-              disabled={readOnly}
-              className={readOnly ? 'bg-gray-100' : ''}
+            
+            <ProposedActionsList
+              actions={proposedActions}
+              onChange={handleProposedActionsChange}
+              readOnly={readOnly}
             />
+            
             {error && (
-              <p className="text-sm text-red-600 mt-1">
+              <p className="text-sm text-red-600 mt-2">
                 Error: {error}
               </p>
             )}
           </div>
+          
           {!readOnly && (
             <Button onClick={handleSave} disabled={!isFormValid || !hasChanges}>
               Guardar Anàlisi

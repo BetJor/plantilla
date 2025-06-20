@@ -11,6 +11,14 @@ export interface User {
   territorialScope?: string; // Àmbit geogràfic o funcional
 }
 
+export interface ProposedActionItem {
+  id: string;
+  description: string;
+  assignedTo: string;
+  dueDate: string;
+  status?: 'pending' | 'in-progress' | 'completed' | 'cancelled';
+}
+
 export interface CorrectiveAction {
   id: string;
   title: string;
@@ -53,7 +61,8 @@ export interface CorrectiveAction {
   // Dades existents per a cada fase
   analysisData?: {
     rootCauses: string;
-    proposedAction: string;
+    proposedAction?: string; // Mantenim per compatibilitat amb dades existents
+    proposedActions?: ProposedActionItem[]; // Nova estructura
     analysisDate?: string;
     analysisBy?: string;
   };
