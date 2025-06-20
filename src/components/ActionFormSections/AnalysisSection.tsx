@@ -42,18 +42,22 @@ const AnalysisSection = ({ action, onUpdate, readOnly = false }: AnalysisSection
     return [];
   }, [action.analysisData, action.assignedTo, action.dueDate]);
 
-  // Debug logs (després de la declaració de proposedActions)
-  console.log('AnalysisSection - Action status:', action.status);
-  console.log('AnalysisSection - ReadOnly:', readOnly);
-  console.log('AnalysisSection - Proposed actions count:', proposedActions.length);
+  // Debug logs més detallats
+  console.log('=== ANALYSIS SECTION DEBUG ===');
+  console.log('Action ID:', action.id);
+  console.log('Action status:', action.status);
+  console.log('ReadOnly prop:', readOnly);
+  console.log('Proposed actions count:', proposedActions.length);
+  console.log('Proposed actions data:', proposedActions);
 
   // Determinar si mostrar controls de verificació
   const showVerificationControls = action.status === 'Pendiente de Comprobación' && !readOnly;
   
-  // Debug log per verificació
-  console.log('AnalysisSection - Show verification controls:', showVerificationControls);
-  console.log('AnalysisSection - Status check:', action.status === 'Pendiente de Comprobación');
-  console.log('AnalysisSection - ReadOnly check:', !readOnly);
+  console.log('Show verification controls calculation:');
+  console.log('- Status is Pendiente de Comprobación:', action.status === 'Pendiente de Comprobación');
+  console.log('- Not readOnly:', !readOnly);
+  console.log('- Final showVerificationControls:', showVerificationControls);
+  console.log('=== END DEBUG ===');
 
   const handleSave = () => {
     // Actualitzar les dades de l'anàlisi i canviar l'estat

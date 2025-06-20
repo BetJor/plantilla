@@ -1,13 +1,14 @@
+
 import React, { useState } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent } from '@/components/ui/card';
+import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Trash2, Edit2, Save, X, User, Calendar, Split, Sparkles, Clock } from 'lucide-react';
-import { type ProposedActionItem } from '@/types';
-import { useGeminiSuggestions } from '@/hooks/useGeminiSuggestions';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Plus, Trash2, Check, AlertTriangle, X } from 'lucide-react';
+import { ProposedActionItem } from '@/types';
 
 interface ProposedActionsListProps {
   actions: ProposedActionItem[];
@@ -20,230 +21,109 @@ interface ProposedActionsListProps {
 const ProposedActionsList = ({ 
   actions, 
   onChange, 
-  readOnly = false,
+  readOnly = false, 
   showVerificationControls = false,
-  onVerificationUpdate
+  onVerificationUpdate 
 }: ProposedActionsListProps) => {
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [newAction, setNewAction] = useState({
-    description: '',
-    assignedTo: '',
-    dueDate: ''
+
+  // Debug detallat per cada acció
+  console.log('=== PROPOSED ACTIONS LIST DEBUG ===');
+  console.log('Total actions:', actions.length);
+  console.log('ReadOnly:', readOnly);
+  console.log('ShowVerificationControls:', showVerificationControls);
+  actions.forEach((action, index) => {
+    console.log(`Action ${index + 1} (ID: ${action.id}):`);
+    console.log('  - Description:', action.description);
+    console.log('  - VerificationStatus:', action.verificationStatus);
+    console.log('  - Will show verification controls:', showVerificationControls && !readOnly);
   });
-  const [showNewForm, setShowNewForm] = useState(false);
-  const { generateMultipleProposedActions, isLoading } = useGeminiSuggestions();
+  console.log('=== END PROPOSED ACTIONS DEBUG ===');
 
-  // Debug logs
-  console.log('ProposedActionsList - readOnly:', readOnly);
-  console.log('ProposedActionsList - showVerificationControls:', showVerificationControls);
-  console.log('ProposedActionsList - actions count:', actions.length);
-
-  const handleAddAction = () => {
-    if (!newAction.description.trim() || !newAction.assignedTo.trim() || !newAction.dueDate) {
-      return;
-    }
-
-    const action: ProposedActionItem = {
+  const addAction = () => {
+    const newAction: ProposedActionItem = {
       id: Date.now().toString(),
-      description: newAction.description.trim(),
-      assignedTo: newAction.assignedTo.trim(),
-      dueDate: newAction.dueDate,
-      status: 'pending'
+      description: '',
+      assignedTo: '',
+      dueDate: '',
+      status: 'pending',
+      verificationStatus: 'not-verified'
     };
-
-    onChange([...actions, action]);
-    setNewAction({ description: '', assignedTo: '', dueDate: '' });
-    setShowNewForm(false);
+    onChange([...actions, newAction]);
   };
 
-  const handleEditAction = (id: string, updates: Partial<ProposedActionItem>) => {
-    onChange(actions.map(action => 
+  const updateAction = (id: string, updates: Partial<ProposedActionItem>) => {
+    const updatedActions = actions.map(action =>
       action.id === id ? { ...action, ...updates } : action
-    ));
-    setEditingId(null);
+    );
+    onChange(updatedActions);
   };
 
-  const handleDeleteAction = (id: string) => {
+  const removeAction = (id: string) => {
     onChange(actions.filter(action => action.id !== id));
   };
 
-  const handleVerificationUpdate = (actionId: string, updates: Partial<ProposedActionItem>) => {
-    const updatedAction = {
-      ...updates,
+  const handleVerificationChange = (actionId: string, status: ProposedActionItem['verificationStatus'], comments?: string) => {
+    const updates: Partial<ProposedActionItem> = {
+      verificationStatus: status,
+      verificationComments: comments || '',
       verificationDate: new Date().toISOString(),
       verificationBy: 'current-user'
     };
 
     if (onVerificationUpdate) {
-      onVerificationUpdate(actionId, updatedAction);
+      onVerificationUpdate(actionId, updates);
+    } else {
+      updateAction(actionId, updates);
     }
   };
 
-  const handleSplitAction = async (actionToSplit: ProposedActionItem) => {
-    try {
-      const mockAction = {
-        id: `mock-${Date.now()}`,
-        title: `Divisió d'acció: ${actionToSplit.description.substring(0, 50)}...`,
-        description: actionToSplit.description,
-        type: 'sense-categoria',
-        category: 'sense-categoria',
-        subCategory: 'general',
-        status: 'Borrador' as const,
-        centre: 'Centre actual',
-        department: 'Departament actual',
-        priority: 'mitjana' as const,
-        assignedTo: actionToSplit.assignedTo,
-        dueDate: actionToSplit.dueDate,
-        attachments: [],
-        createdBy: 'current-user',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      };
-
-      const splitActions = await generateMultipleProposedActions({
-        action: mockAction,
-        rootCauses: `Divisió de l'acció original: ${actionToSplit.description}`,
-        targetCount: 2
-      });
-
-      const updatedActions = actions.filter(action => action.id !== actionToSplit.id);
-      onChange([...updatedActions, ...splitActions]);
-    } catch (error) {
-      console.error('Error splitting action:', error);
-    }
-  };
-
-  const getStatusColor = (status?: string) => {
+  const getVerificationStatusBadge = (status: ProposedActionItem['verificationStatus']) => {
     switch (status) {
-      case 'completed': return 'bg-green-100 text-green-800';
-      case 'in-progress': return 'bg-blue-100 text-blue-800';
-      case 'cancelled': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'implemented':
+        return <Badge className="bg-green-100 text-green-800 border-green-200">Implementada</Badge>;
+      case 'partial':
+        return <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200">Parcial</Badge>;
+      case 'not-implemented':
+        return <Badge className="bg-red-100 text-red-800 border-red-200">No implementada</Badge>;
+      default:
+        return <Badge variant="outline">Pendent verificació</Badge>;
     }
   };
 
-  const getVerificationStatusColor = (status?: string) => {
-    switch (status) {
-      case 'implemented': return 'bg-green-100 text-green-800';
-      case 'partially-implemented': return 'bg-yellow-100 text-yellow-800';
-      case 'not-implemented': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  const getVerificationStatusText = (status?: string) => {
-    switch (status) {
-      case 'implemented': return 'Implementada';
-      case 'partially-implemented': return 'Parcialment implementada';
-      case 'not-implemented': return 'No implementada';
-      default: return 'Pendent de verificació';
-    }
-  };
+  if (actions.length === 0 && readOnly) {
+    return (
+      <div className="text-center py-4 text-gray-500">
+        No hi ha accions proposades
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
-      {actions.length > 0 && (
-        <div className="space-y-3">
-          {actions.map((action) => (
-            <ActionCard
-              key={action.id}
-              action={action}
-              editingId={editingId}
-              onEdit={(updates) => handleEditAction(action.id, updates)}
-              onDelete={() => handleDeleteAction(action.id)}
-              onSplit={() => handleSplitAction(action)}
-              onStartEdit={() => setEditingId(action.id)}
-              onCancelEdit={() => setEditingId(null)}
-              readOnly={readOnly}
-              showVerificationControls={showVerificationControls}
-              onVerificationUpdate={handleVerificationUpdate}
-              isLoading={isLoading}
-              getStatusColor={getStatusColor}
-              getVerificationStatusColor={getVerificationStatusColor}
-              getVerificationStatusText={getVerificationStatusText}
-            />
-          ))}
-        </div>
-      )}
-
-      {!readOnly && (
-        <>
-          {showNewForm ? (
-            <Card className="border border-blue-200">
-              <CardContent className="p-4">
-                <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="newDescription">Descripció de l'acció</Label>
-                    <Textarea
-                      id="newDescription"
-                      value={newAction.description}
-                      onChange={(e) => setNewAction({ ...newAction, description: e.target.value })}
-                      placeholder="Descriure l'acció específica a implementar..."
-                      rows={3}
-                    />
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="newAssignedTo">Responsable</Label>
-                      <Input
-                        id="newAssignedTo"
-                        value={newAction.assignedTo}
-                        onChange={(e) => setNewAction({ ...newAction, assignedTo: e.target.value })}
-                        placeholder="Nom del responsable"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="newDueDate">Data límit</Label>
-                      <Input
-                        id="newDueDate"
-                        type="date"
-                        value={newAction.dueDate}
-                        onChange={(e) => setNewAction({ ...newAction, dueDate: e.target.value })}
-                      />
-                    </div>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      type="button"
-                      onClick={handleAddAction}
-                      disabled={!newAction.description.trim() || !newAction.assignedTo.trim() || !newAction.dueDate}
-                    >
-                      <Save className="w-4 h-4 mr-2" />
-                      Afegir Acció
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => {
-                        setShowNewForm(false);
-                        setNewAction({ description: '', assignedTo: '', dueDate: '' });
-                      }}
-                    >
-                      <X className="w-4 h-4 mr-2" />
-                      Cancel·lar
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ) : (
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setShowNewForm(true)}
-              className="w-full border-dashed border-2 border-blue-300 text-blue-600 hover:bg-blue-50"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Afegir nova acció
-            </Button>
-          )}
-        </>
-      )}
-
-      {actions.length === 0 && readOnly && (
-        <p className="text-gray-500 text-sm italic">
-          No s'han definit accions específiques
-        </p>
+      {actions.map((action, index) => (
+        <ActionCard
+          key={action.id}
+          action={action}
+          index={index}
+          readOnly={readOnly}
+          showVerificationControls={showVerificationControls}
+          onUpdate={updateAction}
+          onRemove={removeAction}
+          onVerificationChange={handleVerificationChange}
+          getVerificationStatusBadge={getVerificationStatusBadge}
+        />
+      ))}
+      
+      {!readOnly && !showVerificationControls && (
+        <Button
+          type="button"
+          variant="outline"
+          onClick={addAction}
+          className="w-full"
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Afegir Acció
+        </Button>
       )}
     </div>
   );
@@ -251,303 +131,170 @@ const ProposedActionsList = ({
 
 interface ActionCardProps {
   action: ProposedActionItem;
-  editingId: string | null;
-  onEdit: (updates: Partial<ProposedActionItem>) => void;
-  onDelete: () => void;
-  onSplit: () => void;
-  onStartEdit: () => void;
-  onCancelEdit: () => void;
+  index: number;
   readOnly: boolean;
   showVerificationControls: boolean;
-  onVerificationUpdate: (actionId: string, updates: Partial<ProposedActionItem>) => void;
-  isLoading: boolean;
-  getStatusColor: (status?: string) => string;
-  getVerificationStatusColor: (status?: string) => string;
-  getVerificationStatusText: (status?: string) => string;
+  onUpdate: (id: string, updates: Partial<ProposedActionItem>) => void;
+  onRemove: (id: string) => void;
+  onVerificationChange: (actionId: string, status: ProposedActionItem['verificationStatus'], comments?: string) => void;
+  getVerificationStatusBadge: (status: ProposedActionItem['verificationStatus']) => JSX.Element;
 }
 
 const ActionCard = ({
   action,
-  editingId,
-  onEdit,
-  onDelete,
-  onSplit,
-  onStartEdit,
-  onCancelEdit,
+  index,
   readOnly,
   showVerificationControls,
-  onVerificationUpdate,
-  isLoading,
-  getStatusColor,
-  getVerificationStatusColor,
-  getVerificationStatusText
+  onUpdate,
+  onRemove,
+  onVerificationChange,
+  getVerificationStatusBadge
 }: ActionCardProps) => {
-  const [verificationComments, setVerificationComments] = useState(
-    action.verificationComments || ''
-  );
+  const [verificationComments, setVerificationComments] = useState(action.verificationComments || '');
 
-  // Debug log for each action card
+  // Debug per cada ActionCard
   console.log(`ActionCard ${action.id} - showVerificationControls:`, showVerificationControls);
   console.log(`ActionCard ${action.id} - readOnly:`, readOnly);
-
-  const handleStatusChange = (status: ProposedActionItem['verificationStatus']) => {
-    console.log(`ActionCard ${action.id} - Status change to:`, status);
-    onVerificationUpdate(action.id, {
-      verificationStatus: status,
-      verificationComments
-    });
-  };
-
-  const handleCommentsChange = () => {
-    console.log(`ActionCard ${action.id} - Comments change:`, verificationComments);
-    onVerificationUpdate(action.id, {
-      verificationComments
-    });
-  };
+  console.log(`ActionCard ${action.id} - verificationStatus:`, action.verificationStatus);
 
   return (
-    <Card className="border border-gray-200">
+    <Card key={action.id} className="border-l-4 border-l-blue-200">
       <CardContent className="p-4">
-        {editingId === action.id && !readOnly ? (
-          <EditActionForm
-            action={action}
-            onSave={onEdit}
-            onCancel={onCancelEdit}
-          />
-        ) : (
-          <div className="space-y-4">
-            <div className="flex items-start justify-between">
-              <div className="flex-1 space-y-2">
-                <p className="text-sm font-medium text-gray-900">
-                  {action.description}
-                </p>
-                <div className="flex items-center gap-4 text-sm text-gray-600">
-                  <div className="flex items-center gap-1">
-                    <User className="w-4 h-4" />
-                    <span>{action.assignedTo}</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Calendar className="w-4 h-4" />
-                    <span>{new Date(action.dueDate).toLocaleDateString('ca-ES')}</span>
-                  </div>
-                  {action.status && (
-                    <Badge variant="outline" className={getStatusColor(action.status)}>
-                      {action.status}
-                    </Badge>
-                  )}
-                  {action.id.includes('ai-') && (
-                    <Badge variant="outline" className="bg-purple-100 text-purple-800">
-                      <Sparkles className="w-3 h-3 mr-1" />
-                      IA
-                    </Badge>
-                  )}
-                  {showVerificationControls && (
-                    <Badge 
-                      variant="outline" 
-                      className={getVerificationStatusColor(action.verificationStatus)}
-                    >
-                      {getVerificationStatusText(action.verificationStatus)}
-                    </Badge>
-                  )}
-                </div>
-              </div>
-              {!readOnly && !showVerificationControls && (
-                <div className="flex gap-2 ml-4">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={onSplit}
-                    disabled={isLoading}
-                    title="Dividir aquesta acció en múltiples accions més específiques"
-                  >
-                    <Split className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={onStartEdit}
-                  >
-                    <Edit2 className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={onDelete}
-                    className="text-red-600 hover:text-red-700"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </div>
-              )}
-            </div>
-
-            {/* Controls de verificació integrats */}
-            {showVerificationControls && !readOnly && (
-              <div className="space-y-3 border-t pt-3">
-                <div>
-                  <Label className="text-sm font-medium">Estat de verificació</Label>
-                  <div className="flex gap-2 mt-2">
-                    <Button
-                      type="button"
-                      variant={action.verificationStatus === 'implemented' ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => handleStatusChange('implemented')}
-                    >
-                      Implementada
-                    </Button>
-                    <Button
-                      type="button"
-                      variant={action.verificationStatus === 'partially-implemented' ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => handleStatusChange('partially-implemented')}
-                    >
-                      Parcial
-                    </Button>
-                    <Button
-                      type="button"
-                      variant={action.verificationStatus === 'not-implemented' ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => handleStatusChange('not-implemented')}
-                    >
-                      No implementada
-                    </Button>
-                  </div>
-                </div>
-
-                <div>
-                  <Label htmlFor={`comments-${action.id}`} className="text-sm font-medium">
-                    Comentaris de verificació
-                  </Label>
-                  <Textarea
-                    id={`comments-${action.id}`}
-                    value={verificationComments}
-                    onChange={(e) => setVerificationComments(e.target.value)}
-                    onBlur={handleCommentsChange}
-                    placeholder="Afegeix comentaris sobre l'estat de la implementació..."
-                    rows={2}
-                    className="mt-1"
-                  />
-                </div>
-              </div>
-            )}
-
-            {/* Informació de verificació en mode només lectura */}
-            {showVerificationControls && readOnly && action.verificationComments && (
-              <div className="border-t pt-3">
-                <Label className="text-sm font-medium">Comentaris de verificació</Label>
-                <p className="text-sm text-gray-700 mt-1 p-2 bg-gray-50 rounded">
-                  {action.verificationComments}
-                </p>
-              </div>
-            )}
-
-            {/* Data de verificació */}
-            {action.verificationDate && (
-              <div className="flex items-center text-xs text-gray-500">
-                <Clock className="w-3 h-3 mr-1" />
-                Verificat el {new Date(action.verificationDate).toLocaleString('ca-ES')}
-                {action.verificationBy && (
-                  <>
-                    <User className="w-3 h-3 ml-2 mr-1" />
-                    per {action.verificationBy}
-                  </>
-                )}
-              </div>
+        <div className="flex justify-between items-start mb-3">
+          <h4 className="font-medium text-gray-900">Acció {index + 1}</h4>
+          <div className="flex items-center space-x-2">
+            {action.verificationStatus && getVerificationStatusBadge(action.verificationStatus)}
+            {!readOnly && !showVerificationControls && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => onRemove(action.id)}
+                className="text-red-600 hover:text-red-800"
+              >
+                <Trash2 className="w-4 h-4" />
+              </Button>
             )}
           </div>
-        )}
+        </div>
+        
+        <div className="space-y-3">
+          <div>
+            <Label htmlFor={`description-${action.id}`}>Descripció</Label>
+            <Textarea
+              id={`description-${action.id}`}
+              value={action.description}
+              onChange={(e) => onUpdate(action.id, { description: e.target.value })}
+              placeholder="Descripció de l'acció a implementar..."
+              disabled={readOnly}
+              className={readOnly ? 'bg-gray-100' : ''}
+            />
+          </div>
+          
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label htmlFor={`assignedTo-${action.id}`}>Assignat a</Label>
+              <Input
+                id={`assignedTo-${action.id}`}
+                value={action.assignedTo}
+                onChange={(e) => onUpdate(action.id, { assignedTo: e.target.value })}
+                placeholder="Responsable"
+                disabled={readOnly}
+                className={readOnly ? 'bg-gray-100' : ''}
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor={`dueDate-${action.id}`}>Data límit</Label>
+              <Input
+                id={`dueDate-${action.id}`}
+                type="date"
+                value={action.dueDate}
+                onChange={(e) => onUpdate(action.id, { dueDate: e.target.value })}
+                disabled={readOnly}
+                className={readOnly ? 'bg-gray-100' : ''}
+              />
+            </div>
+          </div>
+          
+          {/* CONTROLS DE VERIFICACIÓ - AQUÍ ÉS ON HAN D'APARÈIXER */}
+          {showVerificationControls && (
+            <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <h5 className="font-medium text-yellow-800 mb-3">Verificació de la implementació</h5>
+              
+              {/* Botons de verificació */}
+              <div className="flex flex-wrap gap-2 mb-3">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={action.verificationStatus === 'implemented' ? 'default' : 'outline'}
+                  onClick={() => onVerificationChange(action.id, 'implemented', verificationComments)}
+                  className={action.verificationStatus === 'implemented' ? 'bg-green-600 hover:bg-green-700' : ''}
+                >
+                  <Check className="w-4 h-4 mr-1" />
+                  Implementada
+                </Button>
+                
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={action.verificationStatus === 'partial' ? 'default' : 'outline'}
+                  onClick={() => onVerificationChange(action.id, 'partial', verificationComments)}
+                  className={action.verificationStatus === 'partial' ? 'bg-yellow-600 hover:bg-yellow-700' : ''}
+                >
+                  <AlertTriangle className="w-4 h-4 mr-1" />
+                  Parcial
+                </Button>
+                
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={action.verificationStatus === 'not-implemented' ? 'default' : 'outline'}
+                  onClick={() => onVerificationChange(action.id, 'not-implemented', verificationComments)}
+                  className={action.verificationStatus === 'not-implemented' ? 'bg-red-600 hover:bg-red-700' : ''}
+                >
+                  <X className="w-4 h-4 mr-1" />
+                  No implementada
+                </Button>
+              </div>
+              
+              {/* Camp de comentaris */}
+              <div>
+                <Label htmlFor={`verification-comments-${action.id}`}>Comentaris de verificació</Label>
+                <Textarea
+                  id={`verification-comments-${action.id}`}
+                  value={verificationComments}
+                  onChange={(e) => setVerificationComments(e.target.value)}
+                  placeholder="Comentaris sobre la verificació de la implementació..."
+                  rows={2}
+                />
+              </div>
+            </div>
+          )}
+          
+          {/* Mostrar informació de verificació si ja està verificada */}
+          {readOnly && action.verificationStatus && action.verificationStatus !== 'not-verified' && (
+            <div className="mt-3 p-3 bg-gray-50 border border-gray-200 rounded-lg">
+              <div className="flex items-center justify-between mb-2">
+                <span className="font-medium text-gray-700">Estat de verificació:</span>
+                {getVerificationStatusBadge(action.verificationStatus)}
+              </div>
+              {action.verificationComments && (
+                <p className="text-sm text-gray-600 mb-2">
+                  <strong>Comentaris:</strong> {action.verificationComments}
+                </p>
+              )}
+              {action.verificationDate && (
+                <p className="text-xs text-gray-500">
+                  Verificat el {new Date(action.verificationDate).toLocaleString('ca-ES')} 
+                  {action.verificationBy && ` per ${action.verificationBy}`}
+                </p>
+              )}
+            </div>
+          )}
+        </div>
       </CardContent>
     </Card>
-  );
-};
-
-interface EditActionFormProps {
-  action: ProposedActionItem;
-  onSave: (updates: Partial<ProposedActionItem>) => void;
-  onCancel: () => void;
-}
-
-const EditActionForm = ({ action, onSave, onCancel }: EditActionFormProps) => {
-  const [formData, setFormData] = useState({
-    description: action.description,
-    assignedTo: action.assignedTo,
-    dueDate: action.dueDate,
-    status: action.status || 'pending'
-  });
-
-  const handleSave = () => {
-    if (!formData.description.trim() || !formData.assignedTo.trim() || !formData.dueDate) {
-      return;
-    }
-    onSave(formData);
-  };
-
-  return (
-    <div className="space-y-4">
-      <div>
-        <Label htmlFor="editDescription">Descripció de l'acció</Label>
-        <Textarea
-          id="editDescription"
-          value={formData.description}
-          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-          rows={3}
-        />
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div>
-          <Label htmlFor="editAssignedTo">Responsable</Label>
-          <Input
-            id="editAssignedTo"
-            value={formData.assignedTo}
-            onChange={(e) => setFormData({ ...formData, assignedTo: e.target.value })}
-          />
-        </div>
-        <div>
-          <Label htmlFor="editDueDate">Data límit</Label>
-          <Input
-            id="editDueDate"
-            type="date"
-            value={formData.dueDate}
-            onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
-          />
-        </div>
-        <div>
-          <Label htmlFor="editStatus">Estat</Label>
-          <select
-            id="editStatus"
-            value={formData.status}
-            onChange={(e) => setFormData({ ...formData, status: e.target.value as ProposedActionItem['status'] })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="pending">Pendent</option>
-            <option value="in-progress">En progrés</option>
-            <option value="completed">Completada</option>
-            <option value="cancelled">Cancel·lada</option>
-          </select>
-        </div>
-      </div>
-      <div className="flex gap-2">
-        <Button
-          type="button"
-          onClick={handleSave}
-          disabled={!formData.description.trim() || !formData.assignedTo.trim() || !formData.dueDate}
-        >
-          <Save className="w-4 h-4 mr-2" />
-          Guardar
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          onClick={onCancel}
-        >
-          <X className="w-4 h-4 mr-2" />
-          Cancel·lar
-        </Button>
-      </div>
-    </div>
   );
 };
 
