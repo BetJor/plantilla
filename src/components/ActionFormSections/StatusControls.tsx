@@ -69,11 +69,17 @@ const StatusControls = ({
                !!action.fechaLimiteAnalisis;
       case 'Pendiente de Análisis':
         return !!(action.analysisData?.rootCauses && 
-                 action.analysisData?.proposedAction &&
+                 (action.analysisData?.proposedActions?.length > 0 || action.analysisData?.proposedAction) &&
                  action.responsableImplantacion &&
                  action.fechaLimiteImplantacion);
       case 'Pendiente de Comprobación':
-        return !!(action.verificationData?.implementationCheck &&
+        // Verificar que totes les accions proposades han estat verificades
+        const proposedActions = action.analysisData?.proposedActions || [];
+        const allActionsVerified = proposedActions.every(proposedAction => 
+          proposedAction.verificationStatus && proposedAction.verificationStatus !== 'not-verified'
+        );
+        return !!(allActionsVerified && 
+                 proposedActions.length > 0 &&
                  action.responsableCierre &&
                  action.fechaLimiteCierre);
       case 'Pendiente de Cierre':
@@ -99,13 +105,22 @@ const StatusControls = ({
       case 'Pendiente de Análisis':
         const missingAnalysis = [];
         if (!action.analysisData?.rootCauses) missingAnalysis.push('anàlisi de causes');
-        if (!action.analysisData?.proposedAction) missingAnalysis.push('acció proposada');
+        if (!action.analysisData?.proposedActions?.length && !action.analysisData?.proposedAction) {
+          missingAnalysis.push('accions proposades');
+        }
         if (!action.responsableImplantacion) missingAnalysis.push('responsable d\'implantació');
         if (!action.fechaLimiteImplantacion) missingAnalysis.push('data límit implantació');
         return `Cal completar: ${missingAnalysis.join(', ')}`;
       case 'Pendiente de Comprobación':
         const missingVerification = [];
-        if (!action.verificationData?.implementationCheck) missingVerification.push('verificació de la implantació');
+        const proposedActions = action.analysisData?.proposedActions || [];
+        const unverifiedActions = proposedActions.filter(proposedAction => 
+          !proposedAction.verificationStatus || proposedAction.verificationStatus === 'not-verified'
+        );
+        
+        if (unverifiedActions.length > 0) {
+          missingVerification.push(`verificació de ${unverifiedActions.length} accions`);
+        }
         if (!action.responsableCierre) missingVerification.push('responsable de tancament');
         if (!action.fechaLimiteCierre) missingVerification.push('data límit tancament');
         return `Cal completar: ${missingVerification.join(', ')}`;

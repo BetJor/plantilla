@@ -10,6 +10,7 @@ import { useCorrectiveActions } from '@/hooks/useCorrectiveActions';
 import { CorrectiveAction } from '@/types';
 import DescriptionSection from '@/components/ActionFormSections/DescriptionSection';
 import AnalysisSection from '@/components/ActionFormSections/AnalysisSection';
+import ActionVerificationSection from '@/components/ActionFormSections/ActionVerificationSection';
 import VerificationSection from '@/components/ActionFormSections/VerificationSection';
 import ClosureSection from '@/components/ActionFormSections/ClosureSection';
 import StatusProgress from '@/components/ActionFormSections/StatusProgress';
@@ -121,14 +122,26 @@ const ActionDetail = () => {
       );
     }
 
-    // Show verification section if status is beyond Pendiente de Análisis
+    // Show action verification section if status is Pendiente de Comprobación
     if (['Pendiente de Comprobación', 'Pendiente de Cierre', 'Cerrado'].includes(action.status)) {
+      sections.push(
+        <ActionVerificationSection 
+          key="action-verification"
+          action={action} 
+          onUpdate={handleActionUpdate}
+          readOnly={action.status !== 'Pendiente de Comprobación'}
+        />
+      );
+    }
+
+    // Show verification section if status is beyond Pendiente de Comprobación
+    if (['Pendiente de Cierre', 'Cerrado'].includes(action.status)) {
       sections.push(
         <VerificationSection 
           key="verification"
           action={action} 
           onUpdate={handleActionUpdate}
-          readOnly={action.status !== 'Pendiente de Comprobación'}
+          readOnly={action.status !== 'Pendiente de Cierre'}
         />
       );
     }

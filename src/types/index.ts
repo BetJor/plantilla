@@ -16,6 +16,11 @@ export interface ProposedActionItem {
   assignedTo: string;
   dueDate: string;
   status?: 'pending' | 'in-progress' | 'completed' | 'cancelled';
+  // Nous camps per a la verificació
+  verificationStatus?: 'not-verified' | 'implemented' | 'partially-implemented' | 'not-implemented';
+  verificationComments?: string;
+  verificationDate?: string;
+  verificationBy?: string;
 }
 
 export interface CorrectiveAction {

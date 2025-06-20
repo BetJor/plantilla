@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
@@ -34,7 +35,8 @@ const AnalysisSection = ({ action, onUpdate, readOnly = false }: AnalysisSection
         description: action.analysisData.proposedAction,
         assignedTo: action.assignedTo || '',
         dueDate: action.dueDate || '',
-        status: 'pending' as const
+        status: 'pending' as const,
+        verificationStatus: 'not-verified' as const
       }];
     }
     
@@ -42,11 +44,16 @@ const AnalysisSection = ({ action, onUpdate, readOnly = false }: AnalysisSection
   }, [action.analysisData, action.assignedTo, action.dueDate]);
 
   const handleSave = () => {
+    // Actualitzar les dades de l'anàlisi i canviar l'estat
     onUpdate({
+      status: 'Pendiente de Comprobación',
       analysisData: {
         ...action.analysisData,
         rootCauses,
-        proposedActions,
+        proposedActions: proposedActions.map(action => ({
+          ...action,
+          verificationStatus: action.verificationStatus || 'not-verified'
+        })),
         analysisDate: new Date().toISOString(),
         analysisBy: 'current-user',
         signedBy: 'current-user',
@@ -74,7 +81,13 @@ const AnalysisSection = ({ action, onUpdate, readOnly = false }: AnalysisSection
         rootCauses: rootCauses.trim() || undefined
       });
       
-      handleProposedActionsChange([...proposedActions, ...newActions]);
+      // Afegir verificationStatus a les noves accions
+      const newActionsWithVerification = newActions.map(action => ({
+        ...action,
+        verificationStatus: 'not-verified' as const
+      }));
+      
+      handleProposedActionsChange([...proposedActions, ...newActionsWithVerification]);
     } catch (err) {
       if (err instanceof Error && err.message.includes('clau d\'API')) {
         setShowApiKeyDialog(true);
