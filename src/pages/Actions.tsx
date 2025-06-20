@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Plus, Search, Filter, Eye, Sparkles } from 'lucide-react';
+import { Plus, Search, Filter, Eye, Sparkles, Database } from 'lucide-react';
 import { useCorrectiveActions } from '@/hooks/useCorrectiveActions';
 import { useSimilarActions } from '@/hooks/useSimilarActions';
 import { usePermissions } from '@/hooks/usePermissions';
@@ -19,7 +19,7 @@ import SpecificFields from '@/components/ActionFormSections/SpecificFields';
 import SimilarActionsDialog from '@/components/SimilarActionsDialog';
 
 const Actions = () => {
-  const { actions, addAction } = useCorrectiveActions();
+  const { actions, addAction, addTestActions } = useCorrectiveActions();
   const { findSimilarActions, isLoading: isFindingActions, error: similarActionsError } = useSimilarActions();
   
   // Mock user per testing - en una implementació real vindria del context d'autenticació
@@ -248,6 +248,16 @@ const Actions = () => {
           <p className="text-gray-600">Gestiona les accions correctives i preventives</p>
         </div>
         <div className="flex gap-2">
+          {actions.length === 0 && (
+            <Button 
+              onClick={addTestActions} 
+              variant="outline" 
+              className="bg-green-50 hover:bg-green-100 border-green-200 text-green-700"
+            >
+              <Database className="w-4 h-4 mr-2" />
+              Carregar dades de prova
+            </Button>
+          )}
           <Button onClick={() => setShowCreateForm(true)} className="bg-blue-600 hover:bg-blue-700">
             <Plus className="w-4 h-4 mr-2" />
             Nova Acció
@@ -393,7 +403,11 @@ const Actions = () => {
           <CardContent>
             {actions.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
-                No hi ha accions correctives. Crea la primera acció per començar.
+                <div className="mb-4">
+                  <Database className="w-16 h-16 mx-auto text-gray-300 mb-2" />
+                  <p className="text-lg font-medium mb-2">No hi ha accions correctives</p>
+                  <p className="text-sm">Pots carregar dades de prova o crear la primera acció per començar.</p>
+                </div>
               </div>
             ) : (
               <Table>
