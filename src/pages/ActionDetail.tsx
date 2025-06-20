@@ -21,7 +21,12 @@ const ActionDetail = () => {
   const { actions, addComment, updateAction } = useCorrectiveActions();
   const [newComment, setNewComment] = useState('');
   
+  console.log('ActionDetail: ID de la ruta:', id);
+  console.log('ActionDetail: Accions disponibles:', actions.map(a => ({ id: a.id, title: a.title })));
+  
   const action = actions.find(a => a.id === id);
+  
+  console.log('ActionDetail: Acció trobada:', action ? `${action.id} - ${action.title}` : 'No trobada');
 
   if (!action) {
     return (
@@ -36,7 +41,12 @@ const ActionDetail = () => {
           <CardContent className="p-8 text-center">
             <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-gray-900 mb-2">Acció no trobada</h3>
-            <p className="text-gray-600">L'acció que cerques no existeix o ha estat eliminada.</p>
+            <p className="text-gray-600">
+              L'acció amb ID "{id}" no existeix o ha estat eliminada.
+            </p>
+            <p className="text-sm text-gray-500 mt-2">
+              Accions disponibles: {actions.length > 0 ? actions.map(a => a.id).join(', ') : 'Cap'}
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -240,13 +250,15 @@ const ActionDetail = () => {
                   <p className="text-sm text-gray-900">{action.centre}</p>
                 </div>
               </div>
-              <div className="flex items-center space-x-3">
-                <Building className="w-4 h-4 text-gray-500" />
-                <div>
-                  <p className="text-sm font-medium text-gray-700">Departament</p>
-                  <p className="text-sm text-gray-900">{action.department}</p>
+              {action.department && (
+                <div className="flex items-center space-x-3">
+                  <Building className="w-4 h-4 text-gray-500" />
+                  <div>
+                    <p className="text-sm font-medium text-gray-700">Departament</p>
+                    <p className="text-sm text-gray-900">{action.department}</p>
+                  </div>
                 </div>
-              </div>
+              )}
             </CardContent>
           </Card>
 

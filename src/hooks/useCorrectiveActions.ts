@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { CorrectiveAction, Comment, DashboardMetrics } from '@/types';
 import { toast } from '@/hooks/use-toast';
@@ -25,6 +24,7 @@ export const useCorrectiveActions = () => {
   const saveToStorage = (updatedActions: CorrectiveAction[]) => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedActions));
+      console.log('saveToStorage: Guardades', updatedActions.length, 'accions');
     } catch (error) {
       console.error('Error saving to localStorage:', error);
       toast({
@@ -35,21 +35,32 @@ export const useCorrectiveActions = () => {
     }
   };
 
-  // Funció per carregar dades del localStorage començant amb estat buit
+  // Funció per carregar dades del localStorage
   const loadActions = () => {
     try {
-      console.log('loadActions: Netejant localStorage i inicialitzant amb estat buit...');
-      // Netejar completament el localStorage
-      localStorage.removeItem(STORAGE_KEY);
-      // Inicialitzar amb array buit
-      setActions([]);
-      console.log('loadActions: Sistema inicialitzat amb 0 accions');
+      console.log('loadActions: Carregant accions del localStorage...');
+      const savedData = localStorage.getItem(STORAGE_KEY);
+      
+      if (savedData) {
+        const parsedActions = JSON.parse(savedData);
+        if (Array.isArray(parsedActions)) {
+          setActions(parsedActions);
+          console.log('loadActions: Carregades', parsedActions.length, 'accions del localStorage');
+          console.log('loadActions: IDs de les accions carregades:', parsedActions.map(a => a.id));
+        } else {
+          console.warn('loadActions: Dades invàlides al localStorage, inicialitzant amb array buit');
+          setActions([]);
+        }
+      } else {
+        console.log('loadActions: No hi ha dades guardades, inicialitzant amb array buit');
+        setActions([]);
+      }
     } catch (error) {
-      console.error('loadActions: Error clearing localStorage:', error);
+      console.error('loadActions: Error carregant del localStorage:', error);
       setActions([]);
       toast({
         title: "Avís",
-        description: "Error netejant les dades guardades. S'ha inicialitzat amb estat buit.",
+        description: "Error carregant les dades guardades. S'ha inicialitzat amb estat buit.",
         variant: "destructive"
       });
     }
@@ -74,6 +85,9 @@ export const useCorrectiveActions = () => {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
+    
+    console.log('addAction: Creant nova acció amb ID:', newAction.id);
+    
     const updatedActions = [...actions, newAction];
     setActions(updatedActions);
     saveToStorage(updatedActions);
@@ -95,8 +109,14 @@ export const useCorrectiveActions = () => {
   };
 
   const updateAction = (id: string, updates: Partial<CorrectiveAction>) => {
+    console.log('updateAction: Actualitzant acció amb ID:', id);
+    console.log('updateAction: Accions disponibles:', actions.map(a => a.id));
+    
     const originalAction = actions.find(action => action.id === id);
-    if (!originalAction) return;
+    if (!originalAction) {
+      console.error('updateAction: Acció no trobada amb ID:', id);
+      return;
+    }
 
     const updatedAction = { ...originalAction, ...updates, updatedAt: new Date().toISOString() } as CorrectiveAction;
     
