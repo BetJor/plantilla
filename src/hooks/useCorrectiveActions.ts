@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { CorrectiveAction, Comment, DashboardMetrics } from '@/types';
 import { toast } from '@/hooks/use-toast';
@@ -368,6 +367,25 @@ export const useCorrectiveActions = () => {
     return newComment;
   };
 
+  const clearAllActions = () => {
+    setActions([]);
+    setComments([]);
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+      toast({
+        title: "Accions eliminades",
+        description: "Totes les accions correctives han estat eliminades correctament."
+      });
+    } catch (error) {
+      console.error('Error clearing localStorage:', error);
+      toast({
+        title: "Error",
+        description: "Error en eliminar les dades.",
+        variant: "destructive"
+      });
+    }
+  };
+
   const getDashboardMetrics = (): DashboardMetrics => {
     const totalActions = actions.length;
     const pendingActions = actions.filter(a => 
@@ -448,6 +466,7 @@ export const useCorrectiveActions = () => {
     addAction,
     updateAction,
     addComment,
+    clearAllActions,
     getDashboardMetrics,
     loadActions
   };

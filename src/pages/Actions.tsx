@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Plus, Search, Filter, Eye, Sparkles } from 'lucide-react';
+import { Plus, Search, Filter, Eye, Sparkles, Trash2 } from 'lucide-react';
 import { useCorrectiveActions } from '@/hooks/useCorrectiveActions';
 import { useSimilarActions } from '@/hooks/useSimilarActions';
 import { usePermissions } from '@/hooks/usePermissions';
@@ -19,7 +19,7 @@ import SpecificFields from '@/components/ActionFormSections/SpecificFields';
 import SimilarActionsDialog from '@/components/SimilarActionsDialog';
 
 const Actions = () => {
-  const { actions, addAction } = useCorrectiveActions();
+  const { actions, addAction, clearAllActions } = useCorrectiveActions();
   const { findSimilarActions, isLoading: isFindingActions, error: similarActionsError } = useSimilarActions();
   
   // Mock user per testing - en una implementació real vindria del context d'autenticació
@@ -239,6 +239,12 @@ const Actions = () => {
     return "Buscar accions similars";
   };
 
+  const handleClearAllActions = () => {
+    if (window.confirm('Estàs segur que vols eliminar totes les accions correctives? Aquesta acció no es pot desfer.')) {
+      clearAllActions();
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -246,10 +252,20 @@ const Actions = () => {
           <h1 className="text-3xl font-bold text-gray-900">Accions Correctives</h1>
           <p className="text-gray-600">Gestiona les accions correctives i preventives</p>
         </div>
-        <Button onClick={() => setShowCreateForm(true)} className="bg-blue-600 hover:bg-blue-700">
-          <Plus className="w-4 h-4 mr-2" />
-          Nova Acció
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            onClick={handleClearAllActions}
+            variant="destructive"
+            disabled={actions.length === 0}
+          >
+            <Trash2 className="w-4 h-4 mr-2" />
+            Eliminar Totes
+          </Button>
+          <Button onClick={() => setShowCreateForm(true)} className="bg-blue-600 hover:bg-blue-700">
+            <Plus className="w-4 h-4 mr-2" />
+            Nova Acció
+          </Button>
+        </div>
       </div>
 
       {showCreateForm && (
@@ -411,46 +427,52 @@ const Actions = () => {
           </div>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Títol</TableHead>
-                <TableHead>Tipus</TableHead>
-                <TableHead>Assignat a</TableHead>
-                <TableHead>Prioritat</TableHead>
-                <TableHead>Estat</TableHead>
-                <TableHead>Data Límit</TableHead>
-                <TableHead>Accions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredActions.map((action) => (
-                <TableRow key={action.id} className="hover:bg-blue-50">
-                  <TableCell className="font-medium">{action.title}</TableCell>
-                  <TableCell>{getTypeDisplayName(action.type)}</TableCell>
-                  <TableCell>{action.assignedTo}</TableCell>
-                  <TableCell>
-                    <Badge variant={getPriorityVariant(action.priority)}>
-                      {action.priority}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="outline" className={getStatusBadgeStyle(action.status)}>
-                      {action.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>{new Date(action.dueDate).toLocaleDateString()}</TableCell>
-                  <TableCell>
-                    <Button variant="ghost" size="sm" asChild>
-                      <Link to={`/actions/${action.id}`}>
-                        <Eye className="w-4 h-4" />
-                      </Link>
-                    </Button>
-                  </TableCell>
+          {actions.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+              No hi ha accions correctives. Crea la primera acció per començar.
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Títol</TableHead>
+                  <TableHead>Tipus</TableHead>
+                  <TableHead>Assignat a</TableHead>
+                  <TableHead>Prioritat</TableHead>
+                  <TableHead>Estat</TableHead>
+                  <TableHead>Data Límit</TableHead>
+                  <TableHead>Accions</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {filteredActions.map((action) => (
+                  <TableRow key={action.id} className="hover:bg-blue-50">
+                    <TableCell className="font-medium">{action.title}</TableCell>
+                    <TableCell>{getTypeDisplayName(action.type)}</TableCell>
+                    <TableCell>{action.assignedTo}</TableCell>
+                    <TableCell>
+                      <Badge variant={getPriorityVariant(action.priority)}>
+                        {action.priority}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className={getStatusBadgeStyle(action.status)}>
+                        {action.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{new Date(action.dueDate).toLocaleDateString()}</TableCell>
+                    <TableCell>
+                      <Button variant="ghost" size="sm" asChild>
+                        <Link to={`/actions/${action.id}`}>
+                          <Eye className="w-4 h-4" />
+                        </Link>
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
     </div>
