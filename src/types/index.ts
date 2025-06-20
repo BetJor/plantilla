@@ -1,3 +1,4 @@
+
 export interface User {
   id: string;
   name: string;
@@ -5,6 +6,9 @@ export interface User {
   role: 'admin' | 'supervisor' | 'centre_user' | 'quality';
   centre?: string;
   department?: string;
+  // Nous camps per als rols específics
+  specificRoles?: string[]; // Array de rols específics segons USER_ROLES
+  territorialScope?: string; // Àmbit geogràfic o funcional
 }
 
 export interface CorrectiveAction {
@@ -24,7 +28,29 @@ export interface CorrectiveAction {
   createdBy: string;
   createdAt: string;
   updatedAt: string;
-  // New fields for different status sections
+  
+  // Nous camps segons requeriments
+  origin?: string; // Origen de l'acció (auditoria, incidències, etc.)
+  areasImplicadas?: string[]; // Àrees funcionals implicades
+  areasHospital?: string[]; // Àrees implicades del hospital (per ACM-H)
+  responsableAnalisis?: string; // Responsable de l'anàlisi
+  responsableImplantacion?: string; // Responsable de la implantació
+  responsableCierre?: string; // Responsable del tancament
+  fechaLimiteAnalisis?: string; // Data límit per a l'anàlisi
+  fechaLimiteImplantacion?: string; // Data límit per a la implantació
+  fechaLimiteCierre?: string; // Data límit per al tancament
+  
+  // Camps per a les notificacions
+  notificacionesEnviadas?: NotificationRecord[];
+  
+  // Camp per indicar si és una acció "Bis" (generada automàticament)
+  esBis?: boolean;
+  accionOriginal?: string; // ID de l'acció original si és Bis
+  
+  // Tipus de tancament
+  tipoCierre?: 'conforme' | 'no-conforme';
+  
+  // Dades existents per a cada fase
   analysisData?: {
     rootCauses: string;
     proposedAction: string;
@@ -45,6 +71,13 @@ export interface CorrectiveAction {
   };
 }
 
+export interface NotificationRecord {
+  type: 'pendiente-analisis' | 'pendiente-comprobacion' | 'pendiente-cierre' | 'cerrada' | 'retraso' | 'proximo-vencimiento';
+  sentDate: string;
+  recipient: string;
+  actionId: string;
+}
+
 export interface Comment {
   id: string;
   actionId: string;
@@ -63,4 +96,8 @@ export interface DashboardMetrics {
   actionsByStatus: { status: string; count: number }[];
   actionsByType: { type: string; count: number }[];
   actionsByCentre: { centre: string; count: number }[];
+  // Noves mètriques segons requeriments
+  actionsByOrigin: { origin: string; count: number }[];
+  overdueByType: { type: string; count: number }[];
+  conformeVsNoConforme: { conforme: number; noConforme: number };
 }
