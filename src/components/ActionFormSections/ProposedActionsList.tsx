@@ -33,6 +33,11 @@ const ProposedActionsList = ({
   const [showNewForm, setShowNewForm] = useState(false);
   const { generateMultipleProposedActions, isLoading } = useGeminiSuggestions();
 
+  // Debug logs
+  console.log('ProposedActionsList - readOnly:', readOnly);
+  console.log('ProposedActionsList - showVerificationControls:', showVerificationControls);
+  console.log('ProposedActionsList - actions count:', actions.length);
+
   const handleAddAction = () => {
     if (!newAction.description.trim() || !newAction.assignedTo.trim() || !newAction.dueDate) {
       return;
@@ -281,7 +286,12 @@ const ActionCard = ({
     action.verificationComments || ''
   );
 
+  // Debug log for each action card
+  console.log(`ActionCard ${action.id} - showVerificationControls:`, showVerificationControls);
+  console.log(`ActionCard ${action.id} - readOnly:`, readOnly);
+
   const handleStatusChange = (status: ProposedActionItem['verificationStatus']) => {
+    console.log(`ActionCard ${action.id} - Status change to:`, status);
     onVerificationUpdate(action.id, {
       verificationStatus: status,
       verificationComments
@@ -289,6 +299,7 @@ const ActionCard = ({
   };
 
   const handleCommentsChange = () => {
+    console.log(`ActionCard ${action.id} - Comments change:`, verificationComments);
     onVerificationUpdate(action.id, {
       verificationComments
     });

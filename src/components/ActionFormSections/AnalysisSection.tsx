@@ -21,6 +21,11 @@ const AnalysisSection = ({ action, onUpdate, readOnly = false }: AnalysisSection
   
   const { generateAndParseActions, isLoading, error } = useGeminiSuggestions();
 
+  // Debug logs
+  console.log('AnalysisSection - Action status:', action.status);
+  console.log('AnalysisSection - ReadOnly:', readOnly);
+  console.log('AnalysisSection - Proposed actions count:', proposedActions.length);
+
   // Migrar dades existents de proposedAction a proposedActions si cal
   const proposedActions = React.useMemo(() => {
     if (action.analysisData?.proposedActions) {
@@ -41,6 +46,14 @@ const AnalysisSection = ({ action, onUpdate, readOnly = false }: AnalysisSection
     
     return [];
   }, [action.analysisData, action.assignedTo, action.dueDate]);
+
+  // Determinar si mostrar controls de verificació
+  const showVerificationControls = action.status === 'Pendiente de Comprobación' && !readOnly;
+  
+  // Debug log per verificació
+  console.log('AnalysisSection - Show verification controls:', showVerificationControls);
+  console.log('AnalysisSection - Status check:', action.status === 'Pendiente de Comprobación');
+  console.log('AnalysisSection - ReadOnly check:', !readOnly);
 
   const handleSave = () => {
     // Actualitzar les dades de l'anàlisi i canviar l'estat
@@ -119,9 +132,6 @@ const AnalysisSection = ({ action, onUpdate, readOnly = false }: AnalysisSection
   const isComplete = action.analysisData?.rootCauses && (action.analysisData?.proposedActions?.length > 0 || action.analysisData?.proposedAction);
   const hasChanges = rootCauses !== (action.analysisData?.rootCauses || '') || 
                      JSON.stringify(proposedActions) !== JSON.stringify(action.analysisData?.proposedActions || []);
-
-  // Determinar si mostrar controls de verificació
-  const showVerificationControls = action.status === 'Pendiente de Comprobación' && !readOnly;
 
   return (
     <>
