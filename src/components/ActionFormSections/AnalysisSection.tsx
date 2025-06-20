@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
@@ -74,6 +73,26 @@ const AnalysisSection = ({ action, onUpdate, readOnly = false }: AnalysisSection
     });
   };
 
+  const handleVerificationUpdate = (actionId: string, updates: Partial<ProposedActionItem>) => {
+    const updatedActions = proposedActions.map(proposedAction =>
+      proposedAction.id === actionId 
+        ? { 
+            ...proposedAction, 
+            ...updates,
+            verificationDate: new Date().toISOString(),
+            verificationBy: 'current-user'
+          }
+        : proposedAction
+    );
+
+    onUpdate({
+      analysisData: {
+        ...action.analysisData,
+        proposedActions: updatedActions
+      }
+    });
+  };
+
   const handleGenerateSmartActions = async () => {
     try {
       const newActions = await generateAndParseActions({
@@ -100,6 +119,9 @@ const AnalysisSection = ({ action, onUpdate, readOnly = false }: AnalysisSection
   const isComplete = action.analysisData?.rootCauses && (action.analysisData?.proposedActions?.length > 0 || action.analysisData?.proposedAction);
   const hasChanges = rootCauses !== (action.analysisData?.rootCauses || '') || 
                      JSON.stringify(proposedActions) !== JSON.stringify(action.analysisData?.proposedActions || []);
+
+  // Determinar si mostrar controls de verificació
+  const showVerificationControls = action.status === 'Pendiente de Comprobación' && !readOnly;
 
   return (
     <>
@@ -138,7 +160,7 @@ const AnalysisSection = ({ action, onUpdate, readOnly = false }: AnalysisSection
           <div>
             <div className="flex items-center justify-between mb-4">
               <Label>Accions proposades</Label>
-              {!readOnly && (
+              {!readOnly && !showVerificationControls && (
                 <Button
                   type="button"
                   variant="outline"
@@ -161,6 +183,8 @@ const AnalysisSection = ({ action, onUpdate, readOnly = false }: AnalysisSection
               actions={proposedActions}
               onChange={handleProposedActionsChange}
               readOnly={readOnly}
+              showVerificationControls={showVerificationControls}
+              onVerificationUpdate={handleVerificationUpdate}
             />
             
             {error && (
@@ -186,7 +210,7 @@ const AnalysisSection = ({ action, onUpdate, readOnly = false }: AnalysisSection
             </div>
           )}
           
-          {!readOnly && (
+          {!readOnly && !showVerificationControls && (
             <Button onClick={handleSave} disabled={!isFormValid || !hasChanges}>
               Guardar i Signar Anàlisi
             </Button>

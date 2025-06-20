@@ -5,7 +5,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Trash2, Edit2, Save, X, User, Calendar, Split, Sparkles } from 'lucide-react';
+import { Plus, Trash2, Edit2, Save, X, User, Calendar, Split, Sparkles, Clock } from 'lucide-react';
 import { ProposedActionItem } from '@/types';
 import { useGeminiSuggestions } from '@/hooks/useGeminiSuggestions';
 
@@ -13,9 +13,17 @@ interface ProposedActionsListProps {
   actions: ProposedActionItem[];
   onChange: (actions: ProposedActionItem[]) => void;
   readOnly?: boolean;
+  showVerificationControls?: boolean;
+  onVerificationUpdate?: (actionId: string, updates: Partial<ProposedActionItem>) => void;
 }
 
-const ProposedActionsList = ({ actions, onChange, readOnly = false }: ProposedActionsListProps) => {
+const ProposedActionsList = ({ 
+  actions, 
+  onChange, 
+  readOnly = false,
+  showVerificationControls = false,
+  onVerificationUpdate
+}: ProposedActionsListProps) => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [newAction, setNewAction] = useState({
     description: '',
@@ -52,6 +60,18 @@ const ProposedActionsList = ({ actions, onChange, readOnly = false }: ProposedAc
 
   const handleDeleteAction = (id: string) => {
     onChange(actions.filter(action => action.id !== id));
+  };
+
+  const handleVerificationUpdate = (actionId: string, updates: Partial<ProposedActionItem>) => {
+    const updatedAction = {
+      ...updates,
+      verificationDate: new Date().toISOString(),
+      verificationBy: 'current-user'
+    };
+
+    if (onVerificationUpdate) {
+      onVerificationUpdate(actionId, updatedAction);
+    }
   };
 
   const handleSplitAction = async (actionToSplit: ProposedActionItem) => {
@@ -99,82 +119,46 @@ const ProposedActionsList = ({ actions, onChange, readOnly = false }: ProposedAc
     }
   };
 
+  const getVerificationStatusColor = (status?: string) => {
+    switch (status) {
+      case 'implemented': return 'bg-green-100 text-green-800';
+      case 'partially-implemented': return 'bg-yellow-100 text-yellow-800';
+      case 'not-implemented': return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getVerificationStatusText = (status?: string) => {
+    switch (status) {
+      case 'implemented': return 'Implementada';
+      case 'partially-implemented': return 'Parcialment implementada';
+      case 'not-implemented': return 'No implementada';
+      default: return 'Pendent de verificació';
+    }
+  };
+
   return (
     <div className="space-y-4">
       {actions.length > 0 && (
         <div className="space-y-3">
           {actions.map((action) => (
-            <Card key={action.id} className="border border-gray-200">
-              <CardContent className="p-4">
-                {editingId === action.id && !readOnly ? (
-                  <EditActionForm
-                    action={action}
-                    onSave={(updates) => handleEditAction(action.id, updates)}
-                    onCancel={() => setEditingId(null)}
-                  />
-                ) : (
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1 space-y-2">
-                      <p className="text-sm font-medium text-gray-900">
-                        {action.description}
-                      </p>
-                      <div className="flex items-center gap-4 text-sm text-gray-600">
-                        <div className="flex items-center gap-1">
-                          <User className="w-4 h-4" />
-                          <span>{action.assignedTo}</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Calendar className="w-4 h-4" />
-                          <span>{new Date(action.dueDate).toLocaleDateString('ca-ES')}</span>
-                        </div>
-                        {action.status && (
-                          <Badge variant="outline" className={getStatusColor(action.status)}>
-                            {action.status}
-                          </Badge>
-                        )}
-                        {action.id.includes('ai-') && (
-                          <Badge variant="outline" className="bg-purple-100 text-purple-800">
-                            <Sparkles className="w-3 h-3 mr-1" />
-                            IA
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-                    {!readOnly && (
-                      <div className="flex gap-2 ml-4">
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleSplitAction(action)}
-                          disabled={isLoading}
-                          title="Dividir aquesta acció en múltiples accions més específiques"
-                        >
-                          <Split className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setEditingId(action.id)}
-                        >
-                          <Edit2 className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDeleteAction(action.id)}
-                          className="text-red-600 hover:text-red-700"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+            <ProposedActionItem
+              key={action.id}
+              action={action}
+              editingId={editingId}
+              onEdit={(updates) => handleEditAction(action.id, updates)}
+              onDelete={() => handleDeleteAction(action.id)}
+              onSplit={() => handleSplitAction(action)}
+              onStartEdit={() => setEditingId(action.id)}
+              onCancelEdit={() => setEditingId(null)}
+              readOnly={readOnly}
+              showVerificationControls={showVerificationControls}
+              onVerificationUpdate={handleVerificationUpdate}
+              isLoading={isLoading}
+              getStatusColor={getStatusColor}
+              getVerificationStatusColor={getVerificationStatusColor}
+              getVerificationStatusText={getVerificationStatusText}
+            />
           ))}
         </div>
       )}
@@ -259,6 +243,215 @@ const ProposedActionsList = ({ actions, onChange, readOnly = false }: ProposedAc
         </p>
       )}
     </div>
+  );
+};
+
+interface ProposedActionItemProps {
+  action: ProposedActionItem;
+  editingId: string | null;
+  onEdit: (updates: Partial<ProposedActionItem>) => void;
+  onDelete: () => void;
+  onSplit: () => void;
+  onStartEdit: () => void;
+  onCancelEdit: () => void;
+  readOnly: boolean;
+  showVerificationControls: boolean;
+  onVerificationUpdate: (actionId: string, updates: Partial<ProposedActionItem>) => void;
+  isLoading: boolean;
+  getStatusColor: (status?: string) => string;
+  getVerificationStatusColor: (status?: string) => string;
+  getVerificationStatusText: (status?: string) => string;
+}
+
+const ProposedActionItem = ({
+  action,
+  editingId,
+  onEdit,
+  onDelete,
+  onSplit,
+  onStartEdit,
+  onCancelEdit,
+  readOnly,
+  showVerificationControls,
+  onVerificationUpdate,
+  isLoading,
+  getStatusColor,
+  getVerificationStatusColor,
+  getVerificationStatusText
+}: ProposedActionItemProps) => {
+  const [verificationComments, setVerificationComments] = useState(
+    action.verificationComments || ''
+  );
+
+  const handleStatusChange = (status: ProposedActionItem['verificationStatus']) => {
+    onVerificationUpdate(action.id, {
+      verificationStatus: status,
+      verificationComments
+    });
+  };
+
+  const handleCommentsChange = () => {
+    onVerificationUpdate(action.id, {
+      verificationComments
+    });
+  };
+
+  return (
+    <Card className="border border-gray-200">
+      <CardContent className="p-4">
+        {editingId === action.id && !readOnly ? (
+          <EditActionForm
+            action={action}
+            onSave={onEdit}
+            onCancel={onCancelEdit}
+          />
+        ) : (
+          <div className="space-y-4">
+            <div className="flex items-start justify-between">
+              <div className="flex-1 space-y-2">
+                <p className="text-sm font-medium text-gray-900">
+                  {action.description}
+                </p>
+                <div className="flex items-center gap-4 text-sm text-gray-600">
+                  <div className="flex items-center gap-1">
+                    <User className="w-4 h-4" />
+                    <span>{action.assignedTo}</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Calendar className="w-4 h-4" />
+                    <span>{new Date(action.dueDate).toLocaleDateString('ca-ES')}</span>
+                  </div>
+                  {action.status && (
+                    <Badge variant="outline" className={getStatusColor(action.status)}>
+                      {action.status}
+                    </Badge>
+                  )}
+                  {action.id.includes('ai-') && (
+                    <Badge variant="outline" className="bg-purple-100 text-purple-800">
+                      <Sparkles className="w-3 h-3 mr-1" />
+                      IA
+                    </Badge>
+                  )}
+                  {showVerificationControls && (
+                    <Badge 
+                      variant="outline" 
+                      className={getVerificationStatusColor(action.verificationStatus)}
+                    >
+                      {getVerificationStatusText(action.verificationStatus)}
+                    </Badge>
+                  )}
+                </div>
+              </div>
+              {!readOnly && !showVerificationControls && (
+                <div className="flex gap-2 ml-4">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={onSplit}
+                    disabled={isLoading}
+                    title="Dividir aquesta acció en múltiples accions més específiques"
+                  >
+                    <Split className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={onStartEdit}
+                  >
+                    <Edit2 className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={onDelete}
+                    className="text-red-600 hover:text-red-700"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+              )}
+            </div>
+
+            {/* Controls de verificació integrats */}
+            {showVerificationControls && !readOnly && (
+              <div className="space-y-3 border-t pt-3">
+                <div>
+                  <Label className="text-sm font-medium">Estat de verificació</Label>
+                  <div className="flex gap-2 mt-2">
+                    <Button
+                      type="button"
+                      variant={action.verificationStatus === 'implemented' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => handleStatusChange('implemented')}
+                    >
+                      Implementada
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={action.verificationStatus === 'partially-implemented' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => handleStatusChange('partially-implemented')}
+                    >
+                      Parcial
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={action.verificationStatus === 'not-implemented' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => handleStatusChange('not-implemented')}
+                    >
+                      No implementada
+                    </Button>
+                  </div>
+                </div>
+
+                <div>
+                  <Label htmlFor={`comments-${action.id}`} className="text-sm font-medium">
+                    Comentaris de verificació
+                  </Label>
+                  <Textarea
+                    id={`comments-${action.id}`}
+                    value={verificationComments}
+                    onChange={(e) => setVerificationComments(e.target.value)}
+                    onBlur={handleCommentsChange}
+                    placeholder="Afegeix comentaris sobre l'estat de la implementació..."
+                    rows={2}
+                    className="mt-1"
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Informació de verificació en mode només lectura */}
+            {showVerificationControls && readOnly && action.verificationComments && (
+              <div className="border-t pt-3">
+                <Label className="text-sm font-medium">Comentaris de verificació</Label>
+                <p className="text-sm text-gray-700 mt-1 p-2 bg-gray-50 rounded">
+                  {action.verificationComments}
+                </p>
+              </div>
+            )}
+
+            {/* Data de verificació */}
+            {action.verificationDate && (
+              <div className="flex items-center text-xs text-gray-500">
+                <Clock className="w-3 h-3 mr-1" />
+                Verificat el {new Date(action.verificationDate).toLocaleString('ca-ES')}
+                {action.verificationBy && (
+                  <>
+                    <User className="w-3 h-3 ml-2 mr-1" />
+                    per {action.verificationBy}
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 };
 
