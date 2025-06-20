@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -89,15 +90,22 @@ const Actions = () => {
     updateFormData({ [field]: value });
   };
 
-  const getStatusVariant = (status: string) => {
+  const getStatusBadgeStyle = (status: string) => {
     switch (status) {
-      case 'Borrador': return 'secondary';
-      case 'Pendiente de Análisis': return 'default';
-      case 'Pendiente de Comprobación': return 'default';
-      case 'Pendiente de Cierre': return 'destructive';
-      case 'Cerrado': return 'secondary';
-      case 'Anulada': return 'destructive';
-      default: return 'default';
+      case 'Borrador':
+        return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'Pendiente de Análisis':
+        return 'bg-green-100 text-green-800 border-green-200';
+      case 'Pendiente de Comprobación':
+        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'Pendiente de Cierre':
+        return 'bg-orange-100 text-orange-800 border-orange-200';
+      case 'Cerrado':
+        return 'bg-purple-100 text-purple-800 border-purple-200';
+      case 'Anulada':
+        return 'bg-red-100 text-red-800 border-red-200';
+      default:
+        return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
 
@@ -428,7 +436,7 @@ const Actions = () => {
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    <Badge variant={getStatusVariant(action.status)}>
+                    <Badge variant="outline" className={getStatusBadgeStyle(action.status)}>
                       {action.status}
                     </Badge>
                   </TableCell>
