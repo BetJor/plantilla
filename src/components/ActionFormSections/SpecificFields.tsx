@@ -16,6 +16,7 @@ interface SpecificFieldsProps {
   areasHospital?: string[];
   onFieldChange: (field: string, value: any) => void;
   user: any; // Mock user per testing
+  isDraft?: boolean; // Nou paràmetre per identificar si és borrador
 }
 
 const SpecificFields = ({
@@ -26,7 +27,8 @@ const SpecificFields = ({
   areasImplicadas = [],
   areasHospital = [],
   onFieldChange,
-  user = { specificRoles: ['direccio-qualitat'] }
+  user = { specificRoles: ['direccio-qualitat'] },
+  isDraft = true // Per defecte és borrador quan es crea
 }: SpecificFieldsProps) => {
   const { getRequiredFields, getAvailableCentres } = useWorkflow({ user });
   const requiredFields = getRequiredFields(actionType);
@@ -89,15 +91,18 @@ const SpecificFields = ({
             </Select>
           </div>
 
-          <div>
-            <Label htmlFor="department">Departament</Label>
-            <Input
-              id="department"
-              value={department}
-              onChange={(e) => onFieldChange('department', e.target.value)}
-              className="mt-1"
-            />
-          </div>
+          {/* El camp departament només es mostra si NO és borrador */}
+          {!isDraft && (
+            <div>
+              <Label htmlFor="department">Departament</Label>
+              <Input
+                id="department"
+                value={department}
+                onChange={(e) => onFieldChange('department', e.target.value)}
+                className="mt-1"
+              />
+            </div>
+          )}
         </div>
 
         {originOptions[actionType as keyof typeof originOptions] && (

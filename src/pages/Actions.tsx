@@ -45,20 +45,12 @@ const Actions = () => {
     type: '',
     category: '',
     subCategory: '',
-    dueDate: '',
-    assignedTo: '',
     priority: 'mitjana' as const,
     centre: '',
-    department: '',
     origin: '',
     areasImplicadas: [] as string[],
     areasHospital: [] as string[],
-    responsableAnalisis: '',
-    responsableImplantacion: '',
-    responsableCierre: '',
-    fechaLimiteAnalisis: '',
-    fechaLimiteImplantacion: '',
-    fechaLimiteCierre: ''
+    responsableAnalisis: ''
   });
 
   const updateFormData = (updates: Partial<typeof formData>) => {
@@ -78,10 +70,6 @@ const Actions = () => {
   };
 
   const handleResponsableChange = (field: string, value: string) => {
-    updateFormData({ [field]: value });
-  };
-
-  const handleDateChange = (field: string, value: string) => {
     updateFormData({ [field]: value });
   };
 
@@ -136,7 +124,7 @@ const Actions = () => {
       console.warn('handleFindSimilarActions: Títol o descripció buits');
       toast({
         title: "Camps obligatoris",
-        description: "Cal omplir el títol i la descripció abans de buscar accions similars.",
+        description: "Cal omplir l'assumpte i la descripció abans de buscar accions similars.",
         variant: "destructive"
       });
       return;
@@ -171,8 +159,7 @@ const Actions = () => {
         description: formData.description,
         type: formData.type,
         category: formData.category,
-        centre: formData.centre,
-        department: formData.department
+        centre: formData.centre
       });
       
       console.log('handleFindSimilarActions: Resultats rebuts:', results.length);
@@ -183,13 +170,32 @@ const Actions = () => {
     }
   };
 
+  const handleSaveDraft = (e: React.FormEvent) => {
+    e.preventDefault();
+    addAction({
+      ...formData,
+      status: 'Borrador',
+      attachments: [],
+      createdBy: 'current-user',
+      dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 30 dies per defecte
+      assignedTo: formData.responsableAnalisis || 'current-user'
+    });
+    
+    toast({
+      title: "Borrador guardat",
+      description: "El borrador s'ha guardat correctament."
+    });
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     addAction({
       ...formData,
       status: 'Pendiente de Análisis',
       attachments: [],
-      createdBy: 'current-user'
+      createdBy: 'current-user',
+      dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 30 dies per defecte
+      assignedTo: formData.responsableAnalisis || 'current-user'
     });
     setFormData({
       title: '',
@@ -197,20 +203,12 @@ const Actions = () => {
       type: '',
       category: '',
       subCategory: '',
-      dueDate: '',
-      assignedTo: '',
       priority: 'mitjana',
       centre: '',
-      department: '',
       origin: '',
       areasImplicadas: [],
       areasHospital: [],
-      responsableAnalisis: '',
-      responsableImplantacion: '',
-      responsableCierre: '',
-      fechaLimiteAnalisis: '',
-      fechaLimiteImplantacion: '',
-      fechaLimiteCierre: ''
+      responsableAnalisis: ''
     });
     setShowCreateForm(false);
     setSimilarActions([]);
@@ -228,7 +226,7 @@ const Actions = () => {
 
   const getTooltipMessage = () => {
     if (!formData.title.trim() || !formData.description.trim()) {
-      return "Cal omplir el títol i la descripció";
+      return "Cal omplir l'assumpte i la descripció";
     }
     if (actions.filter(action => action.status !== 'Borrador').length === 0) {
       return "No hi ha accions existents per comparar";
@@ -260,14 +258,14 @@ const Actions = () => {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <CardTitle className="text-blue-800">Crear Nova Acció Correctiva</CardTitle>
-                <Badge variant="secondary" className="bg-blue-100 text-blue-800 border-blue-300">
-                  Estat: Pendiente de Análisis
+                <Badge variant="secondary" className="bg-purple-100 text-purple-800 border-purple-300">
+                  Estat: Borrador
                 </Badge>
               </div>
             </div>
           </CardHeader>
           <CardContent className="p-6">
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form className="space-y-6">
               <CategorySelectors
                 selectedType={formData.type}
                 selectedCategory={formData.category}
@@ -282,7 +280,7 @@ const Actions = () => {
               <SpecificFields
                 actionType={formData.type}
                 centre={formData.centre}
-                department={formData.department}
+                department=""
                 origin={formData.origin}
                 areasImplicadas={formData.areasImplicadas}
                 areasHospital={formData.areasHospital}
@@ -290,52 +288,15 @@ const Actions = () => {
                 user={mockUser}
               />
 
-              <ResponsibleAssignment
-                actionType={formData.type}
-                currentStatus="Borrador"
-                responsableAnalisis={formData.responsableAnalisis}
-                responsableImplantacion={formData.responsableImplantacion}
-                responsableCierre={formData.responsableCierre}
-                fechaLimiteAnalisis={formData.fechaLimiteAnalisis}
-                fechaLimiteImplantacion={formData.fechaLimiteImplantacion}
-                fechaLimiteCierre={formData.fechaLimiteCierre}
-                onResponsableChange={handleResponsableChange}
-                onDateChange={handleDateChange}
-                user={mockUser}
-              />
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="title" className="text-gray-700 font-medium">Títol</Label>
-                  <Input
-                    id="title"
-                    value={formData.title}
-                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    required
-                    className="mt-1"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="dueDate" className="text-gray-700 font-medium">Data Límit</Label>
-                  <Input
-                    id="dueDate"
-                    type="date"
-                    value={formData.dueDate}
-                    onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
-                    required
-                    className="mt-1"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="assignedTo" className="text-gray-700 font-medium">Assignat a</Label>
-                  <Input
-                    id="assignedTo"
-                    value={formData.assignedTo}
-                    onChange={(e) => setFormData({ ...formData, assignedTo: e.target.value })}
-                    required
-                    className="mt-1"
-                  />
-                </div>
+              <div>
+                <Label htmlFor="title" className="text-gray-700 font-medium">Assumpte</Label>
+                <Input
+                  id="title"
+                  value={formData.title}
+                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                  required
+                  className="mt-1"
+                />
               </div>
               
               <div>
@@ -348,6 +309,15 @@ const Actions = () => {
                   className="mt-1"
                 />
               </div>
+
+              <ResponsibleAssignment
+                actionType={formData.type}
+                currentStatus="Borrador"
+                responsableAnalisis={formData.responsableAnalisis}
+                onResponsableChange={handleResponsableChange}
+                onDateChange={() => {}}
+                user={mockUser}
+              />
               
               <div className="flex gap-4 justify-between">
                 <div className="flex items-center gap-2">
@@ -374,7 +344,10 @@ const Actions = () => {
                   <Button type="button" variant="outline" onClick={() => setShowCreateForm(false)}>
                     Cancel·lar
                   </Button>
-                  <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
+                  <Button type="button" variant="outline" onClick={handleSaveDraft}>
+                    Guardar
+                  </Button>
+                  <Button type="button" onClick={handleSubmit} className="bg-blue-600 hover:bg-blue-700">
                     Crear Acció
                   </Button>
                 </div>
@@ -447,7 +420,7 @@ const Actions = () => {
                           {action.status}
                         </Badge>
                       </TableCell>
-                      <TableCell>{new Date(action.dueDate).toLocaleDateString()}</TableCell>
+                      <TableCell>{action.dueDate ? new Date(action.dueDate).toLocaleDateString() : '-'}</TableCell>
                       <TableCell>
                         <Button variant="ghost" size="sm" asChild>
                           <Link to={`/actions/${action.id}`}>

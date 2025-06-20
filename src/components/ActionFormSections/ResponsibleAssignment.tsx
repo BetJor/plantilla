@@ -53,6 +53,12 @@ const ResponsibleAssignment = ({
     }
   };
 
+  const shouldShowDateField = (field: 'analisis' | 'implantacion' | 'cierre') => {
+    // No mostrar camps de data per l'estat Borrador
+    if (currentStatus === 'Borrador') return false;
+    return shouldShowField(field);
+  };
+
   if (!actionType || !canCreateActionType(actionType)) {
     return null;
   }
@@ -83,16 +89,18 @@ const ResponsibleAssignment = ({
                 </SelectContent>
               </Select>
             </div>
-            <div>
-              <Label htmlFor="fechaLimiteAnalisis">Data Límit Anàlisi</Label>
-              <Input
-                id="fechaLimiteAnalisis"
-                type="date"
-                value={fechaLimiteAnalisis}
-                onChange={(e) => onDateChange('fechaLimiteAnalisis', e.target.value)}
-                className="mt-1"
-              />
-            </div>
+            {shouldShowDateField('analisis') && (
+              <div>
+                <Label htmlFor="fechaLimiteAnalisis">Data Límit Anàlisi</Label>
+                <Input
+                  id="fechaLimiteAnalisis"
+                  type="date"
+                  value={fechaLimiteAnalisis}
+                  onChange={(e) => onDateChange('fechaLimiteAnalisis', e.target.value)}
+                  className="mt-1"
+                />
+              </div>
+            )}
           </div>
         )}
 
@@ -116,16 +124,18 @@ const ResponsibleAssignment = ({
                 </SelectContent>
               </Select>
             </div>
-            <div>
-              <Label htmlFor="fechaLimiteImplantacion">Data Límit Implantació</Label>
-              <Input
-                id="fechaLimiteImplantacion"
-                type="date"
-                value={fechaLimiteImplantacion}
-                onChange={(e) => onDateChange('fechaLimiteImplantacion', e.target.value)}
-                className="mt-1"
-              />
-            </div>
+            {shouldShowDateField('implantacion') && (
+              <div>
+                <Label htmlFor="fechaLimiteImplantacion">Data Límit Implantació</Label>
+                <Input
+                  id="fechaLimiteImplantacion"
+                  type="date"
+                  value={fechaLimiteImplantacion}
+                  onChange={(e) => onDateChange('fechaLimiteImplantacion', e.target.value)}
+                  className="mt-1"
+                />
+              </div>
+            )}
           </div>
         )}
 
@@ -149,16 +159,18 @@ const ResponsibleAssignment = ({
                 </SelectContent>
               </Select>
             </div>
-            <div>
-              <Label htmlFor="fechaLimiteCierre">Data Límit Tancament</Label>
-              <Input
-                id="fechaLimiteCierre"
-                type="date"
-                value={fechaLimiteCierre}
-                onChange={(e) => onDateChange('fechaLimiteCierre', e.target.value)}
-                className="mt-1"
-              />
-            </div>
+            {shouldShowDateField('cierre') && (
+              <div>
+                <Label htmlFor="fechaLimiteCierre">Data Límit Tancament</Label>
+                <Input
+                  id="fechaLimiteCierre"
+                  type="date"
+                  value={fechaLimiteCierre}
+                  onChange={(e) => onDateChange('fechaLimiteCierre', e.target.value)}
+                  className="mt-1"
+                />
+              </div>
+            )}
           </div>
         )}
       </CardContent>
