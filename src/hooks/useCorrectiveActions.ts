@@ -1,9 +1,11 @@
+
 import { useState, useEffect } from 'react';
 import { CorrectiveAction, Comment, DashboardMetrics } from '@/types';
 import { toast } from '@/hooks/use-toast';
 import { useNotifications } from '@/hooks/useNotifications';
 import { useAuditHistory } from '@/hooks/useAuditHistory';
 import { useBisActions } from '@/hooks/useBisActions';
+import { TEST_ACTIONS } from '@/data/testData';
 
 // Dades de mostra per al prototipus amb exemples dels nous tipus d'accions
 const mockActions: CorrectiveAction[] = [
@@ -198,7 +200,7 @@ export const useCorrectiveActions = () => {
     }
   };
 
-  // Funció per carregar dades del localStorage
+  // Funció per carregar dades del localStorage amb integració de dades de prova
   const loadActions = () => {
     try {
       console.log('loadActions: Carregant dades del localStorage...');
@@ -206,15 +208,31 @@ export const useCorrectiveActions = () => {
       if (storedData) {
         const parsedData = JSON.parse(storedData);
         console.log('loadActions: Dades trobades:', parsedData.length, 'accions');
-        setActions(parsedData);
+        
+        // Combinar dades existents amb dades de prova si no existeixen ja
+        const existingIds = parsedData.map((action: CorrectiveAction) => action.id);
+        const newTestActions = TEST_ACTIONS.filter(testAction => 
+          !existingIds.includes(testAction.id)
+        );
+        
+        if (newTestActions.length > 0) {
+          console.log('loadActions: Afegint', newTestActions.length, 'accions de prova noves');
+          const combinedActions = [...parsedData, ...newTestActions];
+          setActions(combinedActions);
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(combinedActions));
+        } else {
+          setActions(parsedData);
+        }
       } else {
-        console.log('loadActions: No hi ha dades guardades, usant dades mock');
-        setActions(mockActions);
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(mockActions));
+        console.log('loadActions: No hi ha dades guardades, carregant dades inicials amb dades de prova');
+        const initialActions = [...mockActions, ...TEST_ACTIONS];
+        setActions(initialActions);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(initialActions));
       }
     } catch (error) {
       console.error('loadActions: Error loading data from localStorage:', error);
-      setActions(mockActions);
+      const fallbackActions = [...mockActions, ...TEST_ACTIONS];
+      setActions(fallbackActions);
       toast({
         title: "Avís",
         description: "Error carregant les dades guardades. S'han carregat les dades per defecte.",
