@@ -9,38 +9,51 @@ interface ParsedAction {
 }
 
 export const parseAIResponseToActions = (aiResponse: string, baseAssignedTo: string = '', baseDueDate: string = ''): ProposedActionItem[] => {
+  console.log('🔍 Parsing AI response:', aiResponse.substring(0, 200) + '...');
+  
   // Neteja el text inicial
   const cleanText = aiResponse.trim();
   
-  // Patrons per identificar accions enumerades
-  const patterns = [
-    /(?:^|\n)\s*(\d+)\.\s*([^\n]+(?:\n(?!\s*\d+\.)[^\n]*)*)/gm, // 1. Acció
-    /(?:^|\n)\s*•\s*([^\n]+(?:\n(?!•)[^\n]*)*)/gm, // • Acció
-    /(?:^|\n)\s*-\s*([^\n]+(?:\n(?!-)[^\n]*)*)/gm, // - Acció
-    /(?:^|\n)\s*\*\s*([^\n]+(?:\n(?!\*)[^\n]*)*)/gm, // * Acció
-  ];
-
+  // Patrons millorats per identificar accions enumerades
+  const numberedPattern = /(?:^|\n)\s*(\d+)\.\s*\*?\*?([^.\n]*(?:[^0-9\n][^\n]*)*?)(?=\n\s*\d+\.|$)/gm;
+  const bulletPattern = /(?:^|\n)\s*[•\-\*]\s*([^\n]+(?:\n(?![•\-\*\d])[^\n]*)*)/gm;
+  
   let actions: ParsedAction[] = [];
   
-  // Prova cada patró
-  for (const pattern of patterns) {
-    const matches = [...cleanText.matchAll(pattern)];
-    if (matches.length > 1) { // Si troba més d'una acció
-      actions = matches.map(match => {
-        const fullText = match[2] || match[1];
-        return parseIndividualAction(fullText, baseAssignedTo, baseDueDate);
+  // Prova primer amb punts numerats
+  const numberedMatches = [...cleanText.matchAll(numberedPattern)];
+  console.log('📋 Numbered matches found:', numberedMatches.length);
+  
+  if (numberedMatches.length > 1) {
+    actions = numberedMatches.map((match, index) => {
+      const actionNumber = match[1];
+      const actionText = match[2].trim();
+      console.log(`📝 Action ${actionNumber}:`, actionText.substring(0, 100) + '...');
+      
+      return parseIndividualAction(actionText, baseAssignedTo, baseDueDate, index);
+    });
+  } else {
+    // Prova amb bullets si no troba punts numerats
+    const bulletMatches = [...cleanText.matchAll(bulletPattern)];
+    console.log('🔸 Bullet matches found:', bulletMatches.length);
+    
+    if (bulletMatches.length > 1) {
+      actions = bulletMatches.map((match, index) => {
+        const actionText = match[1].trim();
+        return parseIndividualAction(actionText, baseAssignedTo, baseDueDate, index);
       });
-      break;
     }
   }
 
   // Si no troba patrons clars, busca accions per paraules clau
   if (actions.length === 0) {
+    console.log('🔍 Trying keyword-based parsing...');
     actions = parseByKeywords(cleanText, baseAssignedTo, baseDueDate);
   }
 
   // Si encara no troba res, crea una sola acció
   if (actions.length === 0) {
+    console.log('📄 Creating single action from full text');
     actions = [{
       description: cleanText.substring(0, 500) + (cleanText.length > 500 ? '...' : ''),
       assignedTo: baseAssignedTo,
@@ -48,27 +61,39 @@ export const parseAIResponseToActions = (aiResponse: string, baseAssignedTo: str
     }];
   }
 
+  console.log('✅ Total actions parsed:', actions.length);
+
   // Converteix a ProposedActionItem
   return actions.map((action, index) => ({
     id: `ai-parsed-${Date.now()}-${index}`,
-    description: action.description.trim(),
+    description: cleanActionText(action.description),
     assignedTo: action.assignedTo || baseAssignedTo || 'Per assignar',
     dueDate: action.dueDate || calculateEscalatedDate(baseDueDate, index),
     status: 'pending' as const
   }));
 };
 
-const parseIndividualAction = (text: string, baseAssignedTo: string, baseDueDate: string): ParsedAction => {
+const cleanActionText = (text: string): string => {
+  // Neteja el text eliminant formatació markdown i asteriscs
+  return text
+    .replace(/\*\*/g, '') // Eliminar **
+    .replace(/\*/g, '') // Eliminar *
+    .replace(/^\d+\.\s*/, '') // Eliminar numeració inicial
+    .replace(/^[•\-\*]\s*/, '') // Eliminar bullets inicials
+    .trim();
+};
+
+const parseIndividualAction = (text: string, baseAssignedTo: string, baseDueDate: string, index: number = 0): ParsedAction => {
   let description = text.trim();
   let assignedTo = baseAssignedTo;
   let dueDate = baseDueDate;
 
-  // Busca responsables mencionats
+  // Busca responsables mencionats amb patrons millorats
   const responsiblePatterns = [
-    /responsable[:\s]*([^.\n,]+)/i,
-    /assignat[:\s]*([^.\n,]+)/i,
-    /encarregat[:\s]*([^.\n,]+)/i,
+    /(?:responsable|assignat|encarregat)[:\s]*([^.\n,]+)/i,
     /departament[:\s]*([^.\n,]+)/i,
+    /equip[:\s]*([^.\n,]+)/i,
+    /personal[:\s]*([^.\n,]+)/i,
   ];
 
   for (const pattern of responsiblePatterns) {
@@ -79,18 +104,19 @@ const parseIndividualAction = (text: string, baseAssignedTo: string, baseDueDate
     }
   }
 
-  // Busca dates mencionades
+  // Busca dates mencionades amb patrons millorats
   const datePatterns = [
     /(\d{1,2})\s*dies?/i,
     /(\d{1,2})\s*setmanes?/i,
     /(\d{1,2})\s*mesos?/i,
+    /durant\s*els?\s*següents?\s*(\d{1,2})\s*(dies?|setmanes?|mesos?)/i,
   ];
 
   for (const pattern of datePatterns) {
     const match = description.match(pattern);
     if (match) {
       const num = parseInt(match[1]);
-      const unit = match[0].toLowerCase();
+      const unit = match[2] || match[0].toLowerCase();
       let days = num;
       
       if (unit.includes('setman')) days = num * 7;
@@ -101,7 +127,34 @@ const parseIndividualAction = (text: string, baseAssignedTo: string, baseDueDate
     }
   }
 
+  // Assigna responsables intel·ligents segons el contingut
+  if (!assignedTo || assignedTo === baseAssignedTo) {
+    assignedTo = inferResponsibleFromContent(description);
+  }
+
   return { description, assignedTo, dueDate };
+};
+
+const inferResponsibleFromContent = (description: string): string => {
+  const lowerDesc = description.toLowerCase();
+  
+  if (lowerDesc.includes('reunir') || lowerDesc.includes('equip')) {
+    return 'Coordinador de Qualitat';
+  }
+  if (lowerDesc.includes('analitzar') || lowerDesc.includes('revisar')) {
+    return 'Departament de Qualitat';
+  }
+  if (lowerDesc.includes('protocol') || lowerDesc.includes('documentar')) {
+    return 'Responsable de Protocols';
+  }
+  if (lowerDesc.includes('formació') || lowerDesc.includes('formar')) {
+    return 'Responsable de Formació';
+  }
+  if (lowerDesc.includes('seguiment') || lowerDesc.includes('monitoritzar')) {
+    return 'Supervisor de Qualitat';
+  }
+  
+  return 'Per assignar';
 };
 
 const parseByKeywords = (text: string, baseAssignedTo: string, baseDueDate: string): ParsedAction[] => {
@@ -134,12 +187,19 @@ const calculateEscalatedDate = (baseDate: string, index: number): string => {
 };
 
 export const shouldAutoParseResponse = (response: string): boolean => {
-  // Comprova si la resposta sembla contenir múltiples accions
-  const numberPattern = /(?:^|\n)\s*\d+\.\s*/gm;
+  // Comprova si la resposta sembla contenir múltiples accions numerades
+  const numberedPattern = /(?:^|\n)\s*\d+\.\s*/gm;
   const bulletPattern = /(?:^|\n)\s*[•\-\*]\s*/gm;
   
-  const numberMatches = [...response.matchAll(numberPattern)];
+  const numberedMatches = [...response.matchAll(numberedPattern)];
   const bulletMatches = [...response.matchAll(bulletPattern)];
   
-  return numberMatches.length > 1 || bulletMatches.length > 2 || response.length > 800;
+  console.log('🔍 Auto-parse detection:', {
+    numberedMatches: numberedMatches.length,
+    bulletMatches: bulletMatches.length,
+    length: response.length
+  });
+  
+  // Més estricte: requereix almenys 2 punts numerats O més de 3 bullets
+  return numberedMatches.length >= 2 || bulletMatches.length > 3 || response.length > 1000;
 };

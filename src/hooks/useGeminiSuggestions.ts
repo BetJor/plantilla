@@ -31,7 +31,7 @@ export const useGeminiSuggestions = () => {
       const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
       const prompt = `
-Ets un expert en qualitat sanitària i accions correctives. Basant-te en la següent informació, proposa una acció correctiva específica, realitzable i adequada per a un entorn sanitari:
+Ets un expert en qualitat sanitària i accions correctives. Basant-te en la següent informació, proposa accions correctives específiques i realitzables per a un entorn sanitari:
 
 INFORMACIÓ DE L'INCIDENT:
 - Títol: ${action.title}
@@ -45,20 +45,20 @@ INFORMACIÓ DE L'INCIDENT:
 ${rootCauses ? `ANÀLISI DE CAUSES ARREL:
 ${rootCauses}` : ''}
 
-INSTRUCCIONS:
-1. Si proposes múltiples passos o accions, numera'ls clarament (1., 2., 3., etc.)
-2. Per cada acció específica, inclou:
+INSTRUCCIONS ESPECÍFIQUES:
+1. Proposa múltiples accions correctives numerades clarament (1., 2., 3., 4., etc.)
+2. Cada acció ha de ser específica i realitzable dins l'entorn sanitari
+3. Per cada acció, indica:
    - Descripció detallada del que cal fer
    - Qui seria el responsable més adequat
    - Termini estimat en dies/setmanes
-3. Assegura't que sigui realitzable dins l'entorn sanitari
-4. Considera els recursos disponibles al departament
-5. Inclou mesures de seguiment si és apropiat
-6. Escriu en català
-7. Sigues concís però específic
+4. Numera cada acció amb format: "1. **Títol de l'acció:** Descripció detallada..."
+5. Assegura't que cada acció sigui independent i completa
+6. Inclou mesures de seguiment i avaluació
+7. Escriu en català
 8. Centra't en prevenir la repetició de l'incident
 
-ACCIÓ PROPOSADA:`;
+ACCIONS CORRECTIVES PROPOSADES:`;
 
       const result = await model.generateContent(prompt);
       const response = await result.response;
@@ -163,12 +163,20 @@ IMPORTANT: Retorna NOMÉS el JSON, sense text adicional abans o després.`;
 
   const generateAndParseActions = async ({ action, rootCauses }: SuggestionRequest): Promise<ProposedActionItem[]> => {
     try {
+      console.log('🚀 Generating and parsing actions...');
       const suggestion = await generateSuggestion({ action, rootCauses });
       
+      console.log('📝 Generated suggestion length:', suggestion.length);
+      console.log('🔍 Checking if should auto-parse...');
+      
       if (shouldAutoParseResponse(suggestion)) {
+        console.log('✅ Auto-parsing detected, proceeding...');
         const baseDate = action.dueDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-        return parseAIResponseToActions(suggestion, action.assignedTo || 'Per assignar', baseDate);
+        const parsedActions = parseAIResponseToActions(suggestion, action.assignedTo || 'Per assignar', baseDate);
+        console.log('📊 Parsed actions count:', parsedActions.length);
+        return parsedActions;
       } else {
+        console.log('📄 Creating single action from response');
         // Si no es detecten múltiples accions, crear una sola
         return [{
           id: `ai-single-${Date.now()}`,
