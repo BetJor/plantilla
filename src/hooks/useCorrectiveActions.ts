@@ -1,204 +1,10 @@
+
 import { useState, useEffect } from 'react';
 import { CorrectiveAction, Comment, DashboardMetrics } from '@/types';
 import { toast } from '@/hooks/use-toast';
 import { useNotifications } from '@/hooks/useNotifications';
 import { useAuditHistory } from '@/hooks/useAuditHistory';
 import { useBisActions } from '@/hooks/useBisActions';
-import { TEST_ACTIONS } from '@/data/testData';
-
-// Dades de mostra per al prototipus amb exemples dels nous tipus d'accions
-const mockActions: CorrectiveAction[] = [
-  {
-    id: '1',
-    title: 'Revisió protocol higiene quirúrgica',
-    description: 'Implementar millores en el protocol de higiene per reduir infeccions post-operatòries detectades en auditoria interna',
-    type: 'ac-qualitat-total',
-    category: '1',
-    subCategory: '1.14',
-    status: 'Pendiente de Análisis',
-    dueDate: '2024-07-15',
-    assignedTo: 'Dr. Maria García',
-    priority: 'alta',
-    centre: 'Hospital Central Barcelona',
-    department: 'Cirurgia',
-    attachments: [],
-    createdBy: 'user1',
-    createdAt: '2024-06-15',
-    updatedAt: '2024-06-16',
-    origin: 'auditoria',
-    areasImplicadas: ['Quiròfans', 'Esterilització', 'Infermeria'],
-    responsableAnalisis: 'Dr. Maria García',
-    fechaLimiteAnalisis: '2024-07-01',
-    analysisData: {
-      rootCauses: 'Manca de formació actualitzada del personal sanitari sobre els nous protocols de higiene. Protocol antic que no inclou les darreres recomanacions de la OMS.',
-      proposedActions: [
-        {
-          id: '1',
-          description: 'Implementar programa de formació continuada en higiene quirúrgica',
-          assignedTo: 'Dr. Maria García',
-          dueDate: '2024-07-10',
-          status: 'pending'
-        },
-        {
-          id: '2',
-          description: 'Actualitzar el protocol seguint les guies més recents de la OMS',
-          assignedTo: 'Coordinador Qualitat',
-          dueDate: '2024-07-05',
-          status: 'pending'
-        }
-      ]
-    }
-  },
-  {
-    id: '2',
-    title: 'Gestió inadequada de residus sanitaris',
-    description: 'Detecció de deficiències en la segregació i emmagatzematge temporal de residus sanitaris al Bloc Quirúrgic',
-    type: 'acm-h',
-    category: '3',
-    subCategory: '3.2',
-    status: 'Pendiente de Comprobación',
-    dueDate: '2024-07-30',
-    assignedTo: 'Joan Martínez',
-    priority: 'mitjana',
-    centre: 'Hospital de Coslada',
-    department: 'Gestió Medioambiental',
-    attachments: [],
-    createdBy: 'user2',
-    createdAt: '2024-06-10',
-    updatedAt: '2024-06-20',
-    origin: 'auditoria',
-    areasImplicadas: ['Bloc Quirúrgic', 'Neteja', 'Gestió de Residus'],
-    areasHospital: ['Quiròfans', 'Reanimació', 'Esterilització'],
-    responsableAnalisis: 'Joan Martínez',
-    responsableImplantacion: 'Anna López',
-    fechaLimiteAnalisis: '2024-06-20',
-    fechaLimiteImplantacion: '2024-07-15',
-    analysisData: {
-      rootCauses: 'Personal no format adequadament en la nova normativa de residus. Contenidors insuficients en algunes zones.',
-      proposedActions: [
-        {
-          id: '1',
-          description: 'Formació específica al personal sobre nova normativa de residus',
-          assignedTo: 'Responsable Formació',
-          dueDate: '2024-07-10',
-          status: 'in-progress'
-        },
-        {
-          id: '2',
-          description: 'Instal·lació de contenidors addicionals en zones deficitàries',
-          assignedTo: 'Joan Martínez',
-          dueDate: '2024-07-08',
-          status: 'completed'
-        }
-      ],
-      analysisDate: '2024-06-22',
-      analysisBy: 'Joan Martínez'
-    },
-    verificationData: {
-      implementationCheck: 'Formació completada al 90% del personal. Contenidors instal·lats i funcionant correctament.',
-      verificationDate: '2024-07-10',
-      verificationBy: 'Anna López',
-      evidenceAttachments: []
-    }
-  },
-  {
-    id: '3',
-    title: 'Vulnerabilitat en sistema de gestió de pacients',
-    description: 'Detecció d\'accés no autoritzat a dades de pacients a través de terminal no securitzat',
-    type: 'acsgsi',
-    category: '1',
-    subCategory: '1.3',
-    status: 'Cerrado',
-    dueDate: '2024-06-30',
-    assignedTo: 'Carlos Ruiz',
-    priority: 'crítica',
-    centre: 'CAP Gràcia',
-    department: 'Sistemes d\'Informació',
-    attachments: [],
-    createdBy: 'user3',
-    createdAt: '2024-05-15',
-    updatedAt: '2024-06-28',
-    origin: 'auditoria',
-    areasImplicadas: ['Sistemes', 'Seguretat', 'Atenció al Pacient'],
-    responsableAnalisis: 'Carlos Ruiz',
-    responsableImplantacion: 'Maria Fernández',
-    responsableCierre: 'user3',
-    fechaLimiteAnalisis: '2024-05-20',
-    fechaLimiteImplantacion: '2024-06-15',
-    fechaLimiteCierre: '2024-06-25',
-    tipoCierre: 'conforme',
-    analysisData: {
-      rootCauses: 'Terminal no configurat amb bloqueig automàtic. Política de contrasenyes no aplicada correctament.',
-      proposedAction: 'Configurar bloqueig automàtic en tots els terminals i aplicar política de contrasenyes fortes.',
-      analysisDate: '2024-05-20',
-      analysisBy: 'Carlos Ruiz'
-    },
-    verificationData: {
-      implementationCheck: 'Tots els terminals configurats amb bloqueig automàtic. Política de contrasenyes implementada i verificada.',
-      verificationDate: '2024-06-15',
-      verificationBy: 'Maria Fernández',
-      evidenceAttachments: []
-    },
-    closureData: {
-      closureNotes: 'Vulnerabilitat solucionada completament. Totes les mesures de seguretat implementades i verificades.',
-      closureDate: '2024-06-28',
-      closureBy: 'user3',
-      effectivenessEvaluation: 'Molt efectiu - eliminació completa de la vulnerabilitat detectada'
-    }
-  },
-  {
-    id: '4',
-    title: 'Queixa usuari extern - temps d\'espera',
-    description: 'Usuari extern reporta temps d\'espera excessius en consultes externes de traumatologia',
-    type: 'sau',
-    category: '1',
-    subCategory: '1.2',
-    status: 'Pendiente de Análisis',
-    dueDate: '2024-08-15',
-    assignedTo: 'Laura Pérez',
-    priority: 'mitjana',
-    centre: 'Hospital Central Barcelona',
-    department: 'Atenció al Usuari',
-    attachments: [],
-    createdBy: 'user4',
-    createdAt: '2024-07-01',
-    updatedAt: '2024-07-01',
-    origin: 'usuario-externo',
-    areasImplicadas: ['Consultes Externes', 'Traumatologia', 'Planificació'],
-    responsableAnalisis: 'Laura Pérez',
-    fechaLimiteAnalisis: '2024-07-15'
-  },
-  {
-    id: '5',
-    title: 'Incidència gestió medioambiental Sevilla-Cartuja',
-    description: 'Emissió no controlada detectada en sistema de ventilació del laboratori',
-    type: 'acm-isl',
-    category: '3',
-    subCategory: '3.4',
-    status: 'Pendiente de Comprobación',
-    dueDate: '2024-08-30',
-    assignedTo: 'Antonio García',
-    priority: 'alta',
-    centre: '4104 Sevilla-Cartuja',
-    department: 'Laboratori',
-    attachments: [],
-    createdBy: 'user5',
-    createdAt: '2024-07-10',
-    updatedAt: '2024-07-20',
-    origin: 'incidencias',
-    areasImplicadas: ['Laboratori', 'Manteniment', 'Seguretat'],
-    responsableAnalisis: 'Antonio García',
-    responsableImplantacion: 'José López',
-    fechaLimiteAnalisis: '2024-07-20',
-    fechaLimiteImplantacion: '2024-08-15',
-    analysisData: {
-      rootCauses: 'Filtre del sistema de ventilació saturat i manteniment preventiu no realitzat segons programa.',
-      proposedAction: 'Substitució immediata dels filtres i revisió del programa de manteniment preventiu.',
-      analysisDate: '2024-07-20',
-      analysisBy: 'Antonio García'
-    }
-  }
-];
 
 const STORAGE_KEY = 'corrective-actions-data';
 
@@ -229,42 +35,21 @@ export const useCorrectiveActions = () => {
     }
   };
 
-  // Funció per carregar dades del localStorage amb integració de dades de prova
+  // Funció per carregar dades del localStorage començant amb estat buit
   const loadActions = () => {
     try {
-      console.log('loadActions: Carregant dades del localStorage...');
-      const storedData = localStorage.getItem(STORAGE_KEY);
-      if (storedData) {
-        const parsedData = JSON.parse(storedData);
-        console.log('loadActions: Dades trobades:', parsedData.length, 'accions');
-        
-        // Combinar dades existents amb dades de prova si no existeixen ja
-        const existingIds = parsedData.map((action: CorrectiveAction) => action.id);
-        const newTestActions = TEST_ACTIONS.filter(testAction => 
-          !existingIds.includes(testAction.id)
-        );
-        
-        if (newTestActions.length > 0) {
-          console.log('loadActions: Afegint', newTestActions.length, 'accions de prova noves');
-          const combinedActions = [...parsedData, ...newTestActions];
-          setActions(combinedActions);
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(combinedActions));
-        } else {
-          setActions(parsedData);
-        }
-      } else {
-        console.log('loadActions: No hi ha dades guardades, carregant dades inicials amb dades de prova');
-        const initialActions = [...mockActions, ...TEST_ACTIONS];
-        setActions(initialActions);
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(initialActions));
-      }
+      console.log('loadActions: Netejant localStorage i inicialitzant amb estat buit...');
+      // Netejar completament el localStorage
+      localStorage.removeItem(STORAGE_KEY);
+      // Inicialitzar amb array buit
+      setActions([]);
+      console.log('loadActions: Sistema inicialitzat amb 0 accions');
     } catch (error) {
-      console.error('loadActions: Error loading data from localStorage:', error);
-      const fallbackActions = [...mockActions, ...TEST_ACTIONS];
-      setActions(fallbackActions);
+      console.error('loadActions: Error clearing localStorage:', error);
+      setActions([]);
       toast({
         title: "Avís",
-        description: "Error carregant les dades guardades. S'han carregat les dades per defecte.",
+        description: "Error netejant les dades guardades. S'ha inicialitzat amb estat buit.",
         variant: "destructive"
       });
     }

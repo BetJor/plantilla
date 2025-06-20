@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Plus, Search, Filter, Eye, Sparkles, Trash2 } from 'lucide-react';
+import { Plus, Search, Filter, Eye, Sparkles } from 'lucide-react';
 import { useCorrectiveActions } from '@/hooks/useCorrectiveActions';
 import { useSimilarActions } from '@/hooks/useSimilarActions';
 import { usePermissions } from '@/hooks/usePermissions';
@@ -20,7 +19,7 @@ import SpecificFields from '@/components/ActionFormSections/SpecificFields';
 import SimilarActionsDialog from '@/components/SimilarActionsDialog';
 
 const Actions = () => {
-  const { actions, addAction, clearAllActions } = useCorrectiveActions();
+  const { actions, addAction } = useCorrectiveActions();
   const { findSimilarActions, isLoading: isFindingActions, error: similarActionsError } = useSimilarActions();
   
   // Mock user per testing - en una implementació real vindria del context d'autenticació
@@ -240,12 +239,6 @@ const Actions = () => {
     return "Buscar accions similars";
   };
 
-  const handleClearAllActions = () => {
-    if (window.confirm('Estàs segur que vols eliminar totes les accions correctives? Aquesta acció no es pot desfer.')) {
-      clearAllActions();
-    }
-  };
-
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -254,14 +247,6 @@ const Actions = () => {
           <p className="text-gray-600">Gestiona les accions correctives i preventives</p>
         </div>
         <div className="flex gap-2">
-          <Button 
-            onClick={handleClearAllActions}
-            variant="destructive"
-            disabled={actions.length === 0}
-          >
-            <Trash2 className="w-4 h-4 mr-2" />
-            Eliminar Totes
-          </Button>
           <Button onClick={() => setShowCreateForm(true)} className="bg-blue-600 hover:bg-blue-700">
             <Plus className="w-4 h-4 mr-2" />
             Nova Acció
