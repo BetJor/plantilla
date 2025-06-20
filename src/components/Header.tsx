@@ -1,3 +1,4 @@
+
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { SidebarTrigger } from '@/components/ui/sidebar';
@@ -16,6 +17,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLocation, Link } from 'react-router-dom';
+import NotificationCenter from '@/components/NotificationCenter';
 
 const Header = () => {
   const { user, logout } = useAuth();
@@ -99,8 +101,10 @@ const Header = () => {
           </div>
         </div>
 
-        {/* Right side - User info */}
+        {/* Right side - Notifications and User info */}
         <div className="flex items-center space-x-4">
+          <NotificationCenter />
+          
           <div className="hidden md:flex md:items-center md:space-x-4">
             <div className="flex flex-col text-right">
               <span className="text-sm font-semibold text-white">{user?.name}</span>

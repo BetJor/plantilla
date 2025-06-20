@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { CorrectiveAction, Comment, DashboardMetrics } from '@/types';
 import { toast } from '@/hooks/use-toast';
+import { useNotifications } from '@/hooks/useNotifications';
 
 // Dades de mostra per al prototipus amb exemples dels nous tipus d'accions
 const mockActions: CorrectiveAction[] = [
@@ -172,6 +173,7 @@ export const useCorrectiveActions = () => {
   const [actions, setActions] = useState<CorrectiveAction[]>([]);
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(false);
+  const { notifyStatusChange, checkOverdueAndUpcoming } = useNotifications();
 
   // Funció per guardar a localStorage
   const saveToStorage = (updatedActions: CorrectiveAction[]) => {
@@ -217,6 +219,13 @@ export const useCorrectiveActions = () => {
     loadActions();
   }, []);
 
+  // Comprovar retards i venciments cada vegada que canvien les accions
+  useEffect(() => {
+    if (actions.length > 0) {
+      checkOverdueAndUpcoming(actions);
+    }
+  }, [actions, checkOverdueAndUpcoming]);
+
   const addAction = (action: Omit<CorrectiveAction, 'id' | 'createdAt' | 'updatedAt'>) => {
     const newAction: CorrectiveAction = {
       ...action,
@@ -228,6 +237,11 @@ export const useCorrectiveActions = () => {
     setActions(updatedActions);
     saveToStorage(updatedActions);
     
+    // Enviar notificació si té responsable d'anàlisi assignat
+    if (newAction.status === 'Pendiente de Análisis' && newAction.responsableAnalisis) {
+      notifyStatusChange(newAction, 'Pendiente de Análisis');
+    }
+    
     toast({
       title: "Acció creada",
       description: "L'acció correctiva s'ha creat correctament."
@@ -237,13 +251,19 @@ export const useCorrectiveActions = () => {
   };
 
   const updateAction = (id: string, updates: Partial<CorrectiveAction>) => {
+    const originalAction = actions.find(action => action.id === id);
+    const updatedAction = { ...originalAction, ...updates, updatedAt: new Date().toISOString() } as CorrectiveAction;
+    
     const updatedActions = actions.map(action => 
-      action.id === id 
-        ? { ...action, ...updates, updatedAt: new Date().toISOString() }
-        : action
+      action.id === id ? updatedAction : action
     );
     setActions(updatedActions);
     saveToStorage(updatedActions);
+
+    // Enviar notificació si hi ha canvi d'estat
+    if (originalAction && updates.status && updates.status !== originalAction.status) {
+      notifyStatusChange(updatedAction, updates.status);
+    }
     
     toast({
       title: "Acció actualitzada",
