@@ -85,9 +85,7 @@ const StatusControls = ({
           proposedAction.verificationStatus && proposedAction.verificationStatus !== 'not-verified'
         );
         return !!(allActionsVerified && 
-                 proposedActionsForVerification.length > 0 &&
-                 action.responsableCierre &&
-                 action.fechaLimiteCierre);
+                 proposedActionsForVerification.length > 0);
       case 'Pendiente de Cierre':
         return !!(action.closureData?.closureNotes && 
                  action.closureData?.effectivenessEvaluation &&
@@ -139,8 +137,6 @@ const StatusControls = ({
         if (unverifiedActions.length > 0) {
           missingVerification.push(`verificació de ${unverifiedActions.length} accions`);
         }
-        if (!action.responsableCierre) missingVerification.push('responsable de tancament');
-        if (!action.fechaLimiteCierre) missingVerification.push('data límit tancament');
         return `Cal completar: ${missingVerification.join(', ')}`;
       case 'Pendiente de Cierre':
         const missingClosure = [];
