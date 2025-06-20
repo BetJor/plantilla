@@ -3,7 +3,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ACTION_TYPES, CATEGORIES } from '@/types/categories';
+import { ACTION_TYPES } from '@/types/categories';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Info } from 'lucide-react';
 
@@ -16,6 +16,7 @@ interface CategorySelectorsProps {
   onSubcategoryChange: (subcategory: string) => void;
   currentStatus: string;
   allowedTypes?: string[];
+  readOnly?: boolean;
 }
 
 const CategorySelectors = ({
@@ -26,9 +27,10 @@ const CategorySelectors = ({
   onCategoryChange,
   onSubcategoryChange,
   currentStatus,
-  allowedTypes = []
+  allowedTypes = [],
+  readOnly = false
 }: CategorySelectorsProps) => {
-  const isReadOnly = !['Borrador'].includes(currentStatus);
+  const isReadOnly = readOnly || !['Borrador'].includes(currentStatus);
   
   // Filtrar tipus d'accions segons permisos
   const availableTypes = allowedTypes.length > 0 
@@ -36,7 +38,7 @@ const CategorySelectors = ({
     : ACTION_TYPES;
 
   const selectedTypeData = ACTION_TYPES.find(type => type.code === selectedType);
-  const availableCategories = selectedTypeData ? CATEGORIES[selectedType] || [] : [];
+  const availableCategories = selectedTypeData ? selectedTypeData.categories : [];
   
   const selectedCategoryData = availableCategories.find(cat => cat.code === selectedCategory);
   const availableSubcategories = selectedCategoryData ? selectedCategoryData.subcategories : [];
