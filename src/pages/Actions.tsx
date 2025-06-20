@@ -111,9 +111,9 @@ const Actions = () => {
   const getPriorityVariant = (priority: string) => {
     switch (priority) {
       case 'crítica': return 'destructive'; // vermell
-      case 'alta': return 'destructive'; // taronja (usarem destructive que és vermell-taronja)
-      case 'mitjana': return 'default'; // taronja clar (usarem default que podem personalitzar)
-      case 'baixa': return 'secondary'; // gris clar (ja està bé)
+      case 'alta': return 'orange'; // taronja
+      case 'mitjana': return 'orange-light'; // taronja clar
+      case 'baixa': return 'secondary'; // gris clar
       default: return 'default';
     }
   };
