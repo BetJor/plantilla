@@ -1,10 +1,9 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { Search, Clock, User, Sparkles, Loader2 } from 'lucide-react';
+import { Search, Clock, User, Sparkles, Loader2, Layers } from 'lucide-react';
 import { CorrectiveAction, ProposedActionItem } from '@/types';
 import { useGeminiSuggestions } from '@/hooks/useGeminiSuggestions';
 import GeminiApiKeyDialog from '@/components/GeminiApiKeyDialog';
@@ -20,7 +19,7 @@ const AnalysisSection = ({ action, onUpdate, readOnly = false }: AnalysisSection
   const [rootCauses, setRootCauses] = React.useState(action.analysisData?.rootCauses || '');
   const [showApiKeyDialog, setShowApiKeyDialog] = React.useState(false);
   
-  const { generateSuggestion, isLoading, error } = useGeminiSuggestions();
+  const { generateSuggestion, generateMultipleProposedActions, isLoading, error } = useGeminiSuggestions();
 
   // Migrar dades existents de proposedAction a proposedActions si cal
   const proposedActions = React.useMemo(() => {
@@ -93,6 +92,23 @@ const AnalysisSection = ({ action, onUpdate, readOnly = false }: AnalysisSection
     }
   };
 
+  const handleGenerateMultipleActions = async () => {
+    try {
+      const multipleActions = await generateMultipleProposedActions({
+        action,
+        rootCauses: rootCauses.trim() || undefined,
+        targetCount: 3
+      });
+      
+      handleProposedActionsChange([...proposedActions, ...multipleActions]);
+    } catch (err) {
+      if (err instanceof Error && err.message.includes('clau d\'API')) {
+        setShowApiKeyDialog(true);
+      }
+      console.error('Error generating multiple actions:', err);
+    }
+  };
+
   const isFormValid = rootCauses.trim() && proposedActions.length > 0;
   const isComplete = action.analysisData?.rootCauses && (action.analysisData?.proposedActions?.length > 0 || action.analysisData?.proposedAction);
   const hasChanges = rootCauses !== (action.analysisData?.rootCauses || '') || 
@@ -136,21 +152,38 @@ const AnalysisSection = ({ action, onUpdate, readOnly = false }: AnalysisSection
             <div className="flex items-center justify-between mb-4">
               <Label>Accions proposades</Label>
               {!readOnly && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={handleGenerateSuggestion}
-                  disabled={isLoading}
-                  className="flex items-center gap-1"
-                >
-                  {isLoading ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <Sparkles className="w-4 h-4" />
-                  )}
-                  Generar amb IA
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleGenerateSuggestion}
+                    disabled={isLoading}
+                    className="flex items-center gap-1"
+                  >
+                    {isLoading ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Sparkles className="w-4 h-4" />
+                    )}
+                    Generar amb IA
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleGenerateMultipleActions}
+                    disabled={isLoading}
+                    className="flex items-center gap-1 bg-purple-50 hover:bg-purple-100 border-purple-200 text-purple-700"
+                  >
+                    {isLoading ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Layers className="w-4 h-4" />
+                    )}
+                    Generar múltiples
+                  </Button>
+                </div>
               )}
             </div>
             

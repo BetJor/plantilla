@@ -6,8 +6,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Trash2, Edit2, Save, X, User, Calendar } from 'lucide-react';
+import { Plus, Trash2, Edit2, Save, X, User, Calendar, Split, Sparkles } from 'lucide-react';
 import { ProposedActionItem } from '@/types';
+import { useGeminiSuggestions } from '@/hooks/useGeminiSuggestions';
 
 interface ProposedActionsListProps {
   actions: ProposedActionItem[];
@@ -23,6 +24,7 @@ const ProposedActionsList = ({ actions, onChange, readOnly = false }: ProposedAc
     dueDate: ''
   });
   const [showNewForm, setShowNewForm] = useState(false);
+  const { generateMultipleProposedActions, isLoading } = useGeminiSuggestions();
 
   const handleAddAction = () => {
     if (!newAction.description.trim() || !newAction.assignedTo.trim() || !newAction.dueDate) {
@@ -51,6 +53,35 @@ const ProposedActionsList = ({ actions, onChange, readOnly = false }: ProposedAc
 
   const handleDeleteAction = (id: string) => {
     onChange(actions.filter(action => action.id !== id));
+  };
+
+  const handleSplitAction = async (actionToSplit: ProposedActionItem) => {
+    try {
+      // Crear un mock action object per la IA
+      const mockAction = {
+        title: `Divisió d'acció: ${actionToSplit.description.substring(0, 50)}...`,
+        description: actionToSplit.description,
+        type: 'sense-categoria',
+        category: 'sense-categoria',
+        centre: 'Centre actual',
+        department: 'Departament actual',
+        priority: 'mitjana' as const,
+        assignedTo: actionToSplit.assignedTo,
+        dueDate: actionToSplit.dueDate
+      };
+
+      const splitActions = await generateMultipleProposedActions({
+        action: mockAction,
+        rootCauses: `Divisió de l'acció original: ${actionToSplit.description}`,
+        targetCount: 2
+      });
+
+      // Substituir l'acció original per les noves accions
+      const updatedActions = actions.filter(action => action.id !== actionToSplit.id);
+      onChange([...updatedActions, ...splitActions]);
+    } catch (error) {
+      console.error('Error splitting action:', error);
+    }
   };
 
   const getStatusColor = (status?: string) => {
@@ -95,10 +126,26 @@ const ProposedActionsList = ({ actions, onChange, readOnly = false }: ProposedAc
                             {action.status}
                           </Badge>
                         )}
+                        {action.id.includes('ai-') && (
+                          <Badge variant="outline" className="bg-purple-100 text-purple-800">
+                            <Sparkles className="w-3 h-3 mr-1" />
+                            IA
+                          </Badge>
+                        )}
                       </div>
                     </div>
                     {!readOnly && (
                       <div className="flex gap-2 ml-4">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleSplitAction(action)}
+                          disabled={isLoading}
+                          title="Dividir aquesta acció en múltiples accions més específiques"
+                        >
+                          <Split className="w-4 h-4" />
+                        </Button>
                         <Button
                           type="button"
                           variant="ghost"
