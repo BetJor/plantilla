@@ -1,4 +1,5 @@
 
+
 import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -81,7 +82,7 @@ const ProposedActionsList = ({
     switch (status) {
       case 'implemented':
         return <Badge className="bg-green-100 text-green-800 border-green-200">Implementada</Badge>;
-      case 'partial':
+      case 'partially-implemented':
         return <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200">Parcial</Badge>;
       case 'not-implemented':
         return <Badge className="bg-red-100 text-red-800 border-red-200">No implementada</Badge>;
@@ -238,9 +239,9 @@ const ActionCard = ({
                 <Button
                   type="button"
                   size="sm"
-                  variant={action.verificationStatus === 'partial' ? 'default' : 'outline'}
-                  onClick={() => onVerificationChange(action.id, 'partial', verificationComments)}
-                  className={action.verificationStatus === 'partial' ? 'bg-yellow-600 hover:bg-yellow-700' : ''}
+                  variant={action.verificationStatus === 'partially-implemented' ? 'default' : 'outline'}
+                  onClick={() => onVerificationChange(action.id, 'partially-implemented', verificationComments)}
+                  className={action.verificationStatus === 'partially-implemented' ? 'bg-yellow-600 hover:bg-yellow-700' : ''}
                 >
                   <AlertTriangle className="w-4 h-4 mr-1" />
                   Parcial
@@ -299,3 +300,4 @@ const ActionCard = ({
 };
 
 export default ProposedActionsList;
+
