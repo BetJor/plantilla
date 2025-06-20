@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -57,17 +56,24 @@ const ProposedActionsList = ({ actions, onChange, readOnly = false }: ProposedAc
 
   const handleSplitAction = async (actionToSplit: ProposedActionItem) => {
     try {
-      // Crear un mock action object per la IA
+      // Crear un mock action object complet per la IA
       const mockAction = {
+        id: `mock-${Date.now()}`,
         title: `Divisió d'acció: ${actionToSplit.description.substring(0, 50)}...`,
         description: actionToSplit.description,
         type: 'sense-categoria',
         category: 'sense-categoria',
+        subCategory: 'general',
+        status: 'Borrador' as const,
         centre: 'Centre actual',
         department: 'Departament actual',
         priority: 'mitjana' as const,
         assignedTo: actionToSplit.assignedTo,
-        dueDate: actionToSplit.dueDate
+        dueDate: actionToSplit.dueDate,
+        attachments: [],
+        createdBy: 'current-user',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
       };
 
       const splitActions = await generateMultipleProposedActions({
