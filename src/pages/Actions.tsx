@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,14 +10,31 @@ import { Label } from '@/components/ui/label';
 import { Plus, Search, Filter, Eye, Sparkles } from 'lucide-react';
 import { useCorrectiveActions } from '@/hooks/useCorrectiveActions';
 import { useSimilarActions } from '@/hooks/useSimilarActions';
+import { usePermissions } from '@/hooks/usePermissions';
 import { toast } from '@/hooks/use-toast';
 import { ACTION_TYPES } from '@/types/categories';
 import CategorySelectors from '@/components/ActionFormSections/CategorySelectors';
+import ResponsibleAssignment from '@/components/ActionFormSections/ResponsibleAssignment';
+import SpecificFields from '@/components/ActionFormSections/SpecificFields';
 import SimilarActionsDialog from '@/components/SimilarActionsDialog';
 
 const Actions = () => {
   const { actions, addAction } = useCorrectiveActions();
   const { findSimilarActions, isLoading: isFindingActions, error: similarActionsError } = useSimilarActions();
+  
+  // Mock user per testing - en una implementació real vindria del context d'autenticació
+  const mockUser = {
+    id: 'current-user',
+    name: 'Usuari Test',
+    email: 'test@example.com',
+    role: 'admin' as const,
+    centre: 'Hospital Central Barcelona',
+    department: 'Qualitat',
+    specificRoles: ['direccio-qualitat', 'director-centre']
+  };
+  
+  const { allowedActionTypes } = usePermissions({ user: mockUser });
+  
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [showSimilarActions, setShowSimilarActions] = useState(false);
@@ -33,7 +49,16 @@ const Actions = () => {
     assignedTo: '',
     priority: 'mitjana' as const,
     centre: '',
-    department: ''
+    department: '',
+    origin: '',
+    areasImplicadas: [] as string[],
+    areasHospital: [] as string[],
+    responsableAnalisis: '',
+    responsableImplantacion: '',
+    responsableCierre: '',
+    fechaLimiteAnalisis: '',
+    fechaLimiteImplantacion: '',
+    fechaLimiteCierre: ''
   });
 
   const updateFormData = (updates: Partial<typeof formData>) => {
@@ -50,6 +75,18 @@ const Actions = () => {
 
   const handleSubcategoryChange = (subCategory: string) => {
     updateFormData({ subCategory });
+  };
+
+  const handleResponsableChange = (field: string, value: string) => {
+    updateFormData({ [field]: value });
+  };
+
+  const handleDateChange = (field: string, value: string) => {
+    updateFormData({ [field]: value });
+  };
+
+  const handleFieldChange = (field: string, value: any) => {
+    updateFormData({ [field]: value });
   };
 
   const getStatusVariant = (status: string) => {
@@ -88,7 +125,6 @@ const Actions = () => {
       category: formData.category
     });
 
-    // Validació bàsica
     if (!formData.title.trim() || !formData.description.trim()) {
       console.warn('handleFindSimilarActions: Títol o descripció buits');
       toast({
@@ -99,7 +135,6 @@ const Actions = () => {
       return;
     }
 
-    // Verificar si hi ha accions existents
     const existingActions = actions.filter(action => action.status !== 'Borrador');
     if (existingActions.length === 0) {
       console.warn('handleFindSimilarActions: No hi ha accions existents');
@@ -111,7 +146,6 @@ const Actions = () => {
       return;
     }
 
-    // Verificar clau API
     const apiKey = localStorage.getItem('gemini-api-key');
     if (!apiKey) {
       console.warn('handleFindSimilarActions: Clau API no configurada');
@@ -139,7 +173,6 @@ const Actions = () => {
       setShowSimilarActions(true);
     } catch (error) {
       console.error('handleFindSimilarActions: Error final:', error);
-      // L'error ja s'ha gestionat al hook amb toast
     }
   };
 
@@ -161,7 +194,16 @@ const Actions = () => {
       assignedTo: '',
       priority: 'mitjana',
       centre: '',
-      department: ''
+      department: '',
+      origin: '',
+      areasImplicadas: [],
+      areasHospital: [],
+      responsableAnalisis: '',
+      responsableImplantacion: '',
+      responsableCierre: '',
+      fechaLimiteAnalisis: '',
+      fechaLimiteImplantacion: '',
+      fechaLimiteCierre: ''
     });
     setShowCreateForm(false);
     setSimilarActions([]);
@@ -172,13 +214,11 @@ const Actions = () => {
     action.description.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Determinar si el botó està activat
   const canSearchSimilar = formData.title.trim().length > 0 && 
                           formData.description.trim().length > 0 && 
                           actions.filter(action => action.status !== 'Borrador').length > 0 &&
                           localStorage.getItem('gemini-api-key');
 
-  // Missatge del tooltip
   const getTooltipMessage = () => {
     if (!formData.title.trim() || !formData.description.trim()) {
       return "Cal omplir el títol i la descripció";
@@ -218,7 +258,7 @@ const Actions = () => {
             </div>
           </CardHeader>
           <CardContent className="p-6">
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-6">
               <CategorySelectors
                 selectedType={formData.type}
                 selectedCategory={formData.category}
@@ -227,6 +267,32 @@ const Actions = () => {
                 onCategoryChange={handleCategoryChange}
                 onSubcategoryChange={handleSubcategoryChange}
                 currentStatus="Borrador"
+                allowedTypes={allowedActionTypes.map(t => t.code)}
+              />
+              
+              <SpecificFields
+                actionType={formData.type}
+                centre={formData.centre}
+                department={formData.department}
+                origin={formData.origin}
+                areasImplicadas={formData.areasImplicadas}
+                areasHospital={formData.areasHospital}
+                onFieldChange={handleFieldChange}
+                user={mockUser}
+              />
+
+              <ResponsibleAssignment
+                actionType={formData.type}
+                currentStatus="Borrador"
+                responsableAnalisis={formData.responsableAnalisis}
+                responsableImplantacion={formData.responsableImplantacion}
+                responsableCierre={formData.responsableCierre}
+                fechaLimiteAnalisis={formData.fechaLimiteAnalisis}
+                fechaLimiteImplantacion={formData.fechaLimiteImplantacion}
+                fechaLimiteCierre={formData.fechaLimiteCierre}
+                onResponsableChange={handleResponsableChange}
+                onDateChange={handleDateChange}
+                user={mockUser}
               />
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -261,27 +327,8 @@ const Actions = () => {
                     className="mt-1"
                   />
                 </div>
-                <div>
-                  <Label htmlFor="centre" className="text-gray-700 font-medium">Centre</Label>
-                  <Input
-                    id="centre"
-                    value={formData.centre}
-                    onChange={(e) => setFormData({ ...formData, centre: e.target.value })}
-                    required
-                    className="mt-1"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="department" className="text-gray-700 font-medium">Departament</Label>
-                  <Input
-                    id="department"
-                    value={formData.department}
-                    onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-                    required
-                    className="mt-1"
-                  />
-                </div>
               </div>
+              
               <div>
                 <Label htmlFor="description" className="text-gray-700 font-medium">Descripció</Label>
                 <Textarea

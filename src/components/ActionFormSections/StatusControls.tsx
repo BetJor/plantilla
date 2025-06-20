@@ -12,14 +12,21 @@ import {
 } from '@/components/ui/dialog';
 import { ArrowRight, XCircle, AlertTriangle } from 'lucide-react';
 import { CorrectiveAction } from '@/types';
+import { useWorkflow } from '@/hooks/useWorkflow';
 
 interface StatusControlsProps {
   action: CorrectiveAction;
   onStatusChange: (newStatus: CorrectiveAction['status']) => void;
+  user?: any; // Mock user per testing
 }
 
-const StatusControls = ({ action, onStatusChange }: StatusControlsProps) => {
+const StatusControls = ({ 
+  action, 
+  onStatusChange, 
+  user = { id: 'current-user', specificRoles: ['direccio-qualitat'] }
+}: StatusControlsProps) => {
   const [isAnnulDialogOpen, setIsAnnulDialogOpen] = useState(false);
+  const { canEditInStatus } = useWorkflow({ user, action });
 
   const getNextStatus = (): CorrectiveAction['status'] | null => {
     switch (action.status) {
@@ -57,13 +64,22 @@ const StatusControls = ({ action, onStatusChange }: StatusControlsProps) => {
         return action.description.trim().length > 0 && 
                !!action.type && 
                !!action.category && 
-               action.subCategory.trim().length > 0;
+               action.subCategory.trim().length > 0 &&
+               !!action.responsableAnalisis &&
+               !!action.fechaLimiteAnalisis;
       case 'Pendiente de Análisis':
-        return !!(action.analysisData?.rootCauses && action.analysisData?.proposedAction);
+        return !!(action.analysisData?.rootCauses && 
+                 action.analysisData?.proposedAction &&
+                 action.responsableImplantacion &&
+                 action.fechaLimiteImplantacion);
       case 'Pendiente de Comprobación':
-        return !!action.verificationData?.implementationCheck;
+        return !!(action.verificationData?.implementationCheck &&
+                 action.responsableCierre &&
+                 action.fechaLimiteCierre);
       case 'Pendiente de Cierre':
-        return !!(action.closureData?.closureNotes && action.closureData?.effectivenessEvaluation);
+        return !!(action.closureData?.closureNotes && 
+                 action.closureData?.effectivenessEvaluation &&
+                 action.tipoCierre);
       default:
         return false;
     }
@@ -77,21 +93,36 @@ const StatusControls = ({ action, onStatusChange }: StatusControlsProps) => {
         if (!action.type) missing.push('tipus d\'acció');
         if (!action.category) missing.push('categoria');
         if (!action.subCategory.trim()) missing.push('subcategoria');
+        if (!action.responsableAnalisis) missing.push('responsable d\'anàlisi');
+        if (!action.fechaLimiteAnalisis) missing.push('data límit anàlisi');
         return `Cal completar: ${missing.join(', ')}`;
       case 'Pendiente de Análisis':
-        return 'Cal completar l\'anàlisi de causes i l\'acció proposada';
+        const missingAnalysis = [];
+        if (!action.analysisData?.rootCauses) missingAnalysis.push('anàlisi de causes');
+        if (!action.analysisData?.proposedAction) missingAnalysis.push('acció proposada');
+        if (!action.responsableImplantacion) missingAnalysis.push('responsable d\'implantació');
+        if (!action.fechaLimiteImplantacion) missingAnalysis.push('data límit implantació');
+        return `Cal completar: ${missingAnalysis.join(', ')}`;
       case 'Pendiente de Comprobación':
-        return 'Cal completar la verificació de la implantació';
+        const missingVerification = [];
+        if (!action.verificationData?.implementationCheck) missingVerification.push('verificació de la implantació');
+        if (!action.responsableCierre) missingVerification.push('responsable de tancament');
+        if (!action.fechaLimiteCierre) missingVerification.push('data límit tancament');
+        return `Cal completar: ${missingVerification.join(', ')}`;
       case 'Pendiente de Cierre':
-        return 'Cal completar les notes de tancament i l\'avaluació d\'eficàcia';
+        const missingClosure = [];
+        if (!action.closureData?.closureNotes) missingClosure.push('notes de tancament');
+        if (!action.closureData?.effectivenessEvaluation) missingClosure.push('avaluació d\'eficàcia');
+        if (!action.tipoCierre) missingClosure.push('tipus de tancament');
+        return `Cal completar: ${missingClosure.join(', ')}`;
       default:
         return '';
     }
   };
 
   const nextStatus = getNextStatus();
-  const canProceed = canAdvance();
-  const canAnnul = !['Cerrado', 'Anulada'].includes(action.status);
+  const canProceed = canAdvance() && canEditInStatus(action.status);
+  const canAnnul = !['Cerrado', 'Anulada'].includes(action.status) && canEditInStatus(action.status);
 
   const handleAdvance = () => {
     if (nextStatus && canProceed) {
@@ -106,6 +137,24 @@ const StatusControls = ({ action, onStatusChange }: StatusControlsProps) => {
 
   if (['Cerrado', 'Anulada'].includes(action.status)) {
     return null;
+  }
+
+  // Si l'usuari no pot editar en aquest estat, només mostrar informació
+  if (!canEditInStatus(action.status)) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Estat de l'Acció</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg">
+            <p className="text-sm text-gray-700">
+              No tens permisos per editar aquesta acció en l'estat actual: <strong>{action.status}</strong>
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
   }
 
   return (
