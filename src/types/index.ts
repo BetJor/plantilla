@@ -1,4 +1,3 @@
-
 export interface User {
   id: string;
   name: string;
@@ -31,7 +30,7 @@ export interface CorrectiveAction {
   assignedTo: string;
   priority: 'baixa' | 'mitjana' | 'alta' | 'crítica';
   centre: string;
-  department: string;
+  department?: string; // Made optional
   attachments: string[];
   createdBy: string;
   createdAt: string;

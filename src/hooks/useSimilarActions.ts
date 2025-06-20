@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { CorrectiveAction } from '@/types';
@@ -17,7 +16,7 @@ interface SimilarityRequest {
   type: string;
   category: string;
   centre: string;
-  department: string;
+  department?: string; // Made optional
 }
 
 export const useSimilarActions = () => {
@@ -110,7 +109,7 @@ NOVA ACCIÓ:
 - Tipus: ${newAction.type}
 - Categoria: ${newAction.category}
 - Centre: ${newAction.centre}
-- Departament: ${newAction.department}
+- Departament: ${newAction.department || 'No especificat'}
 
 ACCIONS EXISTENTS:
 ${existingActions.map((action, index) => `
@@ -120,7 +119,7 @@ ${index + 1}. ID: ${action.id}
    Tipus: ${action.type}
    Categoria: ${action.category}
    Centre: ${action.centre}
-   Departament: ${action.department}
+   Departament: ${action.department || 'No especificat'}
    Estat: ${action.status}
 `).join('\n')}
 

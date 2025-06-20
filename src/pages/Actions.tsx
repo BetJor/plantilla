@@ -159,7 +159,8 @@ const Actions = () => {
         description: formData.description,
         type: formData.type,
         category: formData.category,
-        centre: formData.centre
+        centre: formData.centre,
+        department: mockUser.department
       });
       
       console.log('handleFindSimilarActions: Resultats rebuts:', results.length);
@@ -178,7 +179,8 @@ const Actions = () => {
       attachments: [],
       createdBy: 'current-user',
       dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 30 dies per defecte
-      assignedTo: formData.responsableAnalisis || 'current-user'
+      assignedTo: formData.responsableAnalisis || 'current-user',
+      department: mockUser.department
     });
     
     toast({
@@ -195,7 +197,8 @@ const Actions = () => {
       attachments: [],
       createdBy: 'current-user',
       dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 30 dies per defecte
-      assignedTo: formData.responsableAnalisis || 'current-user'
+      assignedTo: formData.responsableAnalisis || 'current-user',
+      department: mockUser.department
     });
     setFormData({
       title: '',
@@ -286,6 +289,7 @@ const Actions = () => {
                 areasHospital={formData.areasHospital}
                 onFieldChange={handleFieldChange}
                 user={mockUser}
+                isDraft={true}
               />
 
               <div>
@@ -400,7 +404,6 @@ const Actions = () => {
                     <TableHead>Assignat a</TableHead>
                     <TableHead>Prioritat</TableHead>
                     <TableHead>Estat</TableHead>
-                    <TableHead>Data Límit</TableHead>
                     <TableHead>Accions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -420,7 +423,6 @@ const Actions = () => {
                           {action.status}
                         </Badge>
                       </TableCell>
-                      <TableCell>{action.dueDate ? new Date(action.dueDate).toLocaleDateString() : '-'}</TableCell>
                       <TableCell>
                         <Button variant="ghost" size="sm" asChild>
                           <Link to={`/actions/${action.id}`}>
