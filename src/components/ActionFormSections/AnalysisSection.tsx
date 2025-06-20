@@ -49,7 +49,9 @@ const AnalysisSection = ({ action, onUpdate, readOnly = false }: AnalysisSection
         rootCauses,
         proposedActions,
         analysisDate: new Date().toISOString(),
-        analysisBy: 'current-user'
+        analysisBy: 'current-user',
+        signedBy: 'current-user',
+        signedAt: new Date().toISOString()
       }
     });
   };
@@ -164,10 +166,26 @@ const AnalysisSection = ({ action, onUpdate, readOnly = false }: AnalysisSection
               </p>
             )}
           </div>
+
+          {readOnly && action.analysisData?.signedBy && (
+            <div className="bg-blue-50 p-3 rounded-lg">
+              <div className="flex items-center text-sm text-blue-700">
+                <User className="w-4 h-4 mr-1" />
+                <span className="font-medium">Signat per:</span>
+                <span className="ml-1">{action.analysisData.signedBy}</span>
+                {action.analysisData.signedAt && (
+                  <>
+                    <Clock className="w-4 h-4 ml-3 mr-1" />
+                    <span>{new Date(action.analysisData.signedAt).toLocaleString('ca-ES')}</span>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
           
           {!readOnly && (
             <Button onClick={handleSave} disabled={!isFormValid || !hasChanges}>
-              Guardar Anàlisi
+              Guardar i Signar Anàlisi
             </Button>
           )}
         </CardContent>

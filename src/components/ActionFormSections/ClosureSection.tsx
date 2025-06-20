@@ -4,7 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { XCircle, Clock, User } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { XCircle, Clock, User, CheckCircle, AlertCircle } from 'lucide-react';
 import { CorrectiveAction } from '@/types';
 
 interface ClosureSectionProps {
@@ -16,6 +17,7 @@ interface ClosureSectionProps {
 const ClosureSection = ({ action, onUpdate, readOnly = false }: ClosureSectionProps) => {
   const [closureNotes, setClosureNotes] = React.useState(action.closureData?.closureNotes || '');
   const [effectivenessEvaluation, setEffectivenessEvaluation] = React.useState(action.closureData?.effectivenessEvaluation || '');
+  const [isConforme, setIsConforme] = React.useState(action.closureData?.isConforme ?? true);
 
   const handleSave = () => {
     onUpdate({
@@ -23,16 +25,21 @@ const ClosureSection = ({ action, onUpdate, readOnly = false }: ClosureSectionPr
         ...action.closureData,
         closureNotes,
         effectivenessEvaluation,
+        isConforme,
         closureDate: new Date().toISOString(),
-        closureBy: 'current-user'
-      }
+        closureBy: 'current-user',
+        signedBy: 'current-user',
+        signedAt: new Date().toISOString()
+      },
+      tipoCierre: isConforme ? 'conforme' : 'no-conforme'
     });
   };
 
   const isFormValid = closureNotes.trim() && effectivenessEvaluation.trim();
   const isComplete = action.closureData?.closureNotes && action.closureData?.effectivenessEvaluation;
   const hasChanges = closureNotes !== (action.closureData?.closureNotes || '') || 
-                     effectivenessEvaluation !== (action.closureData?.effectivenessEvaluation || '');
+                     effectivenessEvaluation !== (action.closureData?.effectivenessEvaluation || '') ||
+                     isConforme !== (action.closureData?.isConforme ?? true);
 
   return (
     <Card className={`${readOnly ? 'bg-gray-50' : ''} ${isComplete ? 'border-green-200' : ''}`}>
@@ -54,6 +61,47 @@ const ClosureSection = ({ action, onUpdate, readOnly = false }: ClosureSectionPr
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
+        <div>
+          <Label>Tipus de tancament</Label>
+          <div className="flex gap-4 mt-2">
+            <label className="flex items-center space-x-2">
+              <input
+                type="radio"
+                checked={isConforme}
+                onChange={() => setIsConforme(true)}
+                disabled={readOnly}
+                className="form-radio"
+              />
+              <div className="flex items-center">
+                <CheckCircle className="w-4 h-4 text-green-500 mr-1" />
+                <span>Conforme</span>
+              </div>
+            </label>
+            <label className="flex items-center space-x-2">
+              <input
+                type="radio"
+                checked={!isConforme}
+                onChange={() => setIsConforme(false)}
+                disabled={readOnly}
+                className="form-radio"
+              />
+              <div className="flex items-center">
+                <AlertCircle className="w-4 h-4 text-red-500 mr-1" />
+                <span>No Conforme</span>
+              </div>
+            </label>
+          </div>
+          
+          {readOnly && action.closureData?.isConforme !== undefined && (
+            <Badge 
+              variant={action.closureData.isConforme ? 'default' : 'destructive'} 
+              className="mt-2"
+            >
+              {action.closureData.isConforme ? 'Conforme' : 'No Conforme'}
+            </Badge>
+          )}
+        </div>
+
         <div>
           <Label htmlFor="closureNotes">Notes de tancament</Label>
           <Textarea
@@ -78,9 +126,26 @@ const ClosureSection = ({ action, onUpdate, readOnly = false }: ClosureSectionPr
             className={readOnly ? 'bg-gray-100' : ''}
           />
         </div>
+
+        {readOnly && action.closureData?.signedBy && (
+          <div className="bg-blue-50 p-3 rounded-lg">
+            <div className="flex items-center text-sm text-blue-700">
+              <User className="w-4 h-4 mr-1" />
+              <span className="font-medium">Signat per:</span>
+              <span className="ml-1">{action.closureData.signedBy}</span>
+              {action.closureData.signedAt && (
+                <>
+                  <Clock className="w-4 h-4 ml-3 mr-1" />
+                  <span>{new Date(action.closureData.signedAt).toLocaleString('ca-ES')}</span>
+                </>
+              )}
+            </div>
+          </div>
+        )}
+
         {!readOnly && (
           <Button onClick={handleSave} disabled={!isFormValid || !hasChanges}>
-            Guardar Tancament
+            Guardar i Signar Tancament
           </Button>
         )}
       </CardContent>

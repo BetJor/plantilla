@@ -39,6 +39,8 @@ export interface CorrectiveAction {
   
   // Nous camps segons requeriments
   origin?: string; // Origen de l'acció (auditoria, incidències, etc.)
+  auditDate?: string; // Data d'auditoria/origen
+  sector?: string; // Sector/Àrea
   areasImplicadas?: string[]; // Àrees funcionals implicades
   areasHospital?: string[]; // Àrees implicades del hospital (per ACM-H)
   responsableAnalisis?: string; // Responsable de l'anàlisi
@@ -65,18 +67,25 @@ export interface CorrectiveAction {
     proposedActions?: ProposedActionItem[]; // Nova estructura
     analysisDate?: string;
     analysisBy?: string;
+    signedBy?: string; // Signature for analysis phase
+    signedAt?: string;
   };
   verificationData?: {
     implementationCheck: string;
     verificationDate?: string;
     verificationBy?: string;
     evidenceAttachments: string[];
+    signedBy?: string; // Signature for verification phase
+    signedAt?: string;
   };
   closureData?: {
     closureNotes: string;
     closureDate?: string;
     closureBy?: string;
     effectivenessEvaluation: string;
+    isConforme?: boolean; // Si/No per conforme
+    signedBy?: string; // Signature for closure phase
+    signedAt?: string;
   };
 }
 
