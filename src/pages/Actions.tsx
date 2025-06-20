@@ -187,7 +187,7 @@ const Actions = () => {
     e.preventDefault();
     addAction({
       ...formData,
-      status: 'Borrador',
+      status: 'Pendiente de Análisis',
       attachments: [],
       createdBy: 'current-user'
     });
@@ -258,8 +258,8 @@ const Actions = () => {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <CardTitle className="text-blue-800">Crear Nova Acció Correctiva</CardTitle>
-                <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 border-yellow-300">
-                  Estat: Borrador
+                <Badge variant="secondary" className="bg-blue-100 text-blue-800 border-blue-300">
+                  Estat: Pendiente de Análisis
                 </Badge>
               </div>
             </div>
