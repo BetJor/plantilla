@@ -21,11 +21,6 @@ const AnalysisSection = ({ action, onUpdate, readOnly = false }: AnalysisSection
   
   const { generateAndParseActions, isLoading, error } = useGeminiSuggestions();
 
-  // Debug logs
-  console.log('AnalysisSection - Action status:', action.status);
-  console.log('AnalysisSection - ReadOnly:', readOnly);
-  console.log('AnalysisSection - Proposed actions count:', proposedActions.length);
-
   // Migrar dades existents de proposedAction a proposedActions si cal
   const proposedActions = React.useMemo(() => {
     if (action.analysisData?.proposedActions) {
@@ -46,6 +41,11 @@ const AnalysisSection = ({ action, onUpdate, readOnly = false }: AnalysisSection
     
     return [];
   }, [action.analysisData, action.assignedTo, action.dueDate]);
+
+  // Debug logs (després de la declaració de proposedActions)
+  console.log('AnalysisSection - Action status:', action.status);
+  console.log('AnalysisSection - ReadOnly:', readOnly);
+  console.log('AnalysisSection - Proposed actions count:', proposedActions.length);
 
   // Determinar si mostrar controls de verificació
   const showVerificationControls = action.status === 'Pendiente de Comprobación' && !readOnly;
