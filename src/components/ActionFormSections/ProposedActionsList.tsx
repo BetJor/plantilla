@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Trash2, Edit2, Save, X, User, Calendar, Split, Sparkles, Clock } from 'lucide-react';
-import { ProposedActionItem } from '@/types';
+import { type ProposedActionItem } from '@/types';
 import { useGeminiSuggestions } from '@/hooks/useGeminiSuggestions';
 
 interface ProposedActionsListProps {
@@ -76,7 +76,6 @@ const ProposedActionsList = ({
 
   const handleSplitAction = async (actionToSplit: ProposedActionItem) => {
     try {
-      // Crear un mock action object complet per la IA
       const mockAction = {
         id: `mock-${Date.now()}`,
         title: `Divisió d'acció: ${actionToSplit.description.substring(0, 50)}...`,
@@ -102,7 +101,6 @@ const ProposedActionsList = ({
         targetCount: 2
       });
 
-      // Substituir l'acció original per les noves accions
       const updatedActions = actions.filter(action => action.id !== actionToSplit.id);
       onChange([...updatedActions, ...splitActions]);
     } catch (error) {
@@ -142,7 +140,7 @@ const ProposedActionsList = ({
       {actions.length > 0 && (
         <div className="space-y-3">
           {actions.map((action) => (
-            <ProposedActionItem
+            <ActionCard
               key={action.id}
               action={action}
               editingId={editingId}
@@ -246,7 +244,7 @@ const ProposedActionsList = ({
   );
 };
 
-interface ProposedActionItemProps {
+interface ActionCardProps {
   action: ProposedActionItem;
   editingId: string | null;
   onEdit: (updates: Partial<ProposedActionItem>) => void;
@@ -263,7 +261,7 @@ interface ProposedActionItemProps {
   getVerificationStatusText: (status?: string) => string;
 }
 
-const ProposedActionItem = ({
+const ActionCard = ({
   action,
   editingId,
   onEdit,
@@ -278,7 +276,7 @@ const ProposedActionItem = ({
   getStatusColor,
   getVerificationStatusColor,
   getVerificationStatusText
-}: ProposedActionItemProps) => {
+}: ActionCardProps) => {
   const [verificationComments, setVerificationComments] = useState(
     action.verificationComments || ''
   );
