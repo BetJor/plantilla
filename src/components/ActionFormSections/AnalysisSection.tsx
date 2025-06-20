@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { Search, Clock, User, Sparkles, Loader2, Layers } from 'lucide-react';
+import { Search, Clock, User, Sparkles, Loader2, Layers, Zap } from 'lucide-react';
 import { CorrectiveAction, ProposedActionItem } from '@/types';
 import { useGeminiSuggestions } from '@/hooks/useGeminiSuggestions';
 import GeminiApiKeyDialog from '@/components/GeminiApiKeyDialog';
@@ -19,7 +19,7 @@ const AnalysisSection = ({ action, onUpdate, readOnly = false }: AnalysisSection
   const [rootCauses, setRootCauses] = React.useState(action.analysisData?.rootCauses || '');
   const [showApiKeyDialog, setShowApiKeyDialog] = React.useState(false);
   
-  const { generateSuggestion, generateMultipleProposedActions, isLoading, error } = useGeminiSuggestions();
+  const { generateSuggestion, generateMultipleProposedActions, generateAndParseActions, isLoading, error } = useGeminiSuggestions();
 
   // Migrar dades existents de proposedAction a proposedActions si cal
   const proposedActions = React.useMemo(() => {
@@ -65,6 +65,22 @@ const AnalysisSection = ({ action, onUpdate, readOnly = false }: AnalysisSection
         analysisBy: 'current-user'
       }
     });
+  };
+
+  const handleGenerateSmartActions = async () => {
+    try {
+      const newActions = await generateAndParseActions({
+        action,
+        rootCauses: rootCauses.trim() || undefined
+      });
+      
+      handleProposedActionsChange([...proposedActions, ...newActions]);
+    } catch (err) {
+      if (err instanceof Error && err.message.includes('clau d\'API')) {
+        setShowApiKeyDialog(true);
+      }
+      console.error('Error generating smart actions:', err);
+    }
   };
 
   const handleGenerateSuggestion = async () => {
@@ -157,6 +173,21 @@ const AnalysisSection = ({ action, onUpdate, readOnly = false }: AnalysisSection
                     type="button"
                     variant="outline"
                     size="sm"
+                    onClick={handleGenerateSmartActions}
+                    disabled={isLoading}
+                    className="flex items-center gap-1 bg-gradient-to-r from-purple-50 to-blue-50 hover:from-purple-100 hover:to-blue-100 border-purple-200 text-purple-700"
+                  >
+                    {isLoading ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Zap className="w-4 h-4" />
+                    )}
+                    Parsing Intel·ligent
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
                     onClick={handleGenerateSuggestion}
                     disabled={isLoading}
                     className="flex items-center gap-1"
@@ -229,7 +260,7 @@ const AnalysisSection = ({ action, onUpdate, readOnly = false }: AnalysisSection
         onOpenChange={setShowApiKeyDialog}
         onApiKeySet={() => {
           setShowApiKeyDialog(false);
-          handleGenerateSuggestion();
+          handleGenerateSmartActions();
         }}
       />
     </>
