@@ -10,7 +10,7 @@ interface SimilarAction {
 }
 
 interface UseAnalysisSimilarDetectionProps {
-  action?: CorrectiveAction; // Made optional to handle undefined
+  action?: CorrectiveAction;
   isEnabled: boolean;
 }
 
@@ -34,7 +34,8 @@ export const useAnalysisSimilarDetection = ({ action, isEnabled }: UseAnalysisSi
         type: action.type,
         category: action.category,
         centre: action.centre,
-        department: action.department
+        department: action.department,
+        excludeActionId: action.id // Excloure l'acció actual per evitar auto-similitud
       });
 
       setSimilarActions(results);
@@ -62,11 +63,11 @@ export const useAnalysisSimilarDetection = ({ action, isEnabled }: UseAnalysisSi
     if (isEnabled && action && action.status === 'Pendiente de Análisis' && !hasCheckedSimilarity) {
       const timer = setTimeout(() => {
         detectSimilarActions();
-      }, 1000); // Petit delay per evitar cridades excessives
+      }, 1000);
 
       return () => clearTimeout(timer);
     }
-  }, [action?.id, action?.status, isEnabled, hasCheckedSimilarity]); // Use optional chaining for action.id
+  }, [action?.id, action?.status, isEnabled, hasCheckedSimilarity]);
 
   return {
     similarActions,

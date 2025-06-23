@@ -16,7 +16,8 @@ interface SimilarityRequest {
   type: string;
   category: string;
   centre: string;
-  department?: string; // Made optional
+  department?: string;
+  excludeActionId?: string; // Nou paràmetre per excloure una acció específica
 }
 
 export const useSimilarActions = () => {
@@ -62,6 +63,7 @@ export const useSimilarActions = () => {
   const findSimilarActions = async (newAction: SimilarityRequest): Promise<SimilarAction[]> => {
     console.log('findSimilarActions: Iniciant cerca d\'accions similars...');
     console.log('findSimilarActions: Nova acció:', newAction);
+    console.log('findSimilarActions: Excloent acció amb ID:', newAction.excludeActionId);
     
     setIsLoading(true);
     setError(null);
@@ -82,8 +84,15 @@ export const useSimilarActions = () => {
         throw new Error(errorMsg);
       }
 
-      // Preparar les accions existents per comparar
-      const existingActions = actions.filter(action => action.status !== 'Borrador');
+      // Filtrar accions existents i excloure l'acció especificada
+      let existingActions = actions.filter(action => action.status !== 'Borrador');
+      
+      // Excloure l'acció actual si s'especifica l'ID
+      if (newAction.excludeActionId) {
+        existingActions = existingActions.filter(action => action.id !== newAction.excludeActionId);
+        console.log('findSimilarActions: Acció exclosa, accions restants:', existingActions.length);
+      }
+      
       console.log('findSimilarActions: Accions existents per comparar:', existingActions.length);
       
       if (existingActions.length === 0) {
