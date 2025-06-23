@@ -32,7 +32,7 @@ const TabsNavigation = () => {
   };
 
   return (
-    <div className="bg-white border-b border-gray-200 px-6 min-h-[48px] relative z-30">
+    <div className="bg-white border-b border-gray-200 px-6 min-h-[48px]">
       <div className="flex items-center overflow-x-auto scrollbar-hide">
         {tabs.length > 0 ? (
           <div className="flex space-x-1 py-2">

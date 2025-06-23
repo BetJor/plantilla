@@ -33,7 +33,7 @@ const AppSidebar = () => {
   ];
 
   return (
-    <Sidebar className="border-r border-blue-200 top-20 h-[calc(100vh-80px)]">
+    <Sidebar className="border-r border-blue-200">
       <SidebarContent className="bg-white">
         <SidebarGroup>
           <SidebarGroupLabel className="text-blue-800 font-semibold">
