@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -63,16 +62,7 @@ const FloatingActionButtons = ({
   };
 
   const getSaveButtonText = (): string => {
-    switch (action.status) {
-      case 'Borrador':
-        return 'Guardar';
-      case 'Pendiente de Análisis':
-        return 'Guardar i Signar Anàlisi';
-      case 'Pendiente de Cierre':
-        return 'Guardar i Signar Tancament';
-      default:
-        return 'Guardar';
-    }
+    return 'Guardar';
   };
 
   const shouldShowSaveButton = (): boolean => {
