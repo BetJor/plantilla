@@ -3,7 +3,6 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { XCircle, Clock, User, CheckCircle, AlertCircle } from 'lucide-react';
 import { CorrectiveAction } from '@/types';
@@ -12,9 +11,17 @@ interface ClosureSectionProps {
   action: CorrectiveAction;
   onUpdate: (updates: Partial<CorrectiveAction>) => void;
   readOnly?: boolean;
+  saveRef?: React.MutableRefObject<(() => void) | null>;
+  onChangesDetected?: () => void;
 }
 
-const ClosureSection = ({ action, onUpdate, readOnly = false }: ClosureSectionProps) => {
+const ClosureSection = ({ 
+  action, 
+  onUpdate, 
+  readOnly = false,
+  saveRef,
+  onChangesDetected
+}: ClosureSectionProps) => {
   const [closureNotes, setClosureNotes] = React.useState(action.closureData?.closureNotes || '');
   const [effectivenessEvaluation, setEffectivenessEvaluation] = React.useState(action.closureData?.effectivenessEvaluation || '');
   const [isConforme, setIsConforme] = React.useState(action.closureData?.isConforme ?? true);
@@ -35,11 +42,25 @@ const ClosureSection = ({ action, onUpdate, readOnly = false }: ClosureSectionPr
     });
   };
 
+  // Expose save function via ref
+  React.useEffect(() => {
+    if (saveRef) {
+      saveRef.current = handleSave;
+    }
+  }, [saveRef, closureNotes, effectivenessEvaluation, isConforme]);
+
   const isFormValid = closureNotes.trim() && effectivenessEvaluation.trim();
   const isComplete = action.closureData?.closureNotes && action.closureData?.effectivenessEvaluation;
   const hasChanges = closureNotes !== (action.closureData?.closureNotes || '') || 
                      effectivenessEvaluation !== (action.closureData?.effectivenessEvaluation || '') ||
                      isConforme !== (action.closureData?.isConforme ?? true);
+
+  // Notify parent when changes are detected
+  React.useEffect(() => {
+    if (hasChanges && onChangesDetected) {
+      onChangesDetected();
+    }
+  }, [hasChanges, onChangesDetected]);
 
   return (
     <Card className={`${readOnly ? 'bg-gray-50' : ''} ${isComplete ? 'border-green-200' : ''}`}>
@@ -141,12 +162,6 @@ const ClosureSection = ({ action, onUpdate, readOnly = false }: ClosureSectionPr
               )}
             </div>
           </div>
-        )}
-
-        {!readOnly && (
-          <Button onClick={handleSave} disabled={!isFormValid || !hasChanges}>
-            Guardar i Signar Tancament
-          </Button>
         )}
       </CardContent>
     </Card>

@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -20,6 +20,12 @@ const ActionDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { actions, updateAction } = useCorrectiveActions();
+  const [hasPendingChanges, setHasPendingChanges] = useState(false);
+  
+  // Refs to access save functions from child components
+  const descriptionSaveRef = useRef<(() => void) | null>(null);
+  const analysisSaveRef = useRef<(() => void) | null>(null);
+  const closureSaveRef = useRef<(() => void) | null>(null);
   
   console.log('ActionDetail: ID de la ruta:', id);
   console.log('ActionDetail: Accions disponibles:', actions.map(a => ({ id: a.id, title: a.title })));
@@ -77,14 +83,38 @@ const ActionDetail = () => {
 
   const handleStatusChange = (newStatus: CorrectiveAction['status']) => {
     updateAction(action.id, { status: newStatus });
+    setHasPendingChanges(false);
   };
 
   const handleActionUpdate = (updates: Partial<CorrectiveAction>) => {
     updateAction(action.id, updates);
+    setHasPendingChanges(false);
   };
 
   const handleAttachmentsUpdate = (attachments: string[]) => {
     updateAction(action.id, { attachments });
+  };
+
+  const handleSave = () => {
+    // Call the appropriate save function based on current status
+    switch (action.status) {
+      case 'Borrador':
+        if (descriptionSaveRef.current) {
+          descriptionSaveRef.current();
+        }
+        break;
+      case 'Pendiente de Análisis':
+        if (analysisSaveRef.current) {
+          analysisSaveRef.current();
+        }
+        break;
+      case 'Pendiente de Cierre':
+        if (closureSaveRef.current) {
+          closureSaveRef.current();
+        }
+        break;
+    }
+    setHasPendingChanges(false);
   };
 
   const renderCumulativeSections = () => {
@@ -97,6 +127,8 @@ const ActionDetail = () => {
         action={action} 
         onUpdate={handleActionUpdate}
         readOnly={action.status !== 'Borrador'}
+        saveRef={descriptionSaveRef}
+        onChangesDetected={() => setHasPendingChanges(true)}
       />
     );
 
@@ -108,6 +140,8 @@ const ActionDetail = () => {
           action={action} 
           onUpdate={handleActionUpdate}
           readOnly={!['Pendiente de Análisis', 'Pendiente de Comprobación'].includes(action.status)}
+          saveRef={analysisSaveRef}
+          onChangesDetected={() => setHasPendingChanges(true)}
         />
       );
     }
@@ -120,6 +154,8 @@ const ActionDetail = () => {
           action={action} 
           onUpdate={handleActionUpdate}
           readOnly={action.status !== 'Pendiente de Cierre'}
+          saveRef={closureSaveRef}
+          onChangesDetected={() => setHasPendingChanges(true)}
         />
       );
     }
@@ -207,6 +243,8 @@ const ActionDetail = () => {
       <FloatingActionButtons 
         action={action}
         onStatusChange={handleStatusChange}
+        onSave={handleSave}
+        hasPendingChanges={hasPendingChanges}
       />
     </div>
   );

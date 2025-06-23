@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
@@ -13,9 +14,17 @@ interface AnalysisSectionProps {
   action: CorrectiveAction;
   onUpdate: (updates: Partial<CorrectiveAction>) => void;
   readOnly?: boolean;
+  saveRef?: React.MutableRefObject<(() => void) | null>;
+  onChangesDetected?: () => void;
 }
 
-const AnalysisSection = ({ action, onUpdate, readOnly = false }: AnalysisSectionProps) => {
+const AnalysisSection = ({ 
+  action, 
+  onUpdate, 
+  readOnly = false,
+  saveRef,
+  onChangesDetected
+}: AnalysisSectionProps) => {
   const [rootCauses, setRootCauses] = React.useState(action.analysisData?.rootCauses || '');
   const [showApiKeyDialog, setShowApiKeyDialog] = React.useState(false);
   
@@ -78,6 +87,13 @@ const AnalysisSection = ({ action, onUpdate, readOnly = false }: AnalysisSection
     });
   };
 
+  // Expose save function via ref
+  React.useEffect(() => {
+    if (saveRef) {
+      saveRef.current = handleSave;
+    }
+  }, [saveRef, rootCauses, proposedActions]);
+
   const handleProposedActionsChange = (newActions: ProposedActionItem[]) => {
     onUpdate({
       analysisData: {
@@ -136,6 +152,13 @@ const AnalysisSection = ({ action, onUpdate, readOnly = false }: AnalysisSection
   const isComplete = action.analysisData?.rootCauses && (action.analysisData?.proposedActions?.length > 0 || action.analysisData?.proposedAction);
   const hasChanges = rootCauses !== (action.analysisData?.rootCauses || '') || 
                      JSON.stringify(proposedActions) !== JSON.stringify(action.analysisData?.proposedActions || []);
+
+  // Notify parent when changes are detected
+  React.useEffect(() => {
+    if (hasChanges && onChangesDetected) {
+      onChangesDetected();
+    }
+  }, [hasChanges, onChangesDetected]);
 
   return (
     <>
@@ -222,12 +245,6 @@ const AnalysisSection = ({ action, onUpdate, readOnly = false }: AnalysisSection
                 )}
               </div>
             </div>
-          )}
-          
-          {!readOnly && !showVerificationControls && (
-            <Button onClick={handleSave} disabled={!isFormValid || !hasChanges}>
-              Guardar i Signar Anàlisi
-            </Button>
           )}
         </CardContent>
       </Card>

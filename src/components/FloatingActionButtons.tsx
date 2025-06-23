@@ -10,19 +10,23 @@ import {
   DialogTitle 
 } from '@/components/ui/dialog';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { ArrowRight, XCircle, AlertTriangle } from 'lucide-react';
+import { ArrowRight, XCircle, AlertTriangle, Save } from 'lucide-react';
 import { CorrectiveAction } from '@/types';
 import { useWorkflow } from '@/hooks/useWorkflow';
 
 interface FloatingActionButtonsProps {
   action: CorrectiveAction;
   onStatusChange: (newStatus: CorrectiveAction['status']) => void;
+  onSave?: () => void;
+  hasPendingChanges?: boolean;
   user?: any;
 }
 
 const FloatingActionButtons = ({ 
   action, 
-  onStatusChange, 
+  onStatusChange,
+  onSave,
+  hasPendingChanges = false,
   user = { id: 'current-user', specificRoles: ['direccio-qualitat'] }
 }: FloatingActionButtonsProps) => {
   const [isAnnulDialogOpen, setIsAnnulDialogOpen] = useState(false);
@@ -56,6 +60,25 @@ const FloatingActionButtons = ({
       default:
         return '';
     }
+  };
+
+  const getSaveButtonText = (): string => {
+    switch (action.status) {
+      case 'Borrador':
+        return 'Guardar';
+      case 'Pendiente de Análisis':
+        return 'Guardar i Signar Anàlisi';
+      case 'Pendiente de Cierre':
+        return 'Guardar i Signar Tancament';
+      default:
+        return 'Guardar';
+    }
+  };
+
+  const shouldShowSaveButton = (): boolean => {
+    return ['Borrador', 'Pendiente de Análisis', 'Pendiente de Cierre'].includes(action.status) && 
+           hasPendingChanges && 
+           canEditInStatus(action.status);
   };
 
   const canAdvance = (): boolean => {
@@ -143,6 +166,12 @@ const FloatingActionButtons = ({
     setIsAnnulDialogOpen(false);
   };
 
+  const handleSave = () => {
+    if (onSave) {
+      onSave();
+    }
+  };
+
   // No mostrar botons si l'acció està tancada o anul·lada
   if (['Cerrado', 'Anulada'].includes(action.status)) {
     return null;
@@ -194,6 +223,25 @@ const FloatingActionButtons = ({
               </Badge>
             )}
           </div>
+        )}
+
+        {/* Botó de guardar */}
+        {shouldShowSaveButton() && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button 
+                onClick={handleSave}
+                size="lg"
+                className="h-12 px-4 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white shadow-lg transition-all duration-300 hover:scale-105"
+              >
+                <Save className="w-4 h-4 mr-2" />
+                {getSaveButtonText()}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="left">
+              <p>Guardar els canvis realitzats</p>
+            </TooltipContent>
+          </Tooltip>
         )}
 
         {/* Botó d'anul·lació */}

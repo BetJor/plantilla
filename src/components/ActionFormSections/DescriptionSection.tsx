@@ -4,7 +4,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
 import { FileText, Clock, User } from 'lucide-react';
 import { CorrectiveAction } from '@/types';
 import CategorySelectors from './CategorySelectors';
@@ -21,9 +20,17 @@ interface DescriptionSectionProps {
   action: CorrectiveAction;
   onUpdate: (updates: Partial<CorrectiveAction>) => void;
   readOnly?: boolean;
+  saveRef?: React.MutableRefObject<(() => void) | null>;
+  onChangesDetected?: () => void;
 }
 
-const DescriptionSection = ({ action, onUpdate, readOnly = false }: DescriptionSectionProps) => {
+const DescriptionSection = ({ 
+  action, 
+  onUpdate, 
+  readOnly = false,
+  saveRef,
+  onChangesDetected
+}: DescriptionSectionProps) => {
   const [origen, setOrigen] = React.useState<CorrectiveAction['origen']>(action.origen);
   const [description, setDescription] = React.useState(action.description);
   const [selectedType, setSelectedType] = React.useState(action.type || '');
@@ -74,6 +81,13 @@ const DescriptionSection = ({ action, onUpdate, readOnly = false }: DescriptionS
     });
   };
 
+  // Expose save function via ref
+  React.useEffect(() => {
+    if (saveRef) {
+      saveRef.current = handleSave;
+    }
+  }, [saveRef, origen, description, selectedType, selectedCategory, selectedSubcategory, auditDate, sector, selectedAreas, responsableAnalisis]);
+
   const isComplete = action.description.trim().length > 0 && 
                     action.type && 
                     (action.category || selectedCategory) && 
@@ -89,6 +103,13 @@ const DescriptionSection = ({ action, onUpdate, readOnly = false }: DescriptionS
                     sector !== (action.sector || '') ||
                     JSON.stringify(selectedAreas) !== JSON.stringify(action.areasImplicadas || []) ||
                     responsableAnalisis !== (action.responsableAnalisis || '');
+
+  // Notify parent when changes are detected
+  React.useEffect(() => {
+    if (hasChanges && onChangesDetected) {
+      onChangesDetected();
+    }
+  }, [hasChanges, onChangesDetected]);
 
   return (
     <Card className={`${readOnly ? 'bg-gray-50' : ''} ${isComplete ? 'border-green-200' : ''}`}>
@@ -199,12 +220,6 @@ const DescriptionSection = ({ action, onUpdate, readOnly = false }: DescriptionS
             className={readOnly ? 'bg-gray-100' : ''}
           />
         </div>
-
-        {!readOnly && (
-          <Button onClick={handleSave} disabled={!hasChanges}>
-            Guardar
-          </Button>
-        )}
       </CardContent>
     </Card>
   );
