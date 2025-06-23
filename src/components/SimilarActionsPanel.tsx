@@ -98,7 +98,7 @@ const SimilarActionsPanel = ({
         <Alert className="border-red-200 bg-red-50">
           <AlertTriangle className="h-4 w-4 text-red-600" />
           <AlertDescription className="text-red-800">
-            <strong>Atenció:</strong> S'han detectat accions molt similars (>80%). 
+            <strong>Atenció:</strong> S'han detectat accions molt similars (&gt;80%). 
             Considera unir-te a una acció existent abans de crear una de nova.
           </AlertDescription>
         </Alert>

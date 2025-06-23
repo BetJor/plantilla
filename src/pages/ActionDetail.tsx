@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, AlertCircle, Paperclip } from 'lucide-react';
+import { ArrowLeft, AlertCircle, Paperclip, MessageSquare, Activity } from 'lucide-react';
 import { useCorrectiveActions } from '@/hooks/useCorrectiveActions';
 import { CorrectiveAction } from '@/types';
 import DescriptionSection from '@/components/ActionFormSections/DescriptionSection';
@@ -14,13 +14,14 @@ import CommentsSection from '@/components/ActionFormSections/CommentsSection';
 import StatusProgress from '@/components/ActionFormSections/StatusProgress';
 import ControlPanelSection from '@/components/ControlPanelSection';
 import FloatingActionButtons from '@/components/FloatingActionButtons';
+import CollapsibleSection from '@/components/ui/CollapsibleSection';
 import { useToast } from '@/hooks/use-toast';
 
 const ActionDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { actions, updateAction } = useCorrectiveActions();
+  const { actions, updateAction, comments } = useCorrectiveActions();
   const [hasPendingChanges, setHasPendingChanges] = useState(false);
   
   // Refs to access save functions from child components
@@ -207,6 +208,11 @@ const ActionDetail = () => {
     return sections;
   };
 
+  // Get counts for summaries
+  const actionComments = comments.filter(c => c.actionId === action.id);
+  const attachmentCount = action.attachments.length;
+  const commentCount = actionComments.length;
+
   return (
     <div className="space-y-6 pb-20">
       <div className="flex items-center justify-between">
@@ -236,33 +242,62 @@ const ActionDetail = () => {
         </div>
 
         <div className="space-y-6">
-          <StatusProgress action={action} />
+          <CollapsibleSection
+            id="status-progress"
+            title="Progrés de l'Acció"
+            defaultOpen={true}
+            summary={<span>Estat actual: <strong>{action.status}</strong></span>}
+          >
+            <StatusProgress action={action} />
+          </CollapsibleSection>
 
-          <ControlPanelSection 
-            action={action} 
-            onUpdate={handleActionUpdate}
-          />
+          <CollapsibleSection
+            id="control-panel"
+            title="Control Panel"
+            icon={<Activity className="w-5 h-5" />}
+            defaultOpen={false}
+            summary={
+              <div className="flex items-center gap-4 text-sm">
+                <span>Assignat: <strong>{action.assignedTo}</strong></span>
+                <span>•</span>
+                <span>Centre: <strong>{action.centre}</strong></span>
+              </div>
+            }
+          >
+            <ControlPanelSection 
+              action={action} 
+              onUpdate={handleActionUpdate}
+            />
+          </CollapsibleSection>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Paperclip className="w-5 h-5 mr-2" />
-                Adjunts
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <AttachmentsSection
-                attachments={action.attachments}
-                onUpdate={handleAttachmentsUpdate}
-                readOnly={['Cerrado', 'Anulada'].includes(action.status)}
-              />
-            </CardContent>
-          </Card>
+          <CollapsibleSection
+            id="attachments"
+            title="Adjunts"
+            icon={<Paperclip className="w-5 h-5" />}
+            badge={attachmentCount > 0 && <Badge variant="secondary" className="ml-2">{attachmentCount}</Badge>}
+            defaultOpen={attachmentCount > 0}
+            summary={attachmentCount > 0 ? `${attachmentCount} fitxer${attachmentCount > 1 ? 's' : ''}` : 'Cap adjunt'}
+          >
+            <AttachmentsSection
+              attachments={action.attachments}
+              onUpdate={handleAttachmentsUpdate}
+              readOnly={['Cerrado', 'Anulada'].includes(action.status)}
+            />
+          </CollapsibleSection>
 
-          <CommentsSection 
-            actionId={action.id} 
-            readOnly={['Cerrado', 'Anulada'].includes(action.status)}
-          />
+          <CollapsibleSection
+            id="comments"
+            title="Comentaris"
+            icon={<MessageSquare className="w-5 h-5" />}
+            badge={commentCount > 0 && <Badge variant="secondary" className="ml-2">{commentCount}</Badge>}
+            defaultOpen={commentCount > 0}
+            summary={commentCount > 0 ? `${commentCount} comentari${commentCount > 1 ? 's' : ''}` : 'Sense comentaris'}
+          >
+            <CommentsSection 
+              actionId={action.id} 
+              readOnly={['Cerrado', 'Anulada'].includes(action.status)}
+            />
+          </CollapsibleSection>
         </div>
       </div>
 
