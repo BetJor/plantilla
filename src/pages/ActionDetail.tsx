@@ -1,10 +1,9 @@
-
 import React, { useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, AlertCircle, Paperclip, MessageSquare, Activity, TrendingUp } from 'lucide-react';
+import { ArrowLeft, AlertCircle, Paperclip, MessageSquare, Activity, TrendingUp, Search } from 'lucide-react';
 import { useCorrectiveActions } from '@/hooks/useCorrectiveActions';
 import { CorrectiveAction } from '@/types';
 import DescriptionSection from '@/components/ActionFormSections/DescriptionSection';
@@ -18,6 +17,16 @@ import FloatingActionButtons from '@/components/FloatingActionButtons';
 import DraggableSections from '@/components/DraggableSections';
 import { SectionConfig } from '@/hooks/useDraggableSections';
 import { useToast } from '@/hooks/use-toast';
+import { useAutoSimilarDetection } from '@/hooks/useAutoSimilarDetection';
+import { useAnalysisSimilarDetection } from '@/hooks/useAnalysisSimilarDetection';
+import { usePermissions } from '@/hooks/usePermissions';
+import { toast } from '@/hooks/use-toast';
+import { ACTION_TYPES } from '@/types/categories';
+import CategorySelectors from '@/components/ActionFormSections/CategorySelectors';
+import ResponsibleAssignment from '@/components/ActionFormSections/ResponsibleAssignment';
+import SpecificFields from '@/components/ActionFormSections/SpecificFields';
+import SimilarActionsPanel from '@/components/SimilarActionsPanel';
+import StatusControls from '@/components/ActionFormSections/StatusControls';
 
 const ActionDetail = () => {
   const { id } = useParams();
@@ -37,6 +46,20 @@ const ActionDetail = () => {
   console.log('ActionDetail: Accions disponibles:', actions.map(a => ({ id: a.id, title: a.title })));
   
   const action = actions.find(a => a.id === id);
+  
+  // Hook per a la detecció d'accions similars durant l'anàlisi
+  const {
+    similarActions,
+    isDetecting,
+    hasCheckedSimilarity,
+    hasHighSimilarity,
+    detectSimilarActions,
+    clearDetection,
+    markAsReviewed
+  } = useAnalysisSimilarDetection({
+    action: action!,
+    isEnabled: !!action && action.status === 'Pendiente de Análisis'
+  });
   
   console.log('ActionDetail: Acció trobada:', action ? `${action.id} - ${action.title}` : 'No trobada');
 
@@ -108,6 +131,21 @@ const ActionDetail = () => {
 
   const handleAttachmentsUpdate = (attachments: string[]) => {
     updateAction(action.id, { attachments });
+  };
+
+  const handleJoinAction = (actionId: string) => {
+    window.open(`/actions/${actionId}`, '_blank');
+    toast({
+      title: "Navegant a l'acció",
+      description: "S'ha obert l'acció en una nova pestanya per revisar-la.",
+    });
+  };
+
+  const handleCreateBasedOn = (baseAction: any) => {
+    toast({
+      title: "Funcionalitat no disponible",
+      description: "Aquesta funcionalitat està disponible durant la creació d'accions noves.",
+    });
   };
 
   const handleSave = () => {
@@ -228,7 +266,18 @@ const ActionDetail = () => {
           <span>Centre: <strong>{action.centre}</strong></span>
         </div>
       ),
-      content: <ControlPanelSection action={action} onUpdate={handleActionUpdate} />
+      content: (
+        <div className="space-y-4">
+          <ControlPanelSection action={action} onUpdate={handleActionUpdate} />
+          <StatusControls 
+            action={action}
+            onStatusChange={handleStatusChange}
+            hasCheckedSimilarity={hasCheckedSimilarity}
+            onCheckSimilarity={detectSimilarActions}
+            isCheckingSimilarity={isDetecting}
+          />
+        </div>
+      )
     },
     {
       id: 'attachments',
@@ -260,6 +309,31 @@ const ActionDetail = () => {
       )
     }
   ];
+
+  // Afegir secció d'accions similars si és necessari
+  if (action.status === 'Pendiente de Análisis' && (similarActions.length > 0 || isDetecting)) {
+    sidebarSections.splice(2, 0, {
+      id: 'similar-actions',
+      title: 'Accions Similars',
+      icon: <Search className="w-5 h-5" />,
+      badge: similarActions.length > 0 ? <Badge variant={hasHighSimilarity ? "destructive" : "secondary"} className="ml-2">{similarActions.length}</Badge> : undefined,
+      defaultOpen: true,
+      summary: isDetecting ? 'Cercant similituds...' : similarActions.length > 0 ? `${similarActions.length} similitud${similarActions.length > 1 ? 's' : ''} trobada${similarActions.length > 1 ? 's' : ''}` : 'Sense similituds',
+      content: (
+        <SimilarActionsPanel
+          similarActions={similarActions}
+          isDetecting={isDetecting}
+          hasHighSimilarity={hasHighSimilarity}
+          onJoinAction={handleJoinAction}
+          onCreateBasedOn={handleCreateBasedOn}
+          onClearDetection={() => {
+            clearDetection();
+            markAsReviewed();
+          }}
+        />
+      )
+    });
+  }
 
   return (
     <div className="space-y-6 pb-20">

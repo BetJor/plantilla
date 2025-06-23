@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,20 +10,26 @@ import {
   DialogTitle, 
   DialogTrigger 
 } from '@/components/ui/dialog';
-import { ArrowRight, XCircle, AlertTriangle } from 'lucide-react';
+import { ArrowRight, XCircle, AlertTriangle, Search } from 'lucide-react';
 import { CorrectiveAction } from '@/types';
 import { useWorkflow } from '@/hooks/useWorkflow';
 
 interface StatusControlsProps {
   action: CorrectiveAction;
   onStatusChange: (newStatus: CorrectiveAction['status']) => void;
-  user?: any; // Mock user per testing
+  user?: any;
+  hasCheckedSimilarity?: boolean;
+  onCheckSimilarity?: () => void;
+  isCheckingSimilarity?: boolean;
 }
 
 const StatusControls = ({ 
   action, 
   onStatusChange, 
-  user = { id: 'current-user', specificRoles: ['direccio-qualitat'] }
+  user = { id: 'current-user', specificRoles: ['direccio-qualitat'] },
+  hasCheckedSimilarity = false,
+  onCheckSimilarity,
+  isCheckingSimilarity = false
 }: StatusControlsProps) => {
   const [isAnnulDialogOpen, setIsAnnulDialogOpen] = useState(false);
   const { canEditInStatus } = useWorkflow({ user, action });
@@ -66,7 +73,7 @@ const StatusControls = ({
                action.subCategory.trim().length > 0 &&
                !!action.responsableAnalisis;
       case 'Pendiente de Análisis':
-        // Només validar anàlisi de causes i accions proposades amb dades
+        // Afegir validació de similitud
         const hasRootCauses = !!(action.analysisData?.rootCauses?.trim());
         const proposedActions = action.analysisData?.proposedActions || [];
         const hasValidProposedActions = proposedActions.length > 0 && 
@@ -76,9 +83,8 @@ const StatusControls = ({
             proposedAction.dueDate
           );
         
-        return hasRootCauses && hasValidProposedActions;
+        return hasRootCauses && hasValidProposedActions && hasCheckedSimilarity;
       case 'Pendiente de Comprobación':
-        // Verificar que totes les accions proposades han estat verificades
         const proposedActionsForVerification = action.analysisData?.proposedActions || [];
         const allActionsVerified = proposedActionsForVerification.every(proposedAction => 
           proposedAction.verificationStatus && proposedAction.verificationStatus !== 'not-verified'
@@ -123,6 +129,10 @@ const StatusControls = ({
             missingAnalysis.push(`dades completes per ${incompleteActions.length} accions`);
           }
         }
+
+        if (!hasCheckedSimilarity) {
+          missingAnalysis.push('revisió d\'accions similars');
+        }
         
         return `Cal completar: ${missingAnalysis.join(', ')}`;
       case 'Pendiente de Comprobación':
@@ -166,7 +176,6 @@ const StatusControls = ({
     return null;
   }
 
-  // Si l'usuari no pot editar en aquest estat, només mostrar informació
   if (!canEditInStatus(action.status)) {
     return (
       <Card>
@@ -190,6 +199,27 @@ const StatusControls = ({
         <CardTitle>Accions d'Estat</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
+        {/* Botó de revisió de similituds per a "Pendiente de Análisis" */}
+        {action.status === 'Pendiente de Análisis' && onCheckSimilarity && (
+          <div className="space-y-2">
+            <Button 
+              onClick={onCheckSimilarity}
+              disabled={isCheckingSimilarity}
+              variant={hasCheckedSimilarity ? "secondary" : "outline"}
+              className="w-full"
+            >
+              <Search className="w-4 h-4 mr-2" />
+              {isCheckingSimilarity ? 'Cercant...' : hasCheckedSimilarity ? 'Similituds Revisades' : 'Revisar Accions Similars'}
+            </Button>
+            {!hasCheckedSimilarity && (
+              <p className="text-sm text-orange-600 flex items-center">
+                <AlertTriangle className="w-4 h-4 mr-1" />
+                Cal revisar accions similars abans de continuar
+              </p>
+            )}
+          </div>
+        )}
+
         {nextStatus && (
           <div className="space-y-2">
             <Button 

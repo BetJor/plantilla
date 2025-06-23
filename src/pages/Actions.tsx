@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,7 +9,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Plus, Search, Filter, Eye, Database } from 'lucide-react';
 import { useCorrectiveActions } from '@/hooks/useCorrectiveActions';
-import { useAutoSimilarDetection } from '@/hooks/useAutoSimilarDetection';
 import { usePermissions } from '@/hooks/usePermissions';
 import { toast } from '@/hooks/use-toast';
 import { ACTION_TYPES } from '@/types/categories';
@@ -17,23 +16,15 @@ import CategorySelectors from '@/components/ActionFormSections/CategorySelectors
 import ResponsibleAssignment from '@/components/ActionFormSections/ResponsibleAssignment';
 import SpecificFields from '@/components/ActionFormSections/SpecificFields';
 import AttachmentsSection from '@/components/ActionFormSections/AttachmentsSection';
-import SimilarActionsPanel from '@/components/SimilarActionsPanel';
 import { CorrectiveAction } from '@/types';
 
 const Actions = () => {
   const { actions, addAction, addTestActions, updateAction } = useCorrectiveActions();
-  const { 
-    similarActions, 
-    isDetecting, 
-    debouncedDetect, 
-    clearDetection, 
-    hasHighSimilarity 
-  } = useAutoSimilarDetection();
   
   // Mock user per testing - en una implementació real vindria del context d'autenticació
   const mockUser = {
     id: 'current-user',
-    name: 'Usuari Test',
+    name: 'Usu aria Test',
     email: 'test@example.com',
     role: 'admin' as const,
     centre: 'Hospital Central Barcelona',
@@ -60,49 +51,8 @@ const Actions = () => {
     attachments: [] as string[]
   });
 
-  // Auto-detect similar actions when form data changes
-  useEffect(() => {
-    if (formData.title.trim().length > 3 && formData.description.trim().length > 10) {
-      debouncedDetect({
-        title: formData.title,
-        description: formData.description,
-        type: formData.type,
-        category: formData.category,
-        centre: formData.centre,
-        department: mockUser.department
-      });
-    }
-  }, [formData.title, formData.description, formData.type, formData.category, formData.centre, debouncedDetect]);
-
   const updateFormData = (updates: Partial<typeof formData>) => {
     setFormData(prev => ({ ...prev, ...updates }));
-  };
-
-  const handleJoinAction = (actionId: string) => {
-    // Navegar a l'acció per unir-s'hi
-    window.open(`/actions/${actionId}`, '_blank');
-    toast({
-      title: "Navegant a l'acció",
-      description: "S'ha obert l'acció en una nova pestanya per revisar-la.",
-    });
-  };
-
-  const handleCreateBasedOn = (baseAction: any) => {
-    // Pre-omplir el formulari amb dades de l'acció base
-    updateFormData({
-      type: baseAction.type,
-      category: baseAction.category,
-      centre: baseAction.centre,
-      priority: baseAction.priority || 'mitjana',
-      // Mantenir títol i descripció de l'usuari però suggerir millores
-    });
-    
-    clearDetection();
-    
-    toast({
-      title: "Plantilla aplicada",
-      description: "S'han aplicat les dades de l'acció similar al formulari.",
-    });
   };
 
   const handleTypeChange = (type: string) => {
@@ -166,16 +116,6 @@ const Actions = () => {
   const handleSaveDraft = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Verificar alertes de similitud alta abans de guardar
-    if (hasHighSimilarity) {
-      const shouldContinue = window.confirm(
-        'S\'han detectat accions molt similars. Estàs segur que vols crear aquesta nova acció en lloc d\'unir-te a una existent?'
-      );
-      if (!shouldContinue) {
-        return;
-      }
-    }
-    
     const form = e.target as HTMLFormElement;
     const submitButtons = form.querySelectorAll('button');
     submitButtons.forEach(btn => btn.disabled = true);
@@ -216,8 +156,6 @@ const Actions = () => {
       attachments: []
     });
     
-    clearDetection();
-    
     toast({
       title: "Borrador guardat",
       description: "El borrador s'ha guardat correctament."
@@ -230,16 +168,6 @@ const Actions = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Verificar alertes de similitud alta abans de crear
-    if (hasHighSimilarity) {
-      const shouldContinue = window.confirm(
-        'S\'han detectat accions molt similars. Estàs segur que vols crear aquesta nova acció en lloc d\'unir-te a una existent?'
-      );
-      if (!shouldContinue) {
-        return;
-      }
-    }
     
     const form = e.target as HTMLFormElement;
     const submitButtons = form.querySelectorAll('button');
@@ -280,7 +208,6 @@ const Actions = () => {
       attachments: []
     });
     setShowCreateForm(false);
-    clearDetection();
     
     setTimeout(() => {
       submitButtons.forEach(btn => btn.disabled = false);
@@ -318,112 +245,93 @@ const Actions = () => {
       </div>
 
       {showCreateForm && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2">
-            <Card className="border-blue-200">
-              <CardHeader className="bg-blue-50">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <CardTitle className="text-blue-800">Crear Nova Acció Correctiva</CardTitle>
-                    <Badge variant="secondary" className="bg-purple-100 text-purple-800 border-purple-300">
-                      Estat: Borrador
-                    </Badge>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="p-6">
-                <form className="space-y-6">
-                  <CategorySelectors
-                    selectedType={formData.type}
-                    selectedCategory={formData.category}
-                    selectedSubcategory={formData.subCategory}
-                    onTypeChange={handleTypeChange}
-                    onCategoryChange={handleCategoryChange}
-                    onSubcategoryChange={handleSubcategoryChange}
-                    currentStatus="Borrador"
-                    allowedTypes={allowedActionTypes.map(t => t.code)}
-                  />
-                  
-                  <SpecificFields
-                    actionType={formData.type}
-                    centre={formData.centre}
-                    department=""
-                    origen={formData.origen}
-                    areasImplicadas={formData.areasImplicadas}
-                    areasHospital={formData.areasHospital}
-                    onFieldChange={handleFieldChange}
-                    user={mockUser}
-                    isDraft={true}
-                  />
+        <Card className="border-blue-200">
+          <CardHeader className="bg-blue-50">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <CardTitle className="text-blue-800">Crear Nova Acció Correctiva</CardTitle>
+                <Badge variant="secondary" className="bg-purple-100 text-purple-800 border-purple-300">
+                  Estat: Borrador
+                </Badge>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="p-6">
+            <form className="space-y-6">
+              <CategorySelectors
+                selectedType={formData.type}
+                selectedCategory={formData.category}
+                selectedSubcategory={formData.subCategory}
+                onTypeChange={handleTypeChange}
+                onCategoryChange={handleCategoryChange}
+                onSubcategoryChange={handleSubcategoryChange}
+                currentStatus="Borrador"
+                allowedTypes={allowedActionTypes.map(t => t.code)}
+              />
+              
+              <SpecificFields
+                actionType={formData.type}
+                centre={formData.centre}
+                department=""
+                origen={formData.origen}
+                areasImplicadas={formData.areasImplicadas}
+                areasHospital={formData.areasHospital}
+                onFieldChange={handleFieldChange}
+                user={mockUser}
+                isDraft={true}
+              />
 
-                  <div>
-                    <Label htmlFor="title" className="text-gray-700 font-medium">Títol</Label>
-                    <Input
-                      id="title"
-                      value={formData.title}
-                      onChange={(e) => updateFormData({ title: e.target.value })}
-                      required
-                      className="mt-1"
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="description" className="text-gray-700 font-medium">Descripció</Label>
-                    <Textarea
-                      id="description"
-                      value={formData.description}
-                      onChange={(e) => updateFormData({ description: e.target.value })}
-                      required
-                      className="mt-1"
-                    />
-                  </div>
+              <div>
+                <Label htmlFor="title" className="text-gray-700 font-medium">Títol</Label>
+                <Input
+                  id="title"
+                  value={formData.title}
+                  onChange={(e) => updateFormData({ title: e.target.value })}
+                  required
+                  className="mt-1"
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="description" className="text-gray-700 font-medium">Descripció</Label>
+                <Textarea
+                  id="description"
+                  value={formData.description}
+                  onChange={(e) => updateFormData({ description: e.target.value })}
+                  required
+                  className="mt-1"
+                />
+              </div>
 
-                  <ResponsibleAssignment
-                    actionType={formData.type}
-                    currentStatus="Borrador"
-                    responsableAnalisis={formData.responsableAnalisis}
-                    onResponsableChange={handleResponsableChange}
-                    onDateChange={() => {}}
-                    user={mockUser}
-                  />
+              <ResponsibleAssignment
+                actionType={formData.type}
+                currentStatus="Borrador"
+                responsableAnalisis={formData.responsableAnalisis}
+                onResponsableChange={handleResponsableChange}
+                onDateChange={() => {}}
+                user={mockUser}
+              />
 
-                  <AttachmentsSection
-                    attachments={formData.attachments}
-                    onUpdate={handleAttachmentsChange}
-                    readOnly={false}
-                  />
-                  
-                  <div className="flex gap-4 justify-end">
-                    <Button type="button" variant="outline" onClick={() => {
-                      setShowCreateForm(false);
-                      clearDetection();
-                    }}>
-                      Cancel·lar
-                    </Button>
-                    <Button type="button" variant="outline" onClick={handleSaveDraft}>
-                      Guardar
-                    </Button>
-                    <Button type="button" onClick={handleSubmit} className="bg-blue-600 hover:bg-blue-700">
-                      Crear Acció
-                    </Button>
-                  </div>
-                </form>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Panell lateral per a accions similars */}
-          <div className="space-y-4">
-            <SimilarActionsPanel
-              similarActions={similarActions}
-              isDetecting={isDetecting}
-              hasHighSimilarity={hasHighSimilarity}
-              onJoinAction={handleJoinAction}
-              onCreateBasedOn={handleCreateBasedOn}
-              onClearDetection={clearDetection}
-            />
-          </div>
-        </div>
+              <AttachmentsSection
+                attachments={formData.attachments}
+                onUpdate={handleAttachmentsChange}
+                readOnly={false}
+              />
+              
+              <div className="flex gap-4 justify-end">
+                <Button type="button" variant="outline" onClick={() => setShowCreateForm(false)}>
+                  Cancel·lar
+                </Button>
+                <Button type="button" variant="outline" onClick={handleSaveDraft}>
+                  Guardar
+                </Button>
+                <Button type="button" onClick={handleSubmit} className="bg-blue-600 hover:bg-blue-700">
+                  Crear Acció
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
       )}
 
       {!showCreateForm && (
