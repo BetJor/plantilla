@@ -15,8 +15,8 @@ interface SpecificFieldsProps {
   areasImplicadas?: string[];
   areasHospital?: string[];
   onFieldChange: (field: string, value: any) => void;
-  user: any; // Mock user per testing
-  isDraft?: boolean; // Nou paràmetre per identificar si és borrador
+  user: any;
+  isDraft?: boolean;
 }
 
 const SpecificFields = ({
@@ -28,7 +28,7 @@ const SpecificFields = ({
   areasHospital = [],
   onFieldChange,
   user = { specificRoles: ['direccio-qualitat'] },
-  isDraft = true // Per defecte és borrador quan es crea
+  isDraft = true
 }: SpecificFieldsProps) => {
   const { getRequiredFields, getAvailableCentres } = useWorkflow({ user });
   const requiredFields = getRequiredFields(actionType);
@@ -48,13 +48,13 @@ const SpecificFields = ({
 
   const originOptions = {
     'sau': ['usuario-interno', 'usuario-externo'],
-    'ac-qualitat-total': ['auditoria', 'seguimiento-indicadores', 'revision-sistema', 'incidencias', 'otros'],
-    'acm-h': ['auditoria', 'incidencias', 'revision-sistema'],
-    'acm-isl': ['auditoria', 'incidencias', 'revision-sistema'],
-    'acm-ot': ['auditoria', 'incidencias', 'revision-sistema'],
+    'ac-qualitat-total': ['Auditoria', 'Seguimiento Indicadores/objetivos', 'Revisión del sistema', 'Incidencias', 'Otros'],
+    'acm-h': ['Auditoria', 'Incidencias', 'Revisión del sistema'],
+    'acm-isl': ['Auditoria', 'Incidencias', 'Revisión del sistema'],
+    'acm-ot': ['Auditoria', 'Incidencias', 'Revisión del sistema'],
     'amsgp': ['auditoria-interna', 'auditoria-externa', 'incidencias', 'verificaciones'],
-    'acsgsi': ['auditoria', 'incidencias'],
-    'acpsi': ['auditoria', 'incidencias']
+    'acsgsi': ['Auditoria', 'Incidencias'],
+    'acpsi': ['Auditoria', 'Incidencias']
   };
 
   const handleAreaToggle = (area: string, type: 'functional' | 'hospital') => {
@@ -91,7 +91,6 @@ const SpecificFields = ({
             </Select>
           </div>
 
-          {/* El camp departament només es mostra si NO és borrador */}
           {!isDraft && (
             <div>
               <Label htmlFor="department">Departament</Label>
@@ -108,14 +107,14 @@ const SpecificFields = ({
         {originOptions[actionType as keyof typeof originOptions] && (
           <div>
             <Label htmlFor="origin">Origen</Label>
-            <Select value={origin} onValueChange={(value) => onFieldChange('origin', value)}>
+            <Select value={origin} onValueChange={(value) => onFieldChange('origen', value)}>
               <SelectTrigger className="mt-1">
                 <SelectValue placeholder="Selecciona origen" />
               </SelectTrigger>
               <SelectContent>
                 {originOptions[actionType as keyof typeof originOptions]?.map((opt) => (
                   <SelectItem key={opt} value={opt}>
-                    {opt.replace('-', ' ').toUpperCase()}
+                    {opt}
                   </SelectItem>
                 ))}
               </SelectContent>

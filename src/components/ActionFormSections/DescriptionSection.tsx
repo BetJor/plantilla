@@ -37,6 +37,21 @@ const DescriptionSection = ({ action, onUpdate, readOnly = false }: DescriptionS
   const [responsableAnalisis, setResponsableAnalisis] = React.useState(action.responsableAnalisis || '');
   const [attachments, setAttachments] = React.useState<string[]>(action.attachments || []);
 
+  // Carregar dades des de l'acció quan canviï
+  React.useEffect(() => {
+    setOrigen(action.origen || '');
+    setAssumpte(action.assumpte || '');
+    setDescription(action.description);
+    setSelectedType(action.type || '');
+    setSelectedCategory(action.category || '');
+    setSelectedSubcategory(action.subCategory || '');
+    setAuditDate(action.auditDate || '');
+    setSector(action.sector || '');
+    setSelectedAreas(action.areasImplicadas || []);
+    setResponsableAnalisis(action.responsableAnalisis || '');
+    setAttachments(action.attachments || []);
+  }, [action]);
+
   const origenOptions = [
     'Auditoria',
     'Incidencias',
@@ -46,8 +61,11 @@ const DescriptionSection = ({ action, onUpdate, readOnly = false }: DescriptionS
   ];
 
   const handleSave = () => {
+    // Validar que origen sigui un valor vàlid
+    const validatedOrigen = origen && origenOptions.includes(origen) ? origen as CorrectiveAction['origen'] : undefined;
+    
     onUpdate({ 
-      origen: origen as CorrectiveAction['origen'],
+      origen: validatedOrigen,
       assumpte,
       description,
       type: selectedType,

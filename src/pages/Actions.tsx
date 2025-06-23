@@ -16,7 +16,9 @@ import { ACTION_TYPES } from '@/types/categories';
 import CategorySelectors from '@/components/ActionFormSections/CategorySelectors';
 import ResponsibleAssignment from '@/components/ActionFormSections/ResponsibleAssignment';
 import SpecificFields from '@/components/ActionFormSections/SpecificFields';
+import AttachmentsSection from '@/components/ActionFormSections/AttachmentsSection';
 import SimilarActionsDialog from '@/components/SimilarActionsDialog';
+import { CorrectiveAction } from '@/types';
 
 const Actions = () => {
   const { actions, addAction, addTestActions } = useCorrectiveActions();
@@ -47,10 +49,12 @@ const Actions = () => {
     subCategory: '',
     priority: 'mitjana' as const,
     centre: '',
-    origen: '',
+    origen: '' as CorrectiveAction['origen'],
+    assumpte: '',
     areasImplicadas: [] as string[],
     areasHospital: [] as string[],
-    responsableAnalisis: ''
+    responsableAnalisis: '',
+    attachments: [] as string[]
   });
 
   const updateFormData = (updates: Partial<typeof formData>) => {
@@ -75,6 +79,10 @@ const Actions = () => {
 
   const handleFieldChange = (field: string, value: any) => {
     updateFormData({ [field]: value });
+  };
+
+  const handleAttachmentsChange = (attachments: string[]) => {
+    updateFormData({ attachments });
   };
 
   const getStatusBadgeStyle = (status: string) => {
@@ -175,18 +183,33 @@ const Actions = () => {
     e.preventDefault();
     
     // Prevenir múltiples submissions
-    const button = e.target as HTMLFormElement;
-    const submitButton = button.querySelector('button[type="button"]') as HTMLButtonElement;
-    if (submitButton) {
-      submitButton.disabled = true;
-    }
+    const form = e.target as HTMLFormElement;
+    const submitButtons = form.querySelectorAll('button');
+    submitButtons.forEach(btn => btn.disabled = true);
+    
+    // Validar que origen sigui un valor vàlid si està definit
+    const validatedOrigen = formData.origen && 
+      ['Auditoria', 'Incidencias', 'Seguimiento Indicadores/objetivos', 'Revisión del sistema', 'Otros'].includes(formData.origen) 
+      ? formData.origen 
+      : undefined;
     
     addAction({
-      ...formData,
+      title: formData.title,
+      description: formData.description,
+      type: formData.type,
+      category: formData.category,
+      subCategory: formData.subCategory,
+      priority: formData.priority,
+      centre: formData.centre,
+      origen: validatedOrigen,
+      assumpte: formData.assumpte,
+      areasImplicadas: formData.areasImplicadas,
+      areasHospital: formData.areasHospital,
+      responsableAnalisis: formData.responsableAnalisis,
+      attachments: formData.attachments,
       status: 'Borrador',
-      attachments: [],
       createdBy: 'current-user',
-      dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 30 dies per defecte
+      dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
       assignedTo: formData.responsableAnalisis || 'current-user',
       department: mockUser.department
     });
@@ -200,10 +223,12 @@ const Actions = () => {
       subCategory: '',
       priority: 'mitjana',
       centre: '',
-      origen: '',
+      origen: '' as CorrectiveAction['origen'],
+      assumpte: '',
       areasImplicadas: [],
       areasHospital: [],
-      responsableAnalisis: ''
+      responsableAnalisis: '',
+      attachments: []
     });
     
     toast({
@@ -211,11 +236,9 @@ const Actions = () => {
       description: "El borrador s'ha guardat correctament."
     });
     
-    // Reactivar el botó després d'un petit delay
+    // Reactivar els botons després d'un petit delay
     setTimeout(() => {
-      if (submitButton) {
-        submitButton.disabled = false;
-      }
+      submitButtons.forEach(btn => btn.disabled = false);
     }, 1000);
   };
 
@@ -223,18 +246,33 @@ const Actions = () => {
     e.preventDefault();
     
     // Prevenir múltiples submissions
-    const button = e.target as HTMLFormElement;
-    const submitButton = button.querySelector('button[type="button"]') as HTMLButtonElement;
-    if (submitButton) {
-      submitButton.disabled = true;
-    }
+    const form = e.target as HTMLFormElement;
+    const submitButtons = form.querySelectorAll('button');
+    submitButtons.forEach(btn => btn.disabled = true);
+    
+    // Validar que origen sigui un valor vàlid si està definit
+    const validatedOrigen = formData.origen && 
+      ['Auditoria', 'Incidencias', 'Seguimiento Indicadores/objetivos', 'Revisión del sistema', 'Otros'].includes(formData.origen) 
+      ? formData.origen 
+      : undefined;
     
     addAction({
-      ...formData,
+      title: formData.title,
+      description: formData.description,
+      type: formData.type,
+      category: formData.category,
+      subCategory: formData.subCategory,
+      priority: formData.priority,
+      centre: formData.centre,
+      origen: validatedOrigen,
+      assumpte: formData.assumpte,
+      areasImplicadas: formData.areasImplicadas,
+      areasHospital: formData.areasHospital,
+      responsableAnalisis: formData.responsableAnalisis,
+      attachments: formData.attachments,
       status: 'Pendiente de Análisis',
-      attachments: [],
       createdBy: 'current-user',
-      dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 30 dies per defecte
+      dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
       assignedTo: formData.responsableAnalisis || 'current-user',
       department: mockUser.department
     });
@@ -247,19 +285,19 @@ const Actions = () => {
       subCategory: '',
       priority: 'mitjana',
       centre: '',
-      origen: '',
+      origen: '' as CorrectiveAction['origen'],
+      assumpte: '',
       areasImplicadas: [],
       areasHospital: [],
-      responsableAnalisis: ''
+      responsableAnalisis: '',
+      attachments: []
     });
     setShowCreateForm(false);
     setSimilarActions([]);
     
-    // Reactivar el botó després d'un petit delay
+    // Reactivar els botons després d'un petit delay
     setTimeout(() => {
-      if (submitButton) {
-        submitButton.disabled = false;
-      }
+      submitButtons.forEach(btn => btn.disabled = false);
     }, 1000);
   };
 
@@ -340,7 +378,7 @@ const Actions = () => {
                 actionType={formData.type}
                 centre={formData.centre}
                 department=""
-                origen={formData.origen}
+                origin={formData.origen}
                 areasImplicadas={formData.areasImplicadas}
                 areasHospital={formData.areasHospital}
                 onFieldChange={handleFieldChange}
@@ -349,11 +387,21 @@ const Actions = () => {
               />
 
               <div>
-                <Label htmlFor="title" className="text-gray-700 font-medium">Assumpte</Label>
+                <Label htmlFor="assumpte" className="text-gray-700 font-medium">Assumpte</Label>
+                <Input
+                  id="assumpte"
+                  value={formData.assumpte}
+                  onChange={(e) => updateFormData({ assumpte: e.target.value })}
+                  className="mt-1"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="title" className="text-gray-700 font-medium">Títol</Label>
                 <Input
                   id="title"
                   value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                  onChange={(e) => updateFormData({ title: e.target.value })}
                   required
                   className="mt-1"
                 />
@@ -364,7 +412,7 @@ const Actions = () => {
                 <Textarea
                   id="description"
                   value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  onChange={(e) => updateFormData({ description: e.target.value })}
                   required
                   className="mt-1"
                 />
@@ -377,6 +425,12 @@ const Actions = () => {
                 onResponsableChange={handleResponsableChange}
                 onDateChange={() => {}}
                 user={mockUser}
+              />
+
+              <AttachmentsSection
+                attachments={formData.attachments}
+                onUpdate={handleAttachmentsChange}
+                readOnly={false}
               />
               
               <div className="flex gap-4 justify-between">
