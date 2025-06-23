@@ -1,116 +1,36 @@
 import { useState, useEffect } from 'react';
-import { CorrectiveAction, Comment, DashboardMetrics, StatusHistoryEntry } from '@/types';
+import { CorrectiveAction } from '@/types';
 import { toast } from '@/hooks/use-toast';
 import { useNotifications } from '@/hooks/useNotifications';
-import { useAuditHistory } from '@/hooks/useAuditHistory';
-import { useBisActions } from '@/hooks/useBisActions';
-
-const STORAGE_KEY = 'corrective-actions-data';
-const COMMENTS_STORAGE_KEY = 'corrective-actions-comments';
+import { useActionStorage } from './useActionStorage';
+import { useActionCRUD } from './useActionCRUD';
+import { useComments } from './useComments';
+import { useDashboardMetrics } from './useDashboardMetrics';
 
 export const useCorrectiveActions = () => {
-  const [actions, setActions] = useState<CorrectiveAction[]>([]);
-  const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(false);
-  const { notifyStatusChange, checkOverdueAndUpcoming } = useNotifications();
+  const { checkOverdueAndUpcoming } = useNotifications();
+  const { loadActions, clearAllStorage } = useActionStorage();
   const { 
-    logActionCreated, 
-    logActionUpdated, 
-    logStatusChanged, 
-    logActionClosed 
-  } = useAuditHistory();
-  const { createBisAction } = useBisActions();
-
-  // Funció per guardar accions a localStorage
-  const saveToStorage = (updatedActions: CorrectiveAction[]) => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedActions));
-      console.log('saveToStorage: Guardades', updatedActions.length, 'accions');
-    } catch (error) {
-      console.error('Error saving to localStorage:', error);
-      toast({
-        title: "Error",
-        description: "No s'han pogut guardar les dades.",
-        variant: "destructive"
-      });
-    }
-  };
-
-  // Funció per guardar comentaris a localStorage
-  const saveCommentsToStorage = (updatedComments: Comment[]) => {
-    try {
-      localStorage.setItem(COMMENTS_STORAGE_KEY, JSON.stringify(updatedComments));
-      console.log('saveCommentsToStorage: Guardats', updatedComments.length, 'comentaris');
-    } catch (error) {
-      console.error('Error saving comments to localStorage:', error);
-      toast({
-        title: "Error",
-        description: "No s'han pogut guardar els comentaris.",
-        variant: "destructive"
-      });
-    }
-  };
-
-  // Funció per carregar dades del localStorage
-  const loadActions = () => {
-    try {
-      console.log('loadActions: Carregant accions del localStorage...');
-      const savedData = localStorage.getItem(STORAGE_KEY);
-      
-      if (savedData) {
-        const parsedActions = JSON.parse(savedData);
-        if (Array.isArray(parsedActions)) {
-          setActions(parsedActions);
-          console.log('loadActions: Carregades', parsedActions.length, 'accions del localStorage');
-          console.log('loadActions: IDs de les accions carregades:', parsedActions.map(a => a.id));
-        } else {
-          console.warn('loadActions: Dades invàlides al localStorage, inicialitzant amb array buit');
-          setActions([]);
-        }
-      } else {
-        console.log('loadActions: No hi ha dades guardades, inicialitzant amb array buit');
-        setActions([]);
-      }
-    } catch (error) {
-      console.error('loadActions: Error carregant del localStorage:', error);
-      setActions([]);
-      toast({
-        title: "Avís",
-        description: "Error carregant les dades guardades. S'ha inicialitzat amb estat buit.",
-        variant: "destructive"
-      });
-    }
-  };
-
-  // Funció per carregar comentaris del localStorage
-  const loadComments = () => {
-    try {
-      console.log('loadComments: Carregant comentaris del localStorage...');
-      const savedComments = localStorage.getItem(COMMENTS_STORAGE_KEY);
-      
-      if (savedComments) {
-        const parsedComments = JSON.parse(savedComments);
-        if (Array.isArray(parsedComments)) {
-          setComments(parsedComments);
-          console.log('loadComments: Carregats', parsedComments.length, 'comentaris del localStorage');
-        } else {
-          console.warn('loadComments: Dades invàlides al localStorage per comentaris, inicialitzant amb array buit');
-          setComments([]);
-        }
-      } else {
-        console.log('loadComments: No hi ha comentaris guardats, inicialitzant amb array buit');
-        setComments([]);
-      }
-    } catch (error) {
-      console.error('loadComments: Error carregant comentaris del localStorage:', error);
-      setComments([]);
-    }
-  };
+    actions, 
+    addAction, 
+    updateAction, 
+    clearAllActions, 
+    initializeActions 
+  } = useActionCRUD();
+  const { 
+    comments, 
+    addComment, 
+    clearComments, 
+    initializeComments 
+  } = useComments();
+  const { getDashboardMetrics } = useDashboardMetrics(actions);
 
   // Carregar dades del localStorage a l'inici
   useEffect(() => {
-    loadActions();
-    loadComments();
+    const loadedActions = loadActions();
+    initializeActions(loadedActions);
+    initializeComments();
   }, []);
 
   // Comprovar retards i venciments cada vegada que canvien les accions
@@ -317,8 +237,7 @@ export const useCorrectiveActions = () => {
     ];
 
     const allActions = [...actions, ...testActions];
-    setActions(allActions);
-    saveToStorage(allActions);
+    initializeActions(allActions);
     
     toast({
       title: "Accions de prova creades",
@@ -328,214 +247,15 @@ export const useCorrectiveActions = () => {
     console.log('addTestActions: Creades', testActions.length, 'accions de prova');
   };
 
-  const addAction = (action: Omit<CorrectiveAction, 'id' | 'createdAt' | 'updatedAt'>) => {
-    const newAction: CorrectiveAction = {
-      ...action,
-      id: Date.now().toString(),
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      statusHistory: [{
-        status: action.status,
-        date: new Date().toISOString(),
-        userId: action.createdBy,
-        userName: 'Usuari Actual'
-      }]
-    };
-    
-    console.log('addAction: Creant nova acció amb ID:', newAction.id);
-    
-    const updatedActions = [...actions, newAction];
-    setActions(updatedActions);
-    saveToStorage(updatedActions);
-    
-    logActionCreated(newAction, newAction.createdBy, 'System User');
-    
-    if (newAction.status === 'Pendiente de Análisis' && newAction.responsableAnalisis) {
-      notifyStatusChange(newAction, 'Pendiente de Análisis');
-    }
-    
-    toast({
-      title: "Acció creada",
-      description: "L'acció correctiva s'ha creat correctament."
-    });
-    
-    return newAction;
-  };
-
-  const updateAction = (id: string, updates: Partial<CorrectiveAction>) => {
-    console.log('updateAction: Actualitzant acció amb ID:', id);
-    console.log('updateAction: Accions disponibles:', actions.map(a => a.id));
-    
-    const originalAction = actions.find(action => action.id === id);
-    if (!originalAction) {
-      console.error('updateAction: Acció no trobada amb ID:', id);
-      return;
-    }
-
-    let updatedStatusHistory = originalAction.statusHistory || [];
-    
-    // Si hi ha canvi d'estat, afegir nova entrada a l'historial
-    if (updates.status && updates.status !== originalAction.status) {
-      const newHistoryEntry: StatusHistoryEntry = {
-        status: updates.status,
-        date: new Date().toISOString(),
-        userId: 'current-user',
-        userName: 'Usuari Actual'
-      };
-      updatedStatusHistory = [...updatedStatusHistory, newHistoryEntry];
-    }
-
-    const updatedAction = { 
-      ...originalAction, 
-      ...updates, 
-      updatedAt: new Date().toISOString(),
-      statusHistory: updatedStatusHistory
-    } as CorrectiveAction;
-    
-    const updatedActions = actions.map(action => 
-      action.id === id ? updatedAction : action
-    );
-    setActions(updatedActions);
-    saveToStorage(updatedActions);
-
-    const changes: Record<string, { from: any; to: any }> = {};
-    Object.keys(updates).forEach(key => {
-      const oldValue = (originalAction as any)[key];
-      const newValue = (updates as any)[key];
-      if (oldValue !== newValue) {
-        changes[key] = { from: oldValue, to: newValue };
-      }
-    });
-
-    if (Object.keys(changes).length > 0) {
-      logActionUpdated(id, changes, 'current-user', 'Current User');
-    }
-
-    if (updates.status && updates.status !== originalAction.status) {
-      logStatusChanged(id, originalAction.status, updates.status, 'current-user', 'Current User');
-      notifyStatusChange(updatedAction, updates.status);
-      
-      if (updates.status === 'Cerrado' && updates.tipoCierre === 'no-conforme') {
-        createBisAction(updatedAction, addAction);
-      }
-    }
-
-    if (updates.status === 'Cerrado' && updates.tipoCierre) {
-      logActionClosed(id, updates.tipoCierre, 'current-user', 'Current User');
-    }
-    
-    toast({
-      title: "Acció actualitzada",
-      description: "Els canvis s'han guardat correctament."
-    });
-  };
-
-  const addComment = (comment: Omit<Comment, 'id' | 'createdAt'>) => {
-    const newComment: Comment = {
-      ...comment,
-      id: Date.now().toString(),
-      createdAt: new Date().toISOString()
-    };
-    
-    const updatedComments = [...comments, newComment];
-    setComments(updatedComments);
-    saveCommentsToStorage(updatedComments);
-    
-    console.log('addComment: Comentari afegit i guardat:', newComment);
-    
-    return newComment;
-  };
-
   const clearAllActions = () => {
-    setActions([]);
-    setComments([]);
-    try {
-      localStorage.removeItem(STORAGE_KEY);
-      localStorage.removeItem(COMMENTS_STORAGE_KEY);
-      toast({
-        title: "Accions eliminades",
-        description: "Totes les accions correctives i comentaris han estat eliminats correctament."
-      });
-    } catch (error) {
-      console.error('Error clearing localStorage:', error);
-      toast({
-        title: "Error",
-        description: "Error en eliminar les dades.",
-        variant: "destructive"
-      });
-    }
+    clearAllActions();
+    clearComments();
+    clearAllStorage();
   };
 
-  const getDashboardMetrics = (): DashboardMetrics => {
-    const totalActions = actions.length;
-    const pendingActions = actions.filter(a => 
-      ['Pendiente de Análisis', 'Pendiente de Comprobación', 'Pendiente de Cierre'].includes(a.status)
-    ).length;
-    const overdueActions = actions.filter(a => 
-      new Date(a.dueDate) < new Date() && a.status !== 'Cerrado'
-    ).length;
-    const closedThisMonth = actions.filter(a => 
-      a.status === 'Cerrado' && 
-      new Date(a.updatedAt).getMonth() === new Date().getMonth()
-    ).length;
-
-    const actionsByStatus = Object.entries(
-      actions.reduce((acc, action) => {
-        acc[action.status] = (acc[action.status] || 0) + 1;
-        return acc;
-      }, {} as Record<string, number>)
-    ).map(([status, count]) => ({ status, count }));
-
-    const actionsByType = Object.entries(
-      actions.reduce((acc, action) => {
-        acc[action.type] = (acc[action.type] || 0) + 1;
-        return acc;
-      }, {} as Record<string, number>)
-    ).map(([type, count]) => ({ type, count }));
-
-    const actionsByCentre = Object.entries(
-      actions.reduce((acc, action) => {
-        acc[action.centre] = (acc[action.centre] || 0) + 1;
-        return acc;
-      }, {} as Record<string, number>)
-    ).map(([centre, count]) => ({ centre, count }));
-
-    const actionsByOrigin = Object.entries(
-      actions.reduce((acc, action) => {
-        const origin = action.origen || 'sense-especificar';
-        acc[origin] = (acc[origin] || 0) + 1;
-        return acc;
-      }, {} as Record<string, number>)
-    ).map(([origin, count]) => ({ origin, count }));
-
-    const overdueByType = Object.entries(
-      actions.filter(a => new Date(a.dueDate) < new Date() && a.status !== 'Cerrado')
-             .reduce((acc, action) => {
-               acc[action.type] = (acc[action.type] || 0) + 1;
-               return acc;
-             }, {} as Record<string, number>)
-    ).map(([type, count]) => ({ type, count }));
-
-    const conformeVsNoConforme = actions
-      .filter(a => a.status === 'Cerrado')
-      .reduce((acc, action) => {
-        if (action.tipoCierre === 'conforme') acc.conforme++;
-        else if (action.tipoCierre === 'no-conforme') acc.noConforme++;
-        return acc;
-      }, { conforme: 0, noConforme: 0 });
-
-    return {
-      totalActions,
-      pendingActions,
-      overdueActions,
-      closedThisMonth,
-      actionsByStatus,
-      actionsByType,
-      actionsByCentre,
-      actionsByOrigin,
-      overdueByType,
-      conformeVsNoConforme
-    };
+  const loadActions = () => {
+    const loadedActions = loadActions();
+    initializeActions(loadedActions);
   };
 
   return {

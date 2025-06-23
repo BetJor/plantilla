@@ -14,7 +14,8 @@ import CommentsSection from '@/components/ActionFormSections/CommentsSection';
 import StatusProgress from '@/components/ActionFormSections/StatusProgress';
 import ControlPanelSection from '@/components/ControlPanelSection';
 import FloatingActionButtons from '@/components/FloatingActionButtons';
-import CollapsibleSection from '@/components/ui/CollapsibleSection';
+import DraggableSections from '@/components/DraggableSections';
+import { SectionConfig } from '@/hooks/useDraggableSections';
 import { useToast } from '@/hooks/use-toast';
 
 const ActionDetail = () => {
@@ -89,13 +90,11 @@ const ActionDetail = () => {
     updateAction(action.id, { status: newStatus });
     setHasPendingChanges(false);
     
-    // Show success toast
     toast({
       title: "Estat actualitzat",
       description: `L'acció s'ha actualitzat a l'estat: ${newStatus}`,
     });
     
-    // Navigate back to actions list after a short delay
     setTimeout(() => {
       navigate('/actions');
     }, 1500);
@@ -111,7 +110,6 @@ const ActionDetail = () => {
   };
 
   const handleSave = () => {
-    // Call the appropriate save function based on current status
     switch (action.status) {
       case 'Borrador':
         if (descriptionSaveRef.current) {
@@ -131,13 +129,11 @@ const ActionDetail = () => {
     }
     setHasPendingChanges(false);
     
-    // Show success toast
     toast({
       title: "Canvis guardats",
       description: "Les modificacions s'han desat correctament.",
     });
     
-    // Navigate back to actions list after a short delay
     setTimeout(() => {
       navigate('/actions');
     }, 1500);
@@ -146,7 +142,6 @@ const ActionDetail = () => {
   const renderCumulativeSections = () => {
     const sections = [];
     
-    // Always show description section
     sections.push(
       <DescriptionSection 
         key="description"
@@ -158,7 +153,6 @@ const ActionDetail = () => {
       />
     );
 
-    // Show analysis section if status is beyond Borrador
     if (['Pendiente de Análisis', 'Pendiente de Comprobación', 'Pendiente de Cierre', 'Cerrado'].includes(action.status)) {
       sections.push(
         <AnalysisSection 
@@ -173,7 +167,6 @@ const ActionDetail = () => {
       );
     }
 
-    // Show closure section if status is Pendiente de Cierre or Cerrado
     if (['Pendiente de Cierre', 'Cerrado'].includes(action.status)) {
       sections.push(
         <ClosureSection 
@@ -188,7 +181,6 @@ const ActionDetail = () => {
       );
     }
 
-    // Show closed message if action is closed or annulled
     if (['Cerrado', 'Anulada'].includes(action.status)) {
       sections.push(
         <Card key="status-message">
@@ -212,6 +204,60 @@ const ActionDetail = () => {
   const actionComments = comments.filter(c => c.actionId === action.id);
   const attachmentCount = action.attachments.length;
   const commentCount = actionComments.length;
+
+  // Configurar seccions per drag & drop
+  const sidebarSections: SectionConfig[] = [
+    {
+      id: 'status-progress',
+      title: 'Progrés de l\'Acció',
+      defaultOpen: true,
+      summary: <span>Estat actual: <strong>{action.status}</strong></span>,
+      content: <StatusProgress action={action} />
+    },
+    {
+      id: 'control-panel',
+      title: 'Control Panel',
+      icon: <Activity className="w-5 h-5" />,
+      defaultOpen: false,
+      summary: (
+        <div className="flex items-center gap-4 text-sm">
+          <span>Assignat: <strong>{action.assignedTo}</strong></span>
+          <span>•</span>
+          <span>Centre: <strong>{action.centre}</strong></span>
+        </div>
+      ),
+      content: <ControlPanelSection action={action} onUpdate={handleActionUpdate} />
+    },
+    {
+      id: 'attachments',
+      title: 'Adjunts',
+      icon: <Paperclip className="w-5 h-5" />,
+      badge: attachmentCount > 0 ? <Badge variant="secondary" className="ml-2">{attachmentCount}</Badge> : undefined,
+      defaultOpen: attachmentCount > 0,
+      summary: attachmentCount > 0 ? `${attachmentCount} fitxer${attachmentCount > 1 ? 's' : ''}` : 'Cap adjunt',
+      content: (
+        <AttachmentsSection
+          attachments={action.attachments}
+          onUpdate={handleAttachmentsUpdate}
+          readOnly={['Cerrado', 'Anulada'].includes(action.status)}
+        />
+      )
+    },
+    {
+      id: 'comments',
+      title: 'Comentaris',
+      icon: <MessageSquare className="w-5 h-5" />,
+      badge: commentCount > 0 ? <Badge variant="secondary" className="ml-2">{commentCount}</Badge> : undefined,
+      defaultOpen: commentCount > 0,
+      summary: commentCount > 0 ? `${commentCount} comentari${commentCount > 1 ? 's' : ''}` : 'Sense comentaris',
+      content: (
+        <CommentsSection 
+          actionId={action.id} 
+          readOnly={['Cerrado', 'Anulada'].includes(action.status)}
+        />
+      )
+    }
+  ];
 
   return (
     <div className="space-y-6 pb-20">
@@ -241,67 +287,11 @@ const ActionDetail = () => {
           {renderCumulativeSections()}
         </div>
 
-        <div className="space-y-6">
-          <CollapsibleSection
-            id="status-progress"
-            title="Progrés de l'Acció"
-            defaultOpen={true}
-            summary={<span>Estat actual: <strong>{action.status}</strong></span>}
-          >
-            <StatusProgress action={action} />
-          </CollapsibleSection>
-
-          <CollapsibleSection
-            id="control-panel"
-            title="Control Panel"
-            icon={<Activity className="w-5 h-5" />}
-            defaultOpen={false}
-            summary={
-              <div className="flex items-center gap-4 text-sm">
-                <span>Assignat: <strong>{action.assignedTo}</strong></span>
-                <span>•</span>
-                <span>Centre: <strong>{action.centre}</strong></span>
-              </div>
-            }
-          >
-            <ControlPanelSection 
-              action={action} 
-              onUpdate={handleActionUpdate}
-            />
-          </CollapsibleSection>
-
-          <CollapsibleSection
-            id="attachments"
-            title="Adjunts"
-            icon={<Paperclip className="w-5 h-5" />}
-            badge={attachmentCount > 0 && <Badge variant="secondary" className="ml-2">{attachmentCount}</Badge>}
-            defaultOpen={attachmentCount > 0}
-            summary={attachmentCount > 0 ? `${attachmentCount} fitxer${attachmentCount > 1 ? 's' : ''}` : 'Cap adjunt'}
-          >
-            <AttachmentsSection
-              attachments={action.attachments}
-              onUpdate={handleAttachmentsUpdate}
-              readOnly={['Cerrado', 'Anulada'].includes(action.status)}
-            />
-          </CollapsibleSection>
-
-          <CollapsibleSection
-            id="comments"
-            title="Comentaris"
-            icon={<MessageSquare className="w-5 h-5" />}
-            badge={commentCount > 0 && <Badge variant="secondary" className="ml-2">{commentCount}</Badge>}
-            defaultOpen={commentCount > 0}
-            summary={commentCount > 0 ? `${commentCount} comentari${commentCount > 1 ? 's' : ''}` : 'Sense comentaris'}
-          >
-            <CommentsSection 
-              actionId={action.id} 
-              readOnly={['Cerrado', 'Anulada'].includes(action.status)}
-            />
-          </CollapsibleSection>
+        <div>
+          <DraggableSections sections={sidebarSections} />
         </div>
       </div>
 
-      {/* Botons flotants per les accions d'estat */}
       <FloatingActionButtons 
         action={action}
         onStatusChange={handleStatusChange}
