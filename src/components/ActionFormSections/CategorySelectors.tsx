@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ACTION_TYPES } from '@/types/categories';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Info } from 'lucide-react';
+import CompactCategoryDisplay from './CompactCategoryDisplay';
 
 interface CategorySelectorsProps {
   selectedType: string;
@@ -54,6 +55,25 @@ const CategorySelectors = ({
     );
   }
 
+  // Mode lectura compacte
+  if (isReadOnly) {
+    return (
+      <Card className="bg-gray-50">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm">Classificació de l'Acció</CardTitle>
+        </CardHeader>
+        <CardContent className="pt-0">
+          <CompactCategoryDisplay
+            selectedType={selectedType}
+            selectedCategory={selectedCategory}
+            selectedSubcategory={selectedSubcategory}
+          />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Mode edició (manté la funcionalitat completa)
   return (
     <Card>
       <CardHeader>
