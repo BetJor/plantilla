@@ -41,7 +41,7 @@ const AppContent = () => {
           {/* Header */}
           <Header />
           
-          {/* Pestanyes */}
+          {/* Pestanyes - aquestes començaran després de la sidebar */}
           <TabsNavigation />
           
           {/* Contingut de les pàgines */}

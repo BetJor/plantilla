@@ -44,8 +44,12 @@ export const useTabNavigation = () => {
   const location = useLocation();
   const { openTab, setActiveTab, tabs } = useTabsContext();
 
+  console.log('useTabNavigation: current path:', location.pathname);
+  console.log('useTabNavigation: current tabs:', tabs);
+
   useEffect(() => {
     const currentPath = location.pathname;
+    console.log('useTabNavigation: processing path:', currentPath);
     
     // Configuració especial per a detalls d'accions
     if (currentPath.startsWith('/actions/')) {
@@ -57,6 +61,7 @@ export const useTabNavigation = () => {
         icon: Eye,
         closable: true
       };
+      console.log('useTabNavigation: opening action tab:', tab);
       openTab(tab);
       return;
     }
@@ -68,7 +73,10 @@ export const useTabNavigation = () => {
         id: currentPath,
         ...routeInfo
       };
+      console.log('useTabNavigation: opening main tab:', tab);
       openTab(tab);
+    } else {
+      console.warn('useTabNavigation: no route config found for:', currentPath);
     }
   }, [location.pathname, openTab]);
 
@@ -82,9 +90,13 @@ export const useTabNavigation = () => {
       tabId = `action-${actionId}`;
     }
     
+    console.log('useTabNavigation: looking for tab with id:', tabId);
     const existingTab = tabs.find(tab => tab.id === tabId);
     if (existingTab) {
+      console.log('useTabNavigation: activating tab:', existingTab);
       setActiveTab(tabId);
+    } else {
+      console.warn('useTabNavigation: tab not found:', tabId);
     }
   }, [location.pathname, tabs, setActiveTab]);
 };
