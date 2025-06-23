@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,9 +7,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Plus, Search, Filter, Eye, Sparkles, Database } from 'lucide-react';
+import { Plus, Search, Filter, Eye, Database } from 'lucide-react';
 import { useCorrectiveActions } from '@/hooks/useCorrectiveActions';
-import { useSimilarActions } from '@/hooks/useSimilarActions';
+import { useAutoSimilarDetection } from '@/hooks/useAutoSimilarDetection';
 import { usePermissions } from '@/hooks/usePermissions';
 import { toast } from '@/hooks/use-toast';
 import { ACTION_TYPES } from '@/types/categories';
@@ -17,12 +17,18 @@ import CategorySelectors from '@/components/ActionFormSections/CategorySelectors
 import ResponsibleAssignment from '@/components/ActionFormSections/ResponsibleAssignment';
 import SpecificFields from '@/components/ActionFormSections/SpecificFields';
 import AttachmentsSection from '@/components/ActionFormSections/AttachmentsSection';
-import SimilarActionsDialog from '@/components/SimilarActionsDialog';
+import SimilarActionsPanel from '@/components/SimilarActionsPanel';
 import { CorrectiveAction } from '@/types';
 
 const Actions = () => {
-  const { actions, addAction, addTestActions } = useCorrectiveActions();
-  const { findSimilarActions, isLoading: isFindingActions, error: similarActionsError } = useSimilarActions();
+  const { actions, addAction, addTestActions, updateAction } = useCorrectiveActions();
+  const { 
+    similarActions, 
+    isDetecting, 
+    debouncedDetect, 
+    clearDetection, 
+    hasHighSimilarity 
+  } = useAutoSimilarDetection();
   
   // Mock user per testing - en una implementació real vindria del context d'autenticació
   const mockUser = {
@@ -39,8 +45,6 @@ const Actions = () => {
   
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [showSimilarActions, setShowSimilarActions] = useState(false);
-  const [similarActions, setSimilarActions] = useState([]);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -56,8 +60,49 @@ const Actions = () => {
     attachments: [] as string[]
   });
 
+  // Auto-detect similar actions when form data changes
+  useEffect(() => {
+    if (formData.title.trim().length > 3 && formData.description.trim().length > 10) {
+      debouncedDetect({
+        title: formData.title,
+        description: formData.description,
+        type: formData.type,
+        category: formData.category,
+        centre: formData.centre,
+        department: mockUser.department
+      });
+    }
+  }, [formData.title, formData.description, formData.type, formData.category, formData.centre, debouncedDetect]);
+
   const updateFormData = (updates: Partial<typeof formData>) => {
     setFormData(prev => ({ ...prev, ...updates }));
+  };
+
+  const handleJoinAction = (actionId: string) => {
+    // Navegar a l'acció per unir-s'hi
+    window.open(`/actions/${actionId}`, '_blank');
+    toast({
+      title: "Navegant a l'acció",
+      description: "S'ha obert l'acció en una nova pestanya per revisar-la.",
+    });
+  };
+
+  const handleCreateBasedOn = (baseAction: any) => {
+    // Pre-omplir el formulari amb dades de l'acció base
+    updateFormData({
+      type: baseAction.type,
+      category: baseAction.category,
+      centre: baseAction.centre,
+      priority: baseAction.priority || 'mitjana',
+      // Mantenir títol i descripció de l'usuari però suggerir millores
+    });
+    
+    clearDetection();
+    
+    toast({
+      title: "Plantilla aplicada",
+      description: "S'han aplicat les dades de l'acció similar al formulari.",
+    });
   };
 
   const handleTypeChange = (type: string) => {
@@ -105,10 +150,10 @@ const Actions = () => {
 
   const getPriorityVariant = (priority: string) => {
     switch (priority) {
-      case 'crítica': return 'destructive'; // vermell
-      case 'alta': return 'orange'; // taronja
-      case 'mitjana': return 'orange-light'; // taronja clar
-      case 'baixa': return 'secondary'; // gris clar
+      case 'crítica': return 'destructive';
+      case 'alta': return 'destructive';
+      case 'mitjana': return 'default';
+      case 'baixa': return 'secondary';
       default: return 'default';
     }
   };
@@ -118,70 +163,19 @@ const Actions = () => {
     return type?.name || typeCode;
   };
 
-  const handleFindSimilarActions = async () => {
-    console.log('handleFindSimilarActions: Botó clickat');
-    console.log('handleFindSimilarActions: Dades del formulari:', {
-      title: formData.title.trim(),
-      description: formData.description.trim(),
-      type: formData.type,
-      category: formData.category
-    });
-
-    if (!formData.title.trim() || !formData.description.trim()) {
-      console.warn('handleFindSimilarActions: Títol o descripció buits');
-      toast({
-        title: "Camps obligatoris",
-        description: "Cal omplir el títol i la descripció abans de buscar accions similars.",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    const existingActions = actions.filter(action => action.status !== 'Borrador');
-    if (existingActions.length === 0) {
-      console.warn('handleFindSimilarActions: No hi ha accions existents');
-      toast({
-        title: "Cap acció existent",
-        description: "No hi ha accions existents al sistema per comparar.",
-        variant: "default"
-      });
-      return;
-    }
-
-    const apiKey = localStorage.getItem('gemini-api-key');
-    if (!apiKey) {
-      console.warn('handleFindSimilarActions: Clau API no configurada');
-      toast({
-        title: "Configuració necessària",
-        description: "Cal configurar la clau API de Gemini a Configuració per utilitzar aquesta funcionalitat.",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    try {
-      console.log('handleFindSimilarActions: Iniciant cerca...');
-      const results = await findSimilarActions({
-        title: formData.title,
-        description: formData.description,
-        type: formData.type,
-        category: formData.category,
-        centre: formData.centre,
-        department: mockUser.department
-      });
-      
-      console.log('handleFindSimilarActions: Resultats rebuts:', results.length);
-      setSimilarActions(results);
-      setShowSimilarActions(true);
-    } catch (error) {
-      console.error('handleFindSimilarActions: Error final:', error);
-    }
-  };
-
   const handleSaveDraft = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Prevenir múltiples submissions
+    // Verificar alertes de similitud alta abans de guardar
+    if (hasHighSimilarity) {
+      const shouldContinue = window.confirm(
+        'S\'han detectat accions molt similars. Estàs segur que vols crear aquesta nova acció en lloc d\'unir-te a una existent?'
+      );
+      if (!shouldContinue) {
+        return;
+      }
+    }
+    
     const form = e.target as HTMLFormElement;
     const submitButtons = form.querySelectorAll('button');
     submitButtons.forEach(btn => btn.disabled = true);
@@ -222,12 +216,13 @@ const Actions = () => {
       attachments: []
     });
     
+    clearDetection();
+    
     toast({
       title: "Borrador guardat",
       description: "El borrador s'ha guardat correctament."
     });
     
-    // Reactivar els botons després d'un petit delay
     setTimeout(() => {
       submitButtons.forEach(btn => btn.disabled = false);
     }, 1000);
@@ -236,7 +231,16 @@ const Actions = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Prevenir múltiples submissions
+    // Verificar alertes de similitud alta abans de crear
+    if (hasHighSimilarity) {
+      const shouldContinue = window.confirm(
+        'S\'han detectat accions molt similars. Estàs segur que vols crear aquesta nova acció en lloc d\'unir-te a una existent?'
+      );
+      if (!shouldContinue) {
+        return;
+      }
+    }
+    
     const form = e.target as HTMLFormElement;
     const submitButtons = form.querySelectorAll('button');
     submitButtons.forEach(btn => btn.disabled = true);
@@ -276,9 +280,8 @@ const Actions = () => {
       attachments: []
     });
     setShowCreateForm(false);
-    setSimilarActions([]);
+    clearDetection();
     
-    // Reactivar els botons després d'un petit delay
     setTimeout(() => {
       submitButtons.forEach(btn => btn.disabled = false);
     }, 1000);
@@ -288,24 +291,6 @@ const Actions = () => {
     action.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     action.description.toLowerCase().includes(searchTerm.toLowerCase())
   );
-
-  const canSearchSimilar = formData.title.trim().length > 0 && 
-                          formData.description.trim().length > 0 && 
-                          actions.filter(action => action.status !== 'Borrador').length > 0 &&
-                          localStorage.getItem('gemini-api-key');
-
-  const getTooltipMessage = () => {
-    if (!formData.title.trim() || !formData.description.trim()) {
-      return "Cal omplir el títol i la descripció";
-    }
-    if (actions.filter(action => action.status !== 'Borrador').length === 0) {
-      return "No hi ha accions existents per comparar";
-    }
-    if (!localStorage.getItem('gemini-api-key')) {
-      return "Cal configurar la clau API de Gemini a Configuració";
-    }
-    return "Buscar accions similars";
-  };
 
   return (
     <div className="space-y-6">
@@ -333,123 +318,113 @@ const Actions = () => {
       </div>
 
       {showCreateForm && (
-        <Card className="border-blue-200">
-          <CardHeader className="bg-blue-50">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <CardTitle className="text-blue-800">Crear Nova Acció Correctiva</CardTitle>
-                <Badge variant="secondary" className="bg-purple-100 text-purple-800 border-purple-300">
-                  Estat: Borrador
-                </Badge>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="p-6">
-            <form className="space-y-6">
-              <CategorySelectors
-                selectedType={formData.type}
-                selectedCategory={formData.category}
-                selectedSubcategory={formData.subCategory}
-                onTypeChange={handleTypeChange}
-                onCategoryChange={handleCategoryChange}
-                onSubcategoryChange={handleSubcategoryChange}
-                currentStatus="Borrador"
-                allowedTypes={allowedActionTypes.map(t => t.code)}
-              />
-              
-              <SpecificFields
-                actionType={formData.type}
-                centre={formData.centre}
-                department=""
-                origen={formData.origen}
-                areasImplicadas={formData.areasImplicadas}
-                areasHospital={formData.areasHospital}
-                onFieldChange={handleFieldChange}
-                user={mockUser}
-                isDraft={true}
-              />
-
-              <div>
-                <Label htmlFor="title" className="text-gray-700 font-medium">Títol</Label>
-                <Input
-                  id="title"
-                  value={formData.title}
-                  onChange={(e) => updateFormData({ title: e.target.value })}
-                  required
-                  className="mt-1"
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="description" className="text-gray-700 font-medium">Descripció</Label>
-                <Textarea
-                  id="description"
-                  value={formData.description}
-                  onChange={(e) => updateFormData({ description: e.target.value })}
-                  required
-                  className="mt-1"
-                />
-              </div>
-
-              <ResponsibleAssignment
-                actionType={formData.type}
-                currentStatus="Borrador"
-                responsableAnalisis={formData.responsableAnalisis}
-                onResponsableChange={handleResponsableChange}
-                onDateChange={() => {}}
-                user={mockUser}
-              />
-
-              <AttachmentsSection
-                attachments={formData.attachments}
-                onUpdate={handleAttachmentsChange}
-                readOnly={false}
-              />
-              
-              <div className="flex gap-4 justify-between">
-                <div className="flex items-center gap-2">
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    onClick={handleFindSimilarActions}
-                    disabled={!canSearchSimilar || isFindingActions}
-                    className="flex items-center gap-2"
-                    title={getTooltipMessage()}
-                  >
-                    <Sparkles className="w-4 h-4" />
-                    {isFindingActions ? 'Cercant...' : 'Buscar accions similars'}
-                  </Button>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2">
+            <Card className="border-blue-200">
+              <CardHeader className="bg-blue-50">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <CardTitle className="text-blue-800">Crear Nova Acció Correctiva</CardTitle>
+                    <Badge variant="secondary" className="bg-purple-100 text-purple-800 border-purple-300">
+                      Estat: Borrador
+                    </Badge>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="p-6">
+                <form className="space-y-6">
+                  <CategorySelectors
+                    selectedType={formData.type}
+                    selectedCategory={formData.category}
+                    selectedSubcategory={formData.subCategory}
+                    onTypeChange={handleTypeChange}
+                    onCategoryChange={handleCategoryChange}
+                    onSubcategoryChange={handleSubcategoryChange}
+                    currentStatus="Borrador"
+                    allowedTypes={allowedActionTypes.map(t => t.code)}
+                  />
                   
-                  {!canSearchSimilar && (
-                    <span className="text-sm text-gray-500">
-                      {getTooltipMessage()}
-                    </span>
-                  )}
-                </div>
-                
-                <div className="flex gap-4">
-                  <Button type="button" variant="outline" onClick={() => setShowCreateForm(false)}>
-                    Cancel·lar
-                  </Button>
-                  <Button type="button" variant="outline" onClick={handleSaveDraft}>
-                    Guardar
-                  </Button>
-                  <Button type="button" onClick={handleSubmit} className="bg-blue-600 hover:bg-blue-700">
-                    Crear Acció
-                  </Button>
-                </div>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
-      )}
+                  <SpecificFields
+                    actionType={formData.type}
+                    centre={formData.centre}
+                    department=""
+                    origen={formData.origen}
+                    areasImplicadas={formData.areasImplicadas}
+                    areasHospital={formData.areasHospital}
+                    onFieldChange={handleFieldChange}
+                    user={mockUser}
+                    isDraft={true}
+                  />
 
-      <SimilarActionsDialog
-        open={showSimilarActions}
-        onOpenChange={setShowSimilarActions}
-        similarActions={similarActions}
-        isLoading={isFindingActions}
-      />
+                  <div>
+                    <Label htmlFor="title" className="text-gray-700 font-medium">Títol</Label>
+                    <Input
+                      id="title"
+                      value={formData.title}
+                      onChange={(e) => updateFormData({ title: e.target.value })}
+                      required
+                      className="mt-1"
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="description" className="text-gray-700 font-medium">Descripció</Label>
+                    <Textarea
+                      id="description"
+                      value={formData.description}
+                      onChange={(e) => updateFormData({ description: e.target.value })}
+                      required
+                      className="mt-1"
+                    />
+                  </div>
+
+                  <ResponsibleAssignment
+                    actionType={formData.type}
+                    currentStatus="Borrador"
+                    responsableAnalisis={formData.responsableAnalisis}
+                    onResponsableChange={handleResponsableChange}
+                    onDateChange={() => {}}
+                    user={mockUser}
+                  />
+
+                  <AttachmentsSection
+                    attachments={formData.attachments}
+                    onUpdate={handleAttachmentsChange}
+                    readOnly={false}
+                  />
+                  
+                  <div className="flex gap-4 justify-end">
+                    <Button type="button" variant="outline" onClick={() => {
+                      setShowCreateForm(false);
+                      clearDetection();
+                    }}>
+                      Cancel·lar
+                    </Button>
+                    <Button type="button" variant="outline" onClick={handleSaveDraft}>
+                      Guardar
+                    </Button>
+                    <Button type="button" onClick={handleSubmit} className="bg-blue-600 hover:bg-blue-700">
+                      Crear Acció
+                    </Button>
+                  </div>
+                </form>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Panell lateral per a accions similars */}
+          <div className="space-y-4">
+            <SimilarActionsPanel
+              similarActions={similarActions}
+              isDetecting={isDetecting}
+              hasHighSimilarity={hasHighSimilarity}
+              onJoinAction={handleJoinAction}
+              onCreateBasedOn={handleCreateBasedOn}
+              onClearDetection={clearDetection}
+            />
+          </div>
+        </div>
+      )}
 
       {!showCreateForm && (
         <Card className="border-blue-200">
