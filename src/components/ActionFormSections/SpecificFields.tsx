@@ -1,10 +1,10 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Loader2 } from 'lucide-react';
 import { useWorkflow } from '@/hooks/useWorkflow';
 
 interface SpecificFieldsProps {
@@ -30,7 +30,7 @@ const SpecificFields = ({
   user = { specificRoles: ['direccio-qualitat'] },
   isDraft = true
 }: SpecificFieldsProps) => {
-  const { getRequiredFields, getAvailableCentres } = useWorkflow({ user });
+  const { getRequiredFields, getAvailableCentres, centresLoading } = useWorkflow({ user });
   const requiredFields = getRequiredFields(actionType);
   const availableCentres = getAvailableCentres();
 
@@ -77,9 +77,20 @@ const SpecificFields = ({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <Label htmlFor="centre">Centre</Label>
-            <Select value={centre} onValueChange={(value) => onFieldChange('centre', value)}>
+            <Select 
+              value={centre} 
+              onValueChange={(value) => onFieldChange('centre', value)}
+              disabled={centresLoading}
+            >
               <SelectTrigger className="mt-1">
-                <SelectValue placeholder="Selecciona centre" />
+                {centresLoading ? (
+                  <div className="flex items-center">
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Carregant centres...
+                  </div>
+                ) : (
+                  <SelectValue placeholder="Selecciona centre" />
+                )}
               </SelectTrigger>
               <SelectContent>
                 {availableCentres.map((center) => (
@@ -89,6 +100,11 @@ const SpecificFields = ({
                 ))}
               </SelectContent>
             </Select>
+            {centresLoading && (
+              <p className="text-xs text-gray-500 mt-1">
+                Carregant centres des del servidor...
+              </p>
+            )}
           </div>
 
           {!isDraft && (

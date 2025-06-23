@@ -1,7 +1,7 @@
-
 import { useMemo } from 'react';
 import { CorrectiveAction, User } from '@/types';
 import { ACTION_TYPES, USER_ROLES } from '@/types/categories';
+import { useCentres } from './useCentres';
 
 interface UseWorkflowProps {
   user: User;
@@ -9,6 +9,7 @@ interface UseWorkflowProps {
 }
 
 export const useWorkflow = ({ user, action }: UseWorkflowProps) => {
+  const { centres, loading: centresLoading } = useCentres(user.specificRoles);
   
   const workflow = useMemo(() => {
     // Determinar qui pot editar l'acció en cada estat
@@ -74,16 +75,18 @@ export const useWorkflow = ({ user, action }: UseWorkflowProps) => {
       return actionTypeData.allowedRoles.some(role => userRoles.includes(role));
     };
 
-    // Obtenir centres disponibles segons l'usuari
+    // Obtenir centres disponibles des del webservice
     const getAvailableCentres = () => {
-      const userRoles = user.specificRoles || [];
-      
-      if (userRoles.includes('direccio-qualitat')) {
-        return ['Hospital Central Barcelona', 'Hospital de Coslada', '4104 Sevilla-Cartuja', 'CAP Gràcia'];
+      if (centresLoading) {
+        return []; // Retornar array buit mentre carrega
       }
       
-      // Per defecte retornar el centre de l'usuari
-      return user.centre ? [user.centre] : [];
+      return centres.map(centre => centre.name);
+    };
+
+    // Obtenir informació detallada d'un centre
+    const getCentreInfo = (centreName: string) => {
+      return centres.find(centre => centre.name === centreName);
     };
 
     return {
@@ -91,9 +94,11 @@ export const useWorkflow = ({ user, action }: UseWorkflowProps) => {
       getResponsibleOptions,
       getRequiredFields,
       canCreateActionType,
-      getAvailableCentres
+      getAvailableCentres,
+      getCentreInfo,
+      centresLoading
     };
-  }, [user, action]);
+  }, [user, action, centres, centresLoading]);
 
   return workflow;
 };
