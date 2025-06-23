@@ -1,5 +1,6 @@
 
 import { useState, useEffect } from 'react';
+import { getFullEndpointUrl } from '@/config/api';
 
 interface Centre {
   id: string;
@@ -17,9 +18,6 @@ interface UseCentresResponse {
   refetch: () => void;
 }
 
-// Mock endpoint - en producció seria una URL real
-const MOCK_CENTRES_ENDPOINT = '/api/centres';
-
 export const useCentres = (userRoles: string[] = []): UseCentresResponse => {
   const [centres, setCentres] = useState<Centre[]>([]);
   const [loading, setLoading] = useState(true);
@@ -30,7 +28,36 @@ export const useCentres = (userRoles: string[] = []): UseCentresResponse => {
       setLoading(true);
       setError(null);
 
-      // Mock response - simula la resposta d'un webservice
+      const endpointUrl = getFullEndpointUrl('centres');
+      
+      try {
+        // Intentar crida real a l'API
+        const response = await fetch(endpointUrl, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          
+          // Filtrar centres segons els rols de l'usuari
+          const filteredCentres = data.centres.filter((centre: Centre) => {
+            if (userRoles.includes('direccio-qualitat')) {
+              return centre.active;
+            }
+            return centre.active && centre.allowedRoles.some(role => userRoles.includes(role));
+          });
+
+          setCentres(filteredCentres);
+          return;
+        }
+      } catch (apiError) {
+        console.warn('API call failed, using mock data:', apiError);
+      }
+
+      // Fallback a mock response
       const mockResponse = {
         centres: [
           {
@@ -77,16 +104,13 @@ export const useCentres = (userRoles: string[] = []): UseCentresResponse => {
       };
 
       // Simular delay de xarxa
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise(resolve => setTimeout(resolve, 300));
 
       // Filtrar centres segons els rols de l'usuari
       const filteredCentres = mockResponse.centres.filter(centre => {
-        // Si l'usuari té el rol de direcció-qualitat, pot veure tots els centres
         if (userRoles.includes('direccio-qualitat')) {
           return centre.active;
         }
-        
-        // Sinó, només pot veure centres per als quals té permisos
         return centre.active && centre.allowedRoles.some(role => userRoles.includes(role));
       });
 

@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Settings as SettingsIcon, Save, Bell, Shield, Database, Mail, Key, Sparkles } from 'lucide-react';
+import { Settings as SettingsIcon, Save, Bell, Shield, Database, Mail, Key, Sparkles, Globe, RefreshCw } from 'lucide-react';
+import { getApiConfig, saveApiConfig, resetApiConfig, testEndpointConnectivity, getFullEndpointUrl } from '@/config/api';
+import type { ApiConfig } from '@/config/api';
 import GeminiApiKeyDialog from '@/components/GeminiApiKeyDialog';
 
 const Settings = () => {
@@ -25,6 +27,15 @@ const Settings = () => {
   const [showApiKeyDialog, setShowApiKeyDialog] = useState(false);
   const [hasGeminiKey, setHasGeminiKey] = useState(!!localStorage.getItem('gemini-api-key'));
 
+  // Nou estat per la configuració d'APIs
+  const [apiConfig, setApiConfig] = useState<ApiConfig>(getApiConfig());
+  const [connectivityStatus, setConnectivityStatus] = useState<Record<string, boolean>>({});
+  const [testingConnectivity, setTestingConnectivity] = useState(false);
+
+  useEffect(() => {
+    setApiConfig(getApiConfig());
+  }, []);
+
   const handleGeneralSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     console.log('General settings saved:', generalSettings);
@@ -44,6 +55,43 @@ const Settings = () => {
   const clearGeminiKey = () => {
     localStorage.removeItem('gemini-api-key');
     setHasGeminiKey(false);
+  };
+
+  const handleApiConfigSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    saveApiConfig(apiConfig);
+    console.log('API configuration saved:', apiConfig);
+  };
+
+  const handleResetApiConfig = () => {
+    resetApiConfig();
+    setApiConfig(getApiConfig());
+    setConnectivityStatus({});
+  };
+
+  const testAllEndpoints = async () => {
+    setTestingConnectivity(true);
+    const status: Record<string, boolean> = {};
+    
+    for (const endpoint of Object.keys(apiConfig.endpoints) as Array<keyof ApiConfig['endpoints']>) {
+      const url = getFullEndpointUrl(endpoint);
+      status[endpoint] = await testEndpointConnectivity(url);
+    }
+    
+    setConnectivityStatus(status);
+    setTestingConnectivity(false);
+  };
+
+  const updateApiConfig = (field: keyof ApiConfig | string, value: string) => {
+    if (field === 'baseUrl') {
+      setApiConfig(prev => ({ ...prev, baseUrl: value }));
+    } else if (field.startsWith('endpoint.')) {
+      const endpointKey = field.split('.')[1] as keyof ApiConfig['endpoints'];
+      setApiConfig(prev => ({
+        ...prev,
+        endpoints: { ...prev.endpoints, [endpointKey]: value }
+      }));
+    }
   };
 
   return (
@@ -167,6 +215,103 @@ const Settings = () => {
             </CardContent>
           </Card>
         </div>
+
+        {/* Nova secció per configuració d'APIs */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Globe className="w-5 h-5" />
+              Configuració d'APIs
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleApiConfigSubmit} className="space-y-4">
+              <div>
+                <Label htmlFor="baseUrl">URL Base de l'API</Label>
+                <Input
+                  id="baseUrl"
+                  value={apiConfig.baseUrl}
+                  onChange={(e) => updateApiConfig('baseUrl', e.target.value)}
+                  placeholder="https://api.salut.cat"
+                />
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <Label htmlFor="centresEndpoint">Endpoint Centres</Label>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      id="centresEndpoint"
+                      value={apiConfig.endpoints.centres}
+                      onChange={(e) => updateApiConfig('endpoint.centres', e.target.value)}
+                      placeholder="/api/centres"
+                    />
+                    {connectivityStatus.centres !== undefined && (
+                      <div className={`w-3 h-3 rounded-full ${connectivityStatus.centres ? 'bg-green-500' : 'bg-red-500'}`} />
+                    )}
+                  </div>
+                </div>
+                
+                <div>
+                  <Label htmlFor="usersEndpoint">Endpoint Usuaris</Label>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      id="usersEndpoint"
+                      value={apiConfig.endpoints.users}
+                      onChange={(e) => updateApiConfig('endpoint.users', e.target.value)}
+                      placeholder="/api/users"
+                    />
+                    {connectivityStatus.users !== undefined && (
+                      <div className={`w-3 h-3 rounded-full ${connectivityStatus.users ? 'bg-green-500' : 'bg-red-500'}`} />
+                    )}
+                  </div>
+                </div>
+                
+                <div>
+                  <Label htmlFor="actionsEndpoint">Endpoint Accions</Label>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      id="actionsEndpoint"
+                      value={apiConfig.endpoints.actions}
+                      onChange={(e) => updateApiConfig('endpoint.actions', e.target.value)}
+                      placeholder="/api/actions"
+                    />
+                    {connectivityStatus.actions !== undefined && (
+                      <div className={`w-3 h-3 rounded-full ${connectivityStatus.actions ? 'bg-green-500' : 'bg-red-500'}`} />
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-2">
+                <Button type="submit" className="flex-1">
+                  <Save className="w-4 h-4 mr-2" />
+                  Guardar Configuració d'APIs
+                </Button>
+                <Button 
+                  type="button" 
+                  variant="outline"
+                  onClick={testAllEndpoints}
+                  disabled={testingConnectivity}
+                >
+                  {testingConnectivity ? (
+                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <Globe className="w-4 h-4 mr-2" />
+                  )}
+                  Provar Connexió
+                </Button>
+                <Button 
+                  type="button" 
+                  variant="destructive"
+                  onClick={handleResetApiConfig}
+                >
+                  Restaurar
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
 
         <Card>
           <CardHeader>
