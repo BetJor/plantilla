@@ -1,27 +1,24 @@
-import React, { useState } from 'react';
+
+import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { ArrowLeft, MessageSquare, Paperclip, Calendar, User, Building, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Calendar, User, Building, AlertCircle, Paperclip } from 'lucide-react';
 import { useCorrectiveActions } from '@/hooks/useCorrectiveActions';
 import { CorrectiveAction } from '@/types';
 import DescriptionSection from '@/components/ActionFormSections/DescriptionSection';
 import AnalysisSection from '@/components/ActionFormSections/AnalysisSection';
 import ClosureSection from '@/components/ActionFormSections/ClosureSection';
-import AttachmentsFormSection from '@/components/ActionFormSections/AttachmentsFormSection';
-import CommentsDisplaySection from '@/components/ActionFormSections/CommentsDisplaySection';
 import AttachmentsSection from '@/components/ActionFormSections/AttachmentsSection';
+import CommentsSection from '@/components/ActionFormSections/CommentsSection';
 import StatusProgress from '@/components/ActionFormSections/StatusProgress';
 import StatusControls from '@/components/ActionFormSections/StatusControls';
 
 const ActionDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { actions, addComment, updateAction } = useCorrectiveActions();
-  const [newComment, setNewComment] = useState('');
+  const { actions, updateAction } = useCorrectiveActions();
   
   console.log('ActionDetail: ID de la ruta:', id);
   console.log('ActionDetail: Accions disponibles:', actions.map(a => ({ id: a.id, title: a.title })));
@@ -79,19 +76,6 @@ const ActionDetail = () => {
 
   const handleStatusChange = (newStatus: CorrectiveAction['status']) => {
     updateAction(action.id, { status: newStatus });
-  };
-
-  const handleAddComment = () => {
-    if (newComment.trim()) {
-      addComment({
-        actionId: action.id,
-        userId: 'current-user',
-        userName: 'Usuari Actual',
-        content: newComment,
-        attachments: []
-      });
-      setNewComment('');
-    }
   };
 
   const handleActionUpdate = (updates: Partial<CorrectiveAction>) => {
@@ -185,32 +169,6 @@ const ActionDetail = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
           {renderCumulativeSections()}
-
-          <AttachmentsFormSection
-            action={action}
-            onUpdate={handleActionUpdate}
-            readOnly={['Cerrado', 'Anulada'].includes(action.status)}
-          />
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Comentaris</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="comment">Afegir comentari</Label>
-                <Textarea
-                  id="comment"
-                  value={newComment}
-                  onChange={(e) => setNewComment(e.target.value)}
-                  placeholder="Escriu el teu comentari..."
-                />
-                <Button onClick={handleAddComment} disabled={!newComment.trim()}>
-                  Afegir Comentari
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
         </div>
 
         <div className="space-y-6">
@@ -278,7 +236,10 @@ const ActionDetail = () => {
             </CardContent>
           </Card>
 
-          <CommentsDisplaySection actionId={action.id} />
+          <CommentsSection 
+            actionId={action.id} 
+            readOnly={['Cerrado', 'Anulada'].includes(action.status)}
+          />
         </div>
       </div>
     </div>

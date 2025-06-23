@@ -1,18 +1,36 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 import { MessageSquare, Paperclip, User, Clock } from 'lucide-react';
-import { Comment } from '@/types';
 import { useCorrectiveActions } from '@/hooks/useCorrectiveActions';
 
-interface CommentsDisplaySectionProps {
+interface CommentsSectionProps {
   actionId: string;
+  readOnly?: boolean;
 }
 
-const CommentsDisplaySection = ({ actionId }: CommentsDisplaySectionProps) => {
-  const { comments } = useCorrectiveActions();
+const CommentsSection = ({ actionId, readOnly = false }: CommentsSectionProps) => {
+  const { comments, addComment } = useCorrectiveActions();
+  const [newComment, setNewComment] = useState('');
+  
   const actionComments = comments.filter(c => c.actionId === actionId);
+
+  const handleAddComment = () => {
+    if (newComment.trim()) {
+      addComment({
+        actionId: actionId,
+        userId: 'current-user',
+        userName: 'Usuari Actual',
+        content: newComment,
+        attachments: []
+      });
+      setNewComment('');
+    }
+  };
 
   return (
     <Card>
@@ -27,9 +45,10 @@ const CommentsDisplaySection = ({ actionId }: CommentsDisplaySectionProps) => {
           </Badge>
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-4">
+        {/* Mostrar comentaris existents */}
         {actionComments.length > 0 ? (
-          <div className="space-y-4">
+          <div className="space-y-4 max-h-60 overflow-y-auto">
             {actionComments.map((comment) => (
               <div key={comment.id} className="border-l-4 border-blue-200 pl-4 py-2">
                 <div className="flex items-center justify-between mb-2">
@@ -63,9 +82,33 @@ const CommentsDisplaySection = ({ actionId }: CommentsDisplaySectionProps) => {
             No hi ha comentaris encara
           </p>
         )}
+
+        {/* Formulari per afegir comentaris */}
+        {!readOnly && (
+          <div className="border-t pt-4 space-y-3">
+            <div className="space-y-2">
+              <Label htmlFor="comment">Afegir comentari</Label>
+              <Textarea
+                id="comment"
+                value={newComment}
+                onChange={(e) => setNewComment(e.target.value)}
+                placeholder="Escriu el teu comentari..."
+                rows={3}
+              />
+              <Button 
+                onClick={handleAddComment} 
+                disabled={!newComment.trim()}
+                size="sm"
+                className="w-full"
+              >
+                Afegir Comentari
+              </Button>
+            </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
 };
 
-export default CommentsDisplaySection;
+export default CommentsSection;
