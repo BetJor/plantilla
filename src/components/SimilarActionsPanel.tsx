@@ -94,29 +94,20 @@ const SimilarActionsPanel = ({
               <Card key={similar.action.id} className="border-l-4 border-l-orange-400">
                 <CardContent className="p-4">
                   <div className="space-y-3">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <h4 className="font-medium text-gray-900">
-                            {similar.action.title}
-                          </h4>
-                          <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium border ${getSimilarityColor(similar.similarity)}`}>
-                            {getSimilarityIcon(similar.similarity)}
-                            {similar.similarity}%
-                          </div>
-                        </div>
-                        <div className="text-sm text-gray-600">
-                          <span className="font-medium">Codi:</span> {similar.action.id}
+                    {/* Títol i percentatge sense botó */}
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2">
+                        <h4 className="font-medium text-gray-900">
+                          {similar.action.title}
+                        </h4>
+                        <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium border ${getSimilarityColor(similar.similarity)}`}>
+                          {getSimilarityIcon(similar.similarity)}
+                          {similar.similarity}%
                         </div>
                       </div>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={() => setPreviewActionId(similar.action.id)}
-                      >
-                        <Eye className="w-3 h-3 mr-1" />
-                        Veure
-                      </Button>
+                      <div className="text-sm text-gray-600">
+                        <span className="font-medium">Codi:</span> {similar.action.id}
+                      </div>
                     </div>
 
                     {/* Similituds detectades */}
@@ -130,6 +121,18 @@ const SimilarActionsPanel = ({
                           </li>
                         ))}
                       </ul>
+                    </div>
+
+                    {/* Botó Veure a sota de tot */}
+                    <div className="flex justify-end">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => setPreviewActionId(similar.action.id)}
+                      >
+                        <Eye className="w-3 h-3 mr-1" />
+                        Veure
+                      </Button>
                     </div>
                   </div>
                 </CardContent>
