@@ -20,7 +20,7 @@ export const useBisActions = () => {
       department: originalAction.department,
       attachments: [],
       createdBy: 'system', // Sistema automàtic
-      origin: originalAction.origin,
+      origen: originalAction.origen,
       areasImplicadas: originalAction.areasImplicadas,
       areasHospital: originalAction.areasHospital,
       responsableAnalisis: originalAction.responsableAnalisis,

@@ -47,7 +47,7 @@ const Actions = () => {
     subCategory: '',
     priority: 'mitjana' as const,
     centre: '',
-    origin: '',
+    origen: '',
     areasImplicadas: [] as string[],
     areasHospital: [] as string[],
     responsableAnalisis: ''
@@ -173,6 +173,14 @@ const Actions = () => {
 
   const handleSaveDraft = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Prevenir múltiples submissions
+    const button = e.target as HTMLFormElement;
+    const submitButton = button.querySelector('button[type="button"]') as HTMLButtonElement;
+    if (submitButton) {
+      submitButton.disabled = true;
+    }
+    
     addAction({
       ...formData,
       status: 'Borrador',
@@ -183,14 +191,44 @@ const Actions = () => {
       department: mockUser.department
     });
     
+    // Reinicialitzar el formulari
+    setFormData({
+      title: '',
+      description: '',
+      type: '',
+      category: '',
+      subCategory: '',
+      priority: 'mitjana',
+      centre: '',
+      origen: '',
+      areasImplicadas: [],
+      areasHospital: [],
+      responsableAnalisis: ''
+    });
+    
     toast({
       title: "Borrador guardat",
       description: "El borrador s'ha guardat correctament."
     });
+    
+    // Reactivar el botó després d'un petit delay
+    setTimeout(() => {
+      if (submitButton) {
+        submitButton.disabled = false;
+      }
+    }, 1000);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Prevenir múltiples submissions
+    const button = e.target as HTMLFormElement;
+    const submitButton = button.querySelector('button[type="button"]') as HTMLButtonElement;
+    if (submitButton) {
+      submitButton.disabled = true;
+    }
+    
     addAction({
       ...formData,
       status: 'Pendiente de Análisis',
@@ -200,6 +238,7 @@ const Actions = () => {
       assignedTo: formData.responsableAnalisis || 'current-user',
       department: mockUser.department
     });
+    
     setFormData({
       title: '',
       description: '',
@@ -208,13 +247,20 @@ const Actions = () => {
       subCategory: '',
       priority: 'mitjana',
       centre: '',
-      origin: '',
+      origen: '',
       areasImplicadas: [],
       areasHospital: [],
       responsableAnalisis: ''
     });
     setShowCreateForm(false);
     setSimilarActions([]);
+    
+    // Reactivar el botó després d'un petit delay
+    setTimeout(() => {
+      if (submitButton) {
+        submitButton.disabled = false;
+      }
+    }, 1000);
   };
 
   const filteredActions = actions.filter(action =>
@@ -294,7 +340,7 @@ const Actions = () => {
                 actionType={formData.type}
                 centre={formData.centre}
                 department=""
-                origin={formData.origin}
+                origen={formData.origen}
                 areasImplicadas={formData.areasImplicadas}
                 areasHospital={formData.areasHospital}
                 onFieldChange={handleFieldChange}

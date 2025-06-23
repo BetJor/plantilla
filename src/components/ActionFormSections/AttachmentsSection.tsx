@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,6 +14,7 @@ interface AttachmentsSectionProps {
 
 const AttachmentsSection = ({ attachments, onUpdate, readOnly = false }: AttachmentsSectionProps) => {
   const [newAttachment, setNewAttachment] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleAddAttachment = () => {
     if (newAttachment.trim() && !attachments.includes(newAttachment.trim())) {
@@ -35,6 +36,10 @@ const AttachmentsSection = ({ attachments, onUpdate, readOnly = false }: Attachm
         onUpdate([...attachments, fileName]);
       }
     }
+  };
+
+  const handleSelectFileClick = () => {
+    fileInputRef.current?.click();
   };
 
   return (
@@ -65,18 +70,21 @@ const AttachmentsSection = ({ attachments, onUpdate, readOnly = false }: Attachm
         <div className="space-y-2">
           <div className="flex gap-2">
             <Input
+              ref={fileInputRef}
               type="file"
               onChange={handleFileUpload}
               className="flex-1"
               accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
+              style={{ display: 'none' }}
             />
             <Button
               type="button"
               variant="outline"
-              onClick={() => document.querySelector('input[type="file"]')?.click()}
+              onClick={handleSelectFileClick}
+              className="flex-1"
             >
               <Upload className="w-4 h-4 mr-1" />
-              Seleccionar
+              Seleccionar fitxer
             </Button>
           </div>
           

@@ -101,7 +101,7 @@ export const useCorrectiveActions = () => {
         dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
         createdAt: new Date('2024-01-15T10:00:00Z').toISOString(),
         updatedAt: new Date('2024-01-15T10:00:00Z').toISOString(),
-        origin: 'auditoria'
+        origen: 'Auditoria'
       },
       
       // 2. Acció pendent d'anàlisi
@@ -124,7 +124,7 @@ export const useCorrectiveActions = () => {
         dueDate: '2024-07-31',
         createdAt: new Date('2024-05-12T13:16:16Z').toISOString(),
         updatedAt: new Date('2024-05-12T13:16:16Z').toISOString(),
-        origin: 'auditoria-lopd'
+        origen: 'Auditoria'
       },
       
       // 3. Acció pendent de comprobació
@@ -148,7 +148,7 @@ export const useCorrectiveActions = () => {
         dueDate: '2024-05-30',
         createdAt: new Date('2024-05-10T13:55:44Z').toISOString(),
         updatedAt: new Date('2024-05-10T13:57:33Z').toISOString(),
-        origin: 'auditoria-lopd',
+        origen: 'Auditoria',
         analysisData: {
           rootCauses: 'Tras la revisión de los distintos sistemas de tratamiento de datos de carácter personal únicamente cabe considerar, en este supuesto, el fichero mensual de trabajadores remitido por la Tesorería General de la Seguridad Social. Dado el volumen de comunicaciones que supondría el cumplimiento del deber de información se considera la necesidad de acogernos a la excepción del artículo 5.5 LO 15/1999.',
           proposedAction: 'La excepción debe ser sometida al criterio de la AEPD. Se sugiere plantear este caso a la AEPD a través de AMAT para que evalúe y dictamine la posibilidad de acogernos a la excepción del artículo 5.5 LO 15/1999.',
@@ -181,7 +181,7 @@ export const useCorrectiveActions = () => {
         dueDate: '2007-11-15',
         createdAt: new Date('2007-09-25T17:58:33Z').toISOString(),
         updatedAt: new Date('2007-10-05T12:55:20Z').toISOString(),
-        origin: 'auditoria-seguridad',
+        origen: 'Auditoria',
         analysisData: {
           rootCauses: 'El acceso a la sala no está restringido puesto que la puerta no está cerrada con llave.',
           proposedAction: 'A pesar de que actualmente no hay equipos de almacenamiento de datos en la sala, la puerta de acceso a la misma debería estar siempre cerrada con llave. La llave de la mencionada sala debe estar custodiada por la Dirección del centro.',
@@ -363,7 +363,7 @@ export const useCorrectiveActions = () => {
     // Noves mètriques
     const actionsByOrigin = Object.entries(
       actions.reduce((acc, action) => {
-        const origin = action.origin || 'sense-especificar';
+        const origin = action.origen || 'sense-especificar';
         acc[origin] = (acc[origin] || 0) + 1;
         return acc;
       }, {} as Record<string, number>)
