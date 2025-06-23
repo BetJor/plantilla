@@ -64,8 +64,7 @@ const StatusControls = ({
                !!action.type && 
                !!action.category && 
                action.subCategory.trim().length > 0 &&
-               !!action.responsableAnalisis &&
-               !!action.fechaLimiteAnalisis;
+               !!action.responsableAnalisis;
       case 'Pendiente de Análisis':
         // Només validar anàlisi de causes i accions proposades amb dades
         const hasRootCauses = !!(action.analysisData?.rootCauses?.trim());
@@ -104,7 +103,6 @@ const StatusControls = ({
         if (!action.category) missing.push('categoria');
         if (!action.subCategory.trim()) missing.push('subcategoria');
         if (!action.responsableAnalisis) missing.push('responsable d\'anàlisi');
-        if (!action.fechaLimiteAnalisis) missing.push('data límit anàlisi');
         return `Cal completar: ${missing.join(', ')}`;
       case 'Pendiente de Análisis':
         const missingAnalysis = [];

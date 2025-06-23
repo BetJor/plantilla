@@ -5,10 +5,18 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { FileText, Clock, User, X } from 'lucide-react';
+import { FileText, Clock, User } from 'lucide-react';
 import { CorrectiveAction } from '@/types';
 import CategorySelectors from './CategorySelectors';
+import MultiFunctionalAreas from './MultiFunctionalAreas';
+import AttachmentsSection from './AttachmentsSection';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 interface DescriptionSectionProps {
   action: CorrectiveAction;
@@ -17,6 +25,8 @@ interface DescriptionSectionProps {
 }
 
 const DescriptionSection = ({ action, onUpdate, readOnly = false }: DescriptionSectionProps) => {
+  const [origen, setOrigen] = React.useState(action.origen || '');
+  const [assumpte, setAssumpte] = React.useState(action.assumpte || '');
   const [description, setDescription] = React.useState(action.description);
   const [selectedType, setSelectedType] = React.useState(action.type || '');
   const [selectedCategory, setSelectedCategory] = React.useState(action.category || '');
@@ -24,55 +34,50 @@ const DescriptionSection = ({ action, onUpdate, readOnly = false }: DescriptionS
   const [auditDate, setAuditDate] = React.useState(action.auditDate || '');
   const [sector, setSector] = React.useState(action.sector || '');
   const [selectedAreas, setSelectedAreas] = React.useState<string[]>(action.areasImplicadas || []);
-  const [newArea, setNewArea] = React.useState('');
+  const [responsableAnalisis, setResponsableAnalisis] = React.useState(action.responsableAnalisis || '');
+  const [attachments, setAttachments] = React.useState<string[]>(action.attachments || []);
 
-  const predefinedAreas = [
-    'Direcció Gestió de Qualitat i Medi Ambient',
-    'Direcció Compres',
-    'Direcció del Centre',
-    'Direcció Assistencial',
-    'Direcció Mèdica',
-    'Direcció d\'Infermeria',
-    'Departament de Qualitat',
-    'Departament de Prevenció',
-    'Recursos Humans'
+  const origenOptions = [
+    'Auditoria',
+    'Incidencias',
+    'Seguimiento Indicadores/objetivos',
+    'Revisión del sistema',
+    'Otros'
   ];
-
-  const handleAddArea = () => {
-    if (newArea.trim() && !selectedAreas.includes(newArea.trim())) {
-      setSelectedAreas([...selectedAreas, newArea.trim()]);
-      setNewArea('');
-    }
-  };
-
-  const handleRemoveArea = (area: string) => {
-    setSelectedAreas(selectedAreas.filter(a => a !== area));
-  };
 
   const handleSave = () => {
     onUpdate({ 
+      origen: origen as CorrectiveAction['origen'],
+      assumpte,
       description,
       type: selectedType,
       category: selectedCategory,
       subCategory: selectedSubcategory,
       auditDate,
       sector,
-      areasImplicadas: selectedAreas
+      areasImplicadas: selectedAreas,
+      responsableAnalisis,
+      attachments
     });
   };
 
   const isComplete = action.description.trim().length > 0 && 
                     action.type && 
                     (action.category || selectedCategory) && 
-                    action.subCategory.trim().length > 0;
+                    action.subCategory.trim().length > 0 &&
+                    action.responsableAnalisis;
   
-  const hasChanges = description !== action.description ||
+  const hasChanges = origen !== (action.origen || '') ||
+                    assumpte !== (action.assumpte || '') ||
+                    description !== action.description ||
                     selectedType !== action.type ||
                     selectedCategory !== (action.category || '') ||
                     selectedSubcategory !== action.subCategory ||
                     auditDate !== (action.auditDate || '') ||
                     sector !== (action.sector || '') ||
-                    JSON.stringify(selectedAreas) !== JSON.stringify(action.areasImplicadas || []);
+                    JSON.stringify(selectedAreas) !== JSON.stringify(action.areasImplicadas || []) ||
+                    responsableAnalisis !== (action.responsableAnalisis || '') ||
+                    JSON.stringify(attachments) !== JSON.stringify(action.attachments || []);
 
   return (
     <Card className={`${readOnly ? 'bg-gray-50' : ''} ${isComplete ? 'border-green-200' : ''}`}>
@@ -94,6 +99,34 @@ const DescriptionSection = ({ action, onUpdate, readOnly = false }: DescriptionS
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
+        <div>
+          <Label htmlFor="origen">Origen</Label>
+          <Select value={origen} onValueChange={setOrigen} disabled={readOnly}>
+            <SelectTrigger>
+              <SelectValue placeholder="Seleccionar origen..." />
+            </SelectTrigger>
+            <SelectContent>
+              {origenOptions.map((option) => (
+                <SelectItem key={option} value={option}>
+                  {option}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div>
+          <Label htmlFor="assumpte">Assumpte</Label>
+          <Input
+            id="assumpte"
+            value={assumpte}
+            onChange={(e) => setAssumpte(e.target.value)}
+            placeholder="Assumpte de l'acció correctiva..."
+            disabled={readOnly}
+            className={readOnly ? 'bg-gray-100' : ''}
+          />
+        </div>
+
         <CategorySelectors
           selectedType={selectedType}
           selectedCategory={selectedCategory}
@@ -129,74 +162,6 @@ const DescriptionSection = ({ action, onUpdate, readOnly = false }: DescriptionS
             />
           </div>
         </div>
-
-        <div>
-          <Label>Àrees Funcionals Implicades</Label>
-          <div className="space-y-3">
-            {selectedAreas.length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {selectedAreas.map((area, index) => (
-                  <Badge key={index} variant="secondary" className="flex items-center gap-1">
-                    {area}
-                    {!readOnly && (
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveArea(area)}
-                        className="ml-1 hover:bg-gray-300 rounded-full p-0.5"
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    )}
-                  </Badge>
-                ))}
-              </div>
-            )}
-            
-            {!readOnly && (
-              <div className="flex gap-2">
-                <select
-                  value={newArea}
-                  onChange={(e) => setNewArea(e.target.value)}
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="">Seleccionar àrea predefinida...</option>
-                  {predefinedAreas
-                    .filter(area => !selectedAreas.includes(area))
-                    .map((area) => (
-                      <option key={area} value={area}>{area}</option>
-                    ))}
-                </select>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handleAddArea}
-                  disabled={!newArea}
-                >
-                  Afegir
-                </Button>
-              </div>
-            )}
-            
-            {!readOnly && (
-              <div className="flex gap-2">
-                <Input
-                  value={newArea}
-                  onChange={(e) => setNewArea(e.target.value)}
-                  placeholder="O escriu una nova àrea..."
-                  onKeyPress={(e) => e.key === 'Enter' && handleAddArea()}
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handleAddArea}
-                  disabled={!newArea.trim()}
-                >
-                  Afegir
-                </Button>
-              </div>
-            )}
-          </div>
-        </div>
         
         <div>
           <Label htmlFor="description">Descripció detallada</Label>
@@ -210,9 +175,34 @@ const DescriptionSection = ({ action, onUpdate, readOnly = false }: DescriptionS
             className={readOnly ? 'bg-gray-100' : ''}
           />
         </div>
+
+        <MultiFunctionalAreas
+          selectedAreas={selectedAreas}
+          onUpdate={setSelectedAreas}
+          readOnly={readOnly}
+        />
+
+        <div>
+          <Label htmlFor="responsableAnalisis">Responsable d'anàlisi</Label>
+          <Input
+            id="responsableAnalisis"
+            value={responsableAnalisis}
+            onChange={(e) => setResponsableAnalisis(e.target.value)}
+            placeholder="Nom del responsable de l'anàlisi..."
+            disabled={readOnly}
+            className={readOnly ? 'bg-gray-100' : ''}
+          />
+        </div>
+
+        <AttachmentsSection
+          attachments={attachments}
+          onUpdate={setAttachments}
+          readOnly={readOnly}
+        />
+
         {!readOnly && (
           <Button onClick={handleSave} disabled={!hasChanges}>
-            Guardar Descripció
+            Guardar
           </Button>
         )}
       </CardContent>
