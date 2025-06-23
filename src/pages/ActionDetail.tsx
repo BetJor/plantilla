@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -25,7 +24,9 @@ const ActionDetail = () => {
   // Refs to access save functions from child components
   const descriptionSaveRef = useRef<(() => void) | null>(null);
   const analysisSaveRef = useRef<(() => void) | null>(null);
+  const analysisSaveOnlyRef = useRef<(() => void) | null>(null);
   const closureSaveRef = useRef<(() => void) | null>(null);
+  const closureSaveOnlyRef = useRef<(() => void) | null>(null);
   
   console.log('ActionDetail: ID de la ruta:', id);
   console.log('ActionDetail: Accions disponibles:', actions.map(a => ({ id: a.id, title: a.title })));
@@ -104,13 +105,13 @@ const ActionDetail = () => {
         }
         break;
       case 'Pendiente de Análisis':
-        if (analysisSaveRef.current) {
-          analysisSaveRef.current();
+        if (analysisSaveOnlyRef.current) {
+          analysisSaveOnlyRef.current();
         }
         break;
       case 'Pendiente de Cierre':
-        if (closureSaveRef.current) {
-          closureSaveRef.current();
+        if (closureSaveOnlyRef.current) {
+          closureSaveOnlyRef.current();
         }
         break;
     }
@@ -141,6 +142,7 @@ const ActionDetail = () => {
           onUpdate={handleActionUpdate}
           readOnly={!['Pendiente de Análisis', 'Pendiente de Comprobación'].includes(action.status)}
           saveRef={analysisSaveRef}
+          saveOnlyRef={analysisSaveOnlyRef}
           onChangesDetected={() => setHasPendingChanges(true)}
         />
       );
@@ -155,6 +157,7 @@ const ActionDetail = () => {
           onUpdate={handleActionUpdate}
           readOnly={action.status !== 'Pendiente de Cierre'}
           saveRef={closureSaveRef}
+          saveOnlyRef={closureSaveOnlyRef}
           onChangesDetected={() => setHasPendingChanges(true)}
         />
       );

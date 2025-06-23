@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
@@ -15,6 +14,7 @@ interface AnalysisSectionProps {
   onUpdate: (updates: Partial<CorrectiveAction>) => void;
   readOnly?: boolean;
   saveRef?: React.MutableRefObject<(() => void) | null>;
+  saveOnlyRef?: React.MutableRefObject<(() => void) | null>;
   onChangesDetected?: () => void;
 }
 
@@ -23,6 +23,7 @@ const AnalysisSection = ({
   onUpdate, 
   readOnly = false,
   saveRef,
+  saveOnlyRef,
   onChangesDetected
 }: AnalysisSectionProps) => {
   const [rootCauses, setRootCauses] = React.useState(action.analysisData?.rootCauses || '');
@@ -87,12 +88,31 @@ const AnalysisSection = ({
     });
   };
 
-  // Expose save function via ref
+  const handleSaveOnly = () => {
+    // Només guardar sense canviar l'estat
+    onUpdate({
+      analysisData: {
+        ...action.analysisData,
+        rootCauses,
+        proposedActions: proposedActions.map(action => ({
+          ...action,
+          verificationStatus: action.verificationStatus || 'not-verified'
+        })),
+        analysisDate: new Date().toISOString(),
+        analysisBy: 'current-user'
+      }
+    });
+  };
+
+  // Expose save functions via refs
   React.useEffect(() => {
     if (saveRef) {
       saveRef.current = handleSave;
     }
-  }, [saveRef, rootCauses, proposedActions]);
+    if (saveOnlyRef) {
+      saveOnlyRef.current = handleSaveOnly;
+    }
+  }, [saveRef, saveOnlyRef, rootCauses, proposedActions]);
 
   const handleProposedActionsChange = (newActions: ProposedActionItem[]) => {
     onUpdate({

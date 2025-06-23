@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
@@ -12,6 +11,7 @@ interface ClosureSectionProps {
   onUpdate: (updates: Partial<CorrectiveAction>) => void;
   readOnly?: boolean;
   saveRef?: React.MutableRefObject<(() => void) | null>;
+  saveOnlyRef?: React.MutableRefObject<(() => void) | null>;
   onChangesDetected?: () => void;
 }
 
@@ -20,6 +20,7 @@ const ClosureSection = ({
   onUpdate, 
   readOnly = false,
   saveRef,
+  saveOnlyRef,
   onChangesDetected
 }: ClosureSectionProps) => {
   const [closureNotes, setClosureNotes] = React.useState(action.closureData?.closureNotes || '');
@@ -42,12 +43,28 @@ const ClosureSection = ({
     });
   };
 
-  // Expose save function via ref
+  const handleSaveOnly = () => {
+    // Només guardar sense signatura ni canvi d'estat
+    onUpdate({
+      closureData: {
+        ...action.closureData,
+        closureNotes,
+        effectivenessEvaluation,
+        isConforme
+      },
+      tipoCierre: isConforme ? 'conforme' : 'no-conforme'
+    });
+  };
+
+  // Expose save functions via refs
   React.useEffect(() => {
     if (saveRef) {
       saveRef.current = handleSave;
     }
-  }, [saveRef, closureNotes, effectivenessEvaluation, isConforme]);
+    if (saveOnlyRef) {
+      saveOnlyRef.current = handleSaveOnly;
+    }
+  }, [saveRef, saveOnlyRef, closureNotes, effectivenessEvaluation, isConforme]);
 
   const isFormValid = closureNotes.trim() && effectivenessEvaluation.trim();
   const isComplete = action.closureData?.closureNotes && action.closureData?.effectivenessEvaluation;
