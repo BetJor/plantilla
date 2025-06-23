@@ -324,8 +324,6 @@ const ActionDetail = () => {
           similarActions={similarActions}
           isDetecting={isDetecting}
           hasHighSimilarity={hasHighSimilarity}
-          onJoinAction={handleJoinAction}
-          onCreateBasedOn={handleCreateBasedOn}
           onClearDetection={() => {
             clearDetection();
             markAsReviewed();
