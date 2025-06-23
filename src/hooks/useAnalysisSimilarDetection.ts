@@ -10,7 +10,7 @@ interface SimilarAction {
 }
 
 interface UseAnalysisSimilarDetectionProps {
-  action: CorrectiveAction;
+  action?: CorrectiveAction; // Made optional to handle undefined
   isEnabled: boolean;
 }
 
@@ -21,7 +21,7 @@ export const useAnalysisSimilarDetection = ({ action, isEnabled }: UseAnalysisSi
   const { findSimilarActions, isLoading } = useSimilarActions();
 
   const detectSimilarActions = async () => {
-    if (!isEnabled || hasCheckedSimilarity || action.status !== 'Pendiente de Análisis') {
+    if (!isEnabled || hasCheckedSimilarity || !action || action.status !== 'Pendiente de Análisis') {
       return;
     }
 
@@ -59,14 +59,14 @@ export const useAnalysisSimilarDetection = ({ action, isEnabled }: UseAnalysisSi
 
   // Auto-detect quan es carrega una acció en estat "Pendiente de Análisis"
   useEffect(() => {
-    if (isEnabled && action.status === 'Pendiente de Análisis' && !hasCheckedSimilarity) {
+    if (isEnabled && action && action.status === 'Pendiente de Análisis' && !hasCheckedSimilarity) {
       const timer = setTimeout(() => {
         detectSimilarActions();
       }, 1000); // Petit delay per evitar cridades excessives
 
       return () => clearTimeout(timer);
     }
-  }, [action.id, action.status, isEnabled, hasCheckedSimilarity]);
+  }, [action?.id, action?.status, isEnabled, hasCheckedSimilarity]); // Use optional chaining for action.id
 
   return {
     similarActions,

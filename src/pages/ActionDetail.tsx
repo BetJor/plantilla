@@ -57,7 +57,7 @@ const ActionDetail = () => {
     clearDetection,
     markAsReviewed
   } = useAnalysisSimilarDetection({
-    action: action!,
+    action: action, // Remove the ! to allow undefined
     isEnabled: !!action && action.status === 'Pendiente de Análisis'
   });
   
