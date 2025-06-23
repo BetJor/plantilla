@@ -11,7 +11,7 @@ interface SpecificFieldsProps {
   actionType: string;
   centre: string;
   department: string;
-  origin?: string;
+  origen?: string;
   areasImplicadas?: string[];
   areasHospital?: string[];
   onFieldChange: (field: string, value: any) => void;
@@ -23,7 +23,7 @@ const SpecificFields = ({
   actionType,
   centre,
   department,
-  origin,
+  origen,
   areasImplicadas = [],
   areasHospital = [],
   onFieldChange,
@@ -106,8 +106,8 @@ const SpecificFields = ({
 
         {originOptions[actionType as keyof typeof originOptions] && (
           <div>
-            <Label htmlFor="origin">Origen</Label>
-            <Select value={origin} onValueChange={(value) => onFieldChange('origen', value)}>
+            <Label htmlFor="origen">Origen</Label>
+            <Select value={origen} onValueChange={(value) => onFieldChange('origen', value)}>
               <SelectTrigger className="mt-1">
                 <SelectValue placeholder="Selecciona origen" />
               </SelectTrigger>
