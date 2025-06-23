@@ -23,6 +23,14 @@ export interface ProposedActionItem {
   verificationBy?: string;
 }
 
+export interface StatusHistoryEntry {
+  status: string;
+  date: string;
+  userId: string;
+  userName: string;
+  notes?: string;
+}
+
 export interface CorrectiveAction {
   id: string;
   title: string;
@@ -40,6 +48,9 @@ export interface CorrectiveAction {
   createdBy: string;
   createdAt: string;
   updatedAt: string;
+  
+  // Nou camp per a l'historial d'estats
+  statusHistory?: StatusHistoryEntry[];
   
   // Nous camps segons requeriments
   origen?: 'Auditoria' | 'Incidencias' | 'Seguimiento Indicadores/objetivos' | 'Revisión del sistema' | 'Otros'; // Nou camp origen
@@ -118,7 +129,6 @@ export interface DashboardMetrics {
   actionsByStatus: { status: string; count: number }[];
   actionsByType: { type: string; count: number }[];
   actionsByCentre: { centre: string; count: number }[];
-  // Noves mètriques segons requeriments
   actionsByOrigin: { origin: string; count: number }[];
   overdueByType: { type: string; count: number }[];
   conformeVsNoConforme: { conforme: number; noConforme: number };

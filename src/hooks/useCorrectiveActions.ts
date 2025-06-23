@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { CorrectiveAction, Comment, DashboardMetrics } from '@/types';
+import { CorrectiveAction, Comment, DashboardMetrics, StatusHistoryEntry } from '@/types';
 import { toast } from '@/hooks/use-toast';
 import { useNotifications } from '@/hooks/useNotifications';
 import { useAuditHistory } from '@/hooks/useAuditHistory';
@@ -82,7 +82,6 @@ export const useCorrectiveActions = () => {
     console.log('addTestActions: Creant accions de prova...');
     
     const testActions: CorrectiveAction[] = [
-      // 1. Acció en estat Borrador
       {
         id: 'test-draft-001',
         title: 'Solicitud de pendrive BIOS',
@@ -101,10 +100,18 @@ export const useCorrectiveActions = () => {
         dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
         createdAt: new Date('2024-01-15T10:00:00Z').toISOString(),
         updatedAt: new Date('2024-01-15T10:00:00Z').toISOString(),
-        origen: 'Auditoria'
+        origen: 'Auditoria',
+        statusHistory: [
+          {
+            status: 'Borrador',
+            date: new Date('2024-01-15T10:00:00Z').toISOString(),
+            userId: 'current-user',
+            userName: 'Joan García',
+            notes: 'Acció creada després de l\'auditoria'
+          }
+        ]
       },
       
-      // 2. Acció pendent d'anàlisi
       {
         id: 'test-pending-analysis-001',
         title: 'Protocolarizar cancelación/modificación de datos',
@@ -124,10 +131,25 @@ export const useCorrectiveActions = () => {
         dueDate: '2024-07-31',
         createdAt: new Date('2024-05-12T13:16:16Z').toISOString(),
         updatedAt: new Date('2024-05-12T13:16:16Z').toISOString(),
-        origen: 'Auditoria'
+        origen: 'Auditoria',
+        statusHistory: [
+          {
+            status: 'Borrador',
+            date: new Date('2024-05-12T13:16:16Z').toISOString(),
+            userId: 'sara.fortea',
+            userName: 'Sara Fortea',
+            notes: 'Acció creada'
+          },
+          {
+            status: 'Pendiente de Análisis',
+            date: new Date('2024-05-12T14:30:00Z').toISOString(),
+            userId: 'supervisor',
+            userName: 'Supervisor Qualitat',
+            notes: 'Enviada per anàlisi'
+          }
+        ]
       },
       
-      // 3. Acció pendent de comprobació
       {
         id: 'test-pending-verification-001',
         title: 'Información trabajadores (excepción art. 5.5 LOPD)',
@@ -149,6 +171,29 @@ export const useCorrectiveActions = () => {
         createdAt: new Date('2024-05-10T13:55:44Z').toISOString(),
         updatedAt: new Date('2024-05-10T13:57:33Z').toISOString(),
         origen: 'Auditoria',
+        statusHistory: [
+          {
+            status: 'Borrador',
+            date: new Date('2024-05-10T13:55:44Z').toISOString(),
+            userId: 'edgard.ansola',
+            userName: 'Edgard Ansola',
+            notes: 'Acció creada'
+          },
+          {
+            status: 'Pendiente de Análisis',
+            date: new Date('2024-05-10T14:00:00Z').toISOString(),
+            userId: 'supervisor',
+            userName: 'Supervisor Qualitat',
+            notes: 'Enviada per anàlisi'
+          },
+          {
+            status: 'Pendiente de Comprobación',
+            date: new Date('2024-05-10T13:57:33Z').toISOString(),
+            userId: 'edgard.ansola',
+            userName: 'Edgard Ansola',
+            notes: 'Anàlisi completada, enviada per verificació'
+          }
+        ],
         analysisData: {
           rootCauses: 'Tras la revisión de los distintos sistemas de tratamiento de datos de carácter personal únicamente cabe considerar, en este supuesto, el fichero mensual de trabajadores remitido por la Tesorería General de la Seguridad Social. Dado el volumen de comunicaciones que supondría el cumplimiento del deber de información se considera la necesidad de acogernos a la excepción del artículo 5.5 LO 15/1999.',
           proposedAction: 'La excepción debe ser sometida al criterio de la AEPD. Se sugiere plantear este caso a la AEPD a través de AMAT para que evalúe y dictamine la posibilidad de acogernos a la excepción del artículo 5.5 LO 15/1999.',
@@ -159,7 +204,6 @@ export const useCorrectiveActions = () => {
         }
       },
       
-      // 4. Acció pendent de tancament
       {
         id: 'test-pending-closure-001',
         title: 'Restricción de acceso sala de informática (AS0827/2007)',
@@ -182,6 +226,35 @@ export const useCorrectiveActions = () => {
         createdAt: new Date('2007-09-25T17:58:33Z').toISOString(),
         updatedAt: new Date('2007-10-05T12:55:20Z').toISOString(),
         origen: 'Auditoria',
+        statusHistory: [
+          {
+            status: 'Borrador',
+            date: new Date('2007-09-25T17:58:33Z').toISOString(),
+            userId: 'edgard.ansola',
+            userName: 'Edgard Ansola',
+            notes: 'Detecció durant auditoria'
+          },
+          {
+            status: 'Pendiente de Análisis',
+            date: new Date('2007-09-26T08:00:00Z').toISOString(),
+            userId: 'supervisor',
+            userName: 'Supervisor Qualitat'
+          },
+          {
+            status: 'Pendiente de Comprobación',
+            date: new Date('2007-09-27T17:34:56Z').toISOString(),
+            userId: 'edgard.ansola',
+            userName: 'Edgard Ansola',
+            notes: 'Anàlisi de causes completada'
+          },
+          {
+            status: 'Pendiente de Cierre',
+            date: new Date('2007-10-05T12:55:20Z').toISOString(),
+            userId: 'eva.mendoza',
+            userName: 'Eva Mendoza',
+            notes: 'Verificació completada, pendent tancament'
+          }
+        ],
         analysisData: {
           rootCauses: 'El acceso a la sala no está restringido puesto que la puerta no está cerrada con llave.',
           proposedAction: 'A pesar de que actualmente no hay equipos de almacenamiento de datos en la sala, la puerta de acceso a la misma debería estar siempre cerrada con llave. La llave de la mencionada sala debe estar custodiada por la Dirección del centro.',
@@ -218,7 +291,13 @@ export const useCorrectiveActions = () => {
       ...action,
       id: Date.now().toString(),
       createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      updatedAt: new Date().toISOString(),
+      statusHistory: [{
+        status: action.status,
+        date: new Date().toISOString(),
+        userId: action.createdBy,
+        userName: 'Usuari Actual'
+      }]
     };
     
     console.log('addAction: Creant nova acció amb ID:', newAction.id);
@@ -227,10 +306,8 @@ export const useCorrectiveActions = () => {
     setActions(updatedActions);
     saveToStorage(updatedActions);
     
-    // Log audit entry
     logActionCreated(newAction, newAction.createdBy, 'System User');
     
-    // Enviar notificació si té responsable d'anàlisi assignat
     if (newAction.status === 'Pendiente de Análisis' && newAction.responsableAnalisis) {
       notifyStatusChange(newAction, 'Pendiente de Análisis');
     }
@@ -253,7 +330,25 @@ export const useCorrectiveActions = () => {
       return;
     }
 
-    const updatedAction = { ...originalAction, ...updates, updatedAt: new Date().toISOString() } as CorrectiveAction;
+    let updatedStatusHistory = originalAction.statusHistory || [];
+    
+    // Si hi ha canvi d'estat, afegir nova entrada a l'historial
+    if (updates.status && updates.status !== originalAction.status) {
+      const newHistoryEntry: StatusHistoryEntry = {
+        status: updates.status,
+        date: new Date().toISOString(),
+        userId: 'current-user',
+        userName: 'Usuari Actual'
+      };
+      updatedStatusHistory = [...updatedStatusHistory, newHistoryEntry];
+    }
+
+    const updatedAction = { 
+      ...originalAction, 
+      ...updates, 
+      updatedAt: new Date().toISOString(),
+      statusHistory: updatedStatusHistory
+    } as CorrectiveAction;
     
     const updatedActions = actions.map(action => 
       action.id === id ? updatedAction : action
@@ -261,7 +356,6 @@ export const useCorrectiveActions = () => {
     setActions(updatedActions);
     saveToStorage(updatedActions);
 
-    // Log audit entries for changes
     const changes: Record<string, { from: any; to: any }> = {};
     Object.keys(updates).forEach(key => {
       const oldValue = (originalAction as any)[key];
@@ -275,18 +369,15 @@ export const useCorrectiveActions = () => {
       logActionUpdated(id, changes, 'current-user', 'Current User');
     }
 
-    // Enviar notificació si hi ha canvi d'estat
     if (updates.status && updates.status !== originalAction.status) {
       logStatusChanged(id, originalAction.status, updates.status, 'current-user', 'Current User');
       notifyStatusChange(updatedAction, updates.status);
       
-      // Si es tanca com NO CONFORME, crear acció BIS
       if (updates.status === 'Cerrado' && updates.tipoCierre === 'no-conforme') {
         createBisAction(updatedAction, addAction);
       }
     }
 
-    // Log closure if action is being closed
     if (updates.status === 'Cerrado' && updates.tipoCierre) {
       logActionClosed(id, updates.tipoCierre, 'current-user', 'Current User');
     }
@@ -360,7 +451,6 @@ export const useCorrectiveActions = () => {
       }, {} as Record<string, number>)
     ).map(([centre, count]) => ({ centre, count }));
 
-    // Noves mètriques
     const actionsByOrigin = Object.entries(
       actions.reduce((acc, action) => {
         const origin = action.origen || 'sense-especificar';
