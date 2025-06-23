@@ -111,6 +111,70 @@ const DescriptionSection = ({
     }
   }, [hasChanges, onChangesDetected]);
 
+  const handleOrigenChange = (value: string) => {
+    console.log('DescriptionSection: origen changed to:', value);
+    setOrigen(value as CorrectiveAction['origen']);
+    if (onChangesDetected) {
+      onChangesDetected();
+    }
+  };
+
+  const handleDescriptionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setDescription(e.target.value);
+    if (onChangesDetected) {
+      onChangesDetected();
+    }
+  };
+
+  const handleAuditDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setAuditDate(e.target.value);
+    if (onChangesDetected) {
+      onChangesDetected();
+    }
+  };
+
+  const handleSectorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSector(e.target.value);
+    if (onChangesDetected) {
+      onChangesDetected();
+    }
+  };
+
+  const handleResponsableAnalisisChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setResponsableAnalisis(e.target.value);
+    if (onChangesDetected) {
+      onChangesDetected();
+    }
+  };
+
+  const handleTypeChange = (value: string) => {
+    setSelectedType(value);
+    if (onChangesDetected) {
+      onChangesDetected();
+    }
+  };
+
+  const handleCategoryChange = (value: string) => {
+    setSelectedCategory(value);
+    if (onChangesDetected) {
+      onChangesDetected();
+    }
+  };
+
+  const handleSubcategoryChange = (value: string) => {
+    setSelectedSubcategory(value);
+    if (onChangesDetected) {
+      onChangesDetected();
+    }
+  };
+
+  const handleAreasChange = (areas: string[]) => {
+    setSelectedAreas(areas);
+    if (onChangesDetected) {
+      onChangesDetected();
+    }
+  };
+
   return (
     <Card className={`${readOnly ? 'bg-gray-50' : ''} ${isComplete ? 'border-green-200' : ''}`}>
       <CardHeader>
@@ -135,10 +199,7 @@ const DescriptionSection = ({
           <Label htmlFor="origen">Origen</Label>
           <Select 
             value={origen || ''} 
-            onValueChange={(value) => {
-              console.log('DescriptionSection: origen changed to:', value);
-              setOrigen(value as CorrectiveAction['origen']);
-            }} 
+            onValueChange={handleOrigenChange} 
             disabled={readOnly}
           >
             <SelectTrigger>
@@ -158,9 +219,9 @@ const DescriptionSection = ({
           selectedType={selectedType}
           selectedCategory={selectedCategory}
           selectedSubcategory={selectedSubcategory}
-          onTypeChange={setSelectedType}
-          onCategoryChange={setSelectedCategory}
-          onSubcategoryChange={setSelectedSubcategory}
+          onTypeChange={handleTypeChange}
+          onCategoryChange={handleCategoryChange}
+          onSubcategoryChange={handleSubcategoryChange}
           readOnly={readOnly}
           currentStatus={action.status}
         />
@@ -172,7 +233,7 @@ const DescriptionSection = ({
               id="auditDate"
               type="date"
               value={auditDate}
-              onChange={(e) => setAuditDate(e.target.value)}
+              onChange={handleAuditDateChange}
               disabled={readOnly}
               className={readOnly ? 'bg-gray-100' : ''}
             />
@@ -182,7 +243,7 @@ const DescriptionSection = ({
             <Input
               id="sector"
               value={sector}
-              onChange={(e) => setSector(e.target.value)}
+              onChange={handleSectorChange}
               placeholder="Ex: KA, Qualitat, Assistencial..."
               disabled={readOnly}
               className={readOnly ? 'bg-gray-100' : ''}
@@ -195,7 +256,7 @@ const DescriptionSection = ({
           <Textarea
             id="description"
             value={description}
-            onChange={(e) => setDescription(e.target.value)}
+            onChange={handleDescriptionChange}
             placeholder="Descriure la situació que ha motivat aquesta acció correctiva..."
             rows={6}
             disabled={readOnly}
@@ -205,7 +266,7 @@ const DescriptionSection = ({
 
         <MultiFunctionalAreas
           selectedAreas={selectedAreas}
-          onUpdate={setSelectedAreas}
+          onUpdate={handleAreasChange}
           readOnly={readOnly}
         />
 
@@ -214,7 +275,7 @@ const DescriptionSection = ({
           <Input
             id="responsableAnalisis"
             value={responsableAnalisis}
-            onChange={(e) => setResponsableAnalisis(e.target.value)}
+            onChange={handleResponsableAnalisisChange}
             placeholder="Nom del responsable de l'anàlisi..."
             disabled={readOnly}
             className={readOnly ? 'bg-gray-100' : ''}
