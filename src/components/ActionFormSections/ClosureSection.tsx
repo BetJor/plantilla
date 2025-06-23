@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
@@ -27,7 +28,36 @@ const ClosureSection = ({
   const [effectivenessEvaluation, setEffectivenessEvaluation] = React.useState(action.closureData?.effectivenessEvaluation || '');
   const [isConforme, setIsConforme] = React.useState(action.closureData?.isConforme ?? true);
 
+  // Actualitzar immediatament quan canvien els valors
+  React.useEffect(() => {
+    console.log('ClosureSection: Actualitzant dades automàticament', {
+      closureNotes,
+      effectivenessEvaluation,
+      isConforme,
+      tipoCierre: isConforme ? 'conforme' : 'no-conforme'
+    });
+    
+    if (closureNotes || effectivenessEvaluation) {
+      onUpdate({
+        closureData: {
+          ...action.closureData,
+          closureNotes,
+          effectivenessEvaluation,
+          isConforme
+        },
+        tipoCierre: isConforme ? 'conforme' : 'no-conforme'
+      });
+    }
+  }, [closureNotes, effectivenessEvaluation, isConforme]);
+
   const handleSave = () => {
+    console.log('ClosureSection: Guardant i signant', {
+      closureNotes,
+      effectivenessEvaluation,
+      isConforme,
+      tipoCierre: isConforme ? 'conforme' : 'no-conforme'
+    });
+    
     onUpdate({
       closureData: {
         ...action.closureData,
@@ -44,7 +74,13 @@ const ClosureSection = ({
   };
 
   const handleSaveOnly = () => {
-    // Només guardar sense signatura ni canvi d'estat
+    console.log('ClosureSection: Guardant només sense signar', {
+      closureNotes,
+      effectivenessEvaluation,
+      isConforme,
+      tipoCierre: isConforme ? 'conforme' : 'no-conforme'
+    });
+    
     onUpdate({
       closureData: {
         ...action.closureData,
@@ -54,6 +90,21 @@ const ClosureSection = ({
       },
       tipoCierre: isConforme ? 'conforme' : 'no-conforme'
     });
+  };
+
+  const handleClosureNotesChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setClosureNotes(e.target.value);
+    if (onChangesDetected) onChangesDetected();
+  };
+
+  const handleEffectivenessChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setEffectivenessEvaluation(e.target.value);
+    if (onChangesDetected) onChangesDetected();
+  };
+
+  const handleConformeChange = (newIsConforme: boolean) => {
+    setIsConforme(newIsConforme);
+    if (onChangesDetected) onChangesDetected();
   };
 
   // Expose save functions via refs
@@ -72,12 +123,17 @@ const ClosureSection = ({
                      effectivenessEvaluation !== (action.closureData?.effectivenessEvaluation || '') ||
                      isConforme !== (action.closureData?.isConforme ?? true);
 
-  // Notify parent when changes are detected
+  // Debug log per verificar l'estat actual
   React.useEffect(() => {
-    if (hasChanges && onChangesDetected) {
-      onChangesDetected();
-    }
-  }, [hasChanges, onChangesDetected]);
+    console.log('ClosureSection: Estat actual', {
+      actionTipoCierre: action.tipoCierre,
+      closureNotesLength: closureNotes.length,
+      effectivenessLength: effectivenessEvaluation.length,
+      isConforme,
+      isFormValid,
+      hasChanges
+    });
+  }, [action.tipoCierre, closureNotes, effectivenessEvaluation, isConforme, isFormValid, hasChanges]);
 
   return (
     <Card className={`${readOnly ? 'bg-gray-50' : ''} ${isComplete ? 'border-green-200' : ''}`}>
@@ -106,7 +162,7 @@ const ClosureSection = ({
               <input
                 type="radio"
                 checked={isConforme}
-                onChange={() => setIsConforme(true)}
+                onChange={() => handleConformeChange(true)}
                 disabled={readOnly}
                 className="form-radio"
               />
@@ -119,7 +175,7 @@ const ClosureSection = ({
               <input
                 type="radio"
                 checked={!isConforme}
-                onChange={() => setIsConforme(false)}
+                onChange={() => handleConformeChange(false)}
                 disabled={readOnly}
                 className="form-radio"
               />
@@ -145,7 +201,7 @@ const ClosureSection = ({
           <Textarea
             id="closureNotes"
             value={closureNotes}
-            onChange={(e) => setClosureNotes(e.target.value)}
+            onChange={handleClosureNotesChange}
             placeholder="Resum final de l'acció correctiva realitzada..."
             rows={4}
             disabled={readOnly}
@@ -157,13 +213,24 @@ const ClosureSection = ({
           <Textarea
             id="effectivenessEvaluation"
             value={effectivenessEvaluation}
-            onChange={(e) => setEffectivenessEvaluation(e.target.value)}
+            onChange={handleEffectivenessChange}
             placeholder="Avaluar si l'acció correctiva ha estat eficaç per solucionar el problema..."
             rows={4}
             disabled={readOnly}
             className={readOnly ? 'bg-gray-100' : ''}
           />
         </div>
+
+        {/* Debug info - només visible en desenvolupament */}
+        {process.env.NODE_ENV === 'development' && (
+          <div className="mt-4 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs">
+            <strong>Debug Info:</strong>
+            <div>tipoCierre: {action.tipoCierre || 'undefined'}</div>
+            <div>closureNotes: {closureNotes.length} chars</div>
+            <div>effectiveness: {effectivenessEvaluation.length} chars</div>
+            <div>isFormValid: {isFormValid.toString()}</div>
+          </div>
+        )}
 
         {readOnly && action.closureData?.signedBy && (
           <div className="bg-blue-50 p-3 rounded-lg">

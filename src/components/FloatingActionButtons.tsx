@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { 
@@ -96,9 +96,22 @@ const FloatingActionButtons = ({
         );
         return !!(allActionsVerified && proposedActionsForVerification.length > 0);
       case 'Pendiente de Cierre':
-        return !!(action.closureData?.closureNotes && 
+        const canAdvanceResult = !!(action.closureData?.closureNotes && 
                  action.closureData?.effectivenessEvaluation &&
                  action.tipoCierre);
+        
+        // Debug log per identificar el problema
+        console.log('FloatingActionButtons: Validació Pendiente de Cierre', {
+          closureNotes: !!action.closureData?.closureNotes,
+          closureNotesValue: action.closureData?.closureNotes,
+          effectivenessEvaluation: !!action.closureData?.effectivenessEvaluation,
+          effectivenessValue: action.closureData?.effectivenessEvaluation,
+          tipoCierre: !!action.tipoCierre,
+          tipoCierreValue: action.tipoCierre,
+          canAdvanceResult
+        });
+        
+        return canAdvanceResult;
       default:
         return false;
     }
@@ -144,6 +157,22 @@ const FloatingActionButtons = ({
   const canAnnul = !['Cerrado', 'Anulada'].includes(action.status) && canEditInStatus(action.status);
   const validationErrors = getValidationErrors();
   const hasPermissions = canEditInStatus(action.status);
+
+  // Debug log per veure l'estat complet
+  React.useEffect(() => {
+    if (action.status === 'Pendiente de Cierre') {
+      console.log('FloatingActionButtons: Estat complet de l\'acció', {
+        status: action.status,
+        canProceed,
+        hasPermissions,
+        validationErrors,
+        action: {
+          tipoCierre: action.tipoCierre,
+          closureData: action.closureData
+        }
+      });
+    }
+  }, [action.status, canProceed, hasPermissions, validationErrors, action.tipoCierre, action.closureData]);
 
   const handleAdvance = () => {
     if (nextStatus && canProceed) {

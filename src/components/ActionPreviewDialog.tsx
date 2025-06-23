@@ -159,10 +159,10 @@ const ActionPreviewDialog = ({ open, onOpenChange, actionId }: ActionPreviewDial
                     <CardTitle>Anàlisi</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-3">
-                    {action.analysisData.rootCause && (
+                    {action.analysisData.rootCauses && (
                       <div>
                         <h4 className="font-medium text-sm mb-1">Causa arrel:</h4>
-                        <p className="text-gray-700 text-sm">{action.analysisData.rootCause}</p>
+                        <p className="text-gray-700 text-sm">{action.analysisData.rootCauses}</p>
                       </div>
                     )}
                     {action.analysisData.proposedActions && action.analysisData.proposedActions.length > 0 && (
@@ -170,7 +170,7 @@ const ActionPreviewDialog = ({ open, onOpenChange, actionId }: ActionPreviewDial
                         <h4 className="font-medium text-sm mb-2">Accions proposades:</h4>
                         <ul className="list-disc list-inside space-y-1 text-sm text-gray-700">
                           {action.analysisData.proposedActions.map((actionItem, idx) => (
-                            <li key={idx}>{actionItem}</li>
+                            <li key={idx}>{actionItem.description}</li>
                           ))}
                         </ul>
                       </div>
