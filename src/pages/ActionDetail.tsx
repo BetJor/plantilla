@@ -14,10 +14,12 @@ import CommentsSection from '@/components/ActionFormSections/CommentsSection';
 import StatusProgress from '@/components/ActionFormSections/StatusProgress';
 import ControlPanelSection from '@/components/ControlPanelSection';
 import FloatingActionButtons from '@/components/FloatingActionButtons';
+import { useToast } from '@/hooks/use-toast';
 
 const ActionDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const { actions, updateAction } = useCorrectiveActions();
   const [hasPendingChanges, setHasPendingChanges] = useState(false);
   
@@ -85,6 +87,17 @@ const ActionDetail = () => {
   const handleStatusChange = (newStatus: CorrectiveAction['status']) => {
     updateAction(action.id, { status: newStatus });
     setHasPendingChanges(false);
+    
+    // Show success toast
+    toast({
+      title: "Estat actualitzat",
+      description: `L'acció s'ha actualitzat a l'estat: ${newStatus}`,
+    });
+    
+    // Navigate back to actions list after a short delay
+    setTimeout(() => {
+      navigate('/actions');
+    }, 1500);
   };
 
   const handleActionUpdate = (updates: Partial<CorrectiveAction>) => {
@@ -116,6 +129,17 @@ const ActionDetail = () => {
         break;
     }
     setHasPendingChanges(false);
+    
+    // Show success toast
+    toast({
+      title: "Canvis guardats",
+      description: "Les modificacions s'han desat correctament.",
+    });
+    
+    // Navigate back to actions list after a short delay
+    setTimeout(() => {
+      navigate('/actions');
+    }, 1500);
   };
 
   const renderCumulativeSections = () => {
