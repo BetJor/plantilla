@@ -15,22 +15,10 @@ import {
   UserPlus,
   Lightbulb
 } from 'lucide-react';
+import { CorrectiveAction } from '@/types';
 
 interface SimilarAction {
-  action: {
-    id: string;
-    title: string;
-    description: string;
-    type: string;
-    status: string;
-    centre: string;
-    department: string;
-    dueDate: string;
-    createdAt: string;
-    assignedTo: string;
-    closedAt?: string;
-    resolution?: string;
-  };
+  action: CorrectiveAction;
   similarity: number;
   reasons: string[];
 }
@@ -128,8 +116,12 @@ const SimilarActionsPanel = ({
                       </h4>
                       <div className="flex items-center gap-3 text-sm text-gray-600 mb-2">
                         <span>{similar.action.centre}</span>
-                        <span>•</span>
-                        <span>{similar.action.department}</span>
+                        {similar.action.department && (
+                          <>
+                            <span>•</span>
+                            <span>{similar.action.department}</span>
+                          </>
+                        )}
                         <Badge variant={getStatusVariant(similar.action.status)} className="text-xs">
                           {similar.action.status}
                         </Badge>
@@ -155,19 +147,19 @@ const SimilarActionsPanel = ({
                       <Clock className="w-3 h-3" />
                       {new Date(similar.action.createdAt).toLocaleDateString('ca-ES')}
                     </div>
-                    {similar.action.status === 'Cerrado' && similar.action.closedAt && (
+                    {similar.action.status === 'Cerrado' && similar.action.closureData?.closureDate && (
                       <div className="flex items-center gap-1 text-green-600">
                         <CheckCircle className="w-3 h-3" />
-                        Tancada {new Date(similar.action.closedAt).toLocaleDateString('ca-ES')}
+                        Tancada {new Date(similar.action.closureData.closureDate).toLocaleDateString('ca-ES')}
                       </div>
                     )}
                   </div>
 
                   {/* Resolució si està disponible */}
-                  {similar.action.resolution && (
+                  {similar.action.closureData?.closureNotes && (
                     <div className="bg-green-50 border border-green-200 rounded p-2">
                       <p className="text-xs text-green-800">
-                        <strong>Resolució:</strong> {similar.action.resolution}
+                        <strong>Resolució:</strong> {similar.action.closureData.closureNotes}
                       </p>
                     </div>
                   )}
