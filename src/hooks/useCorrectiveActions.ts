@@ -6,6 +6,7 @@ import { useAuditHistory } from '@/hooks/useAuditHistory';
 import { useBisActions } from '@/hooks/useBisActions';
 
 const STORAGE_KEY = 'corrective-actions-data';
+const COMMENTS_STORAGE_KEY = 'corrective-actions-comments';
 
 export const useCorrectiveActions = () => {
   const [actions, setActions] = useState<CorrectiveAction[]>([]);
@@ -20,7 +21,7 @@ export const useCorrectiveActions = () => {
   } = useAuditHistory();
   const { createBisAction } = useBisActions();
 
-  // Funció per guardar a localStorage
+  // Funció per guardar accions a localStorage
   const saveToStorage = (updatedActions: CorrectiveAction[]) => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedActions));
@@ -30,6 +31,21 @@ export const useCorrectiveActions = () => {
       toast({
         title: "Error",
         description: "No s'han pogut guardar les dades.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  // Funció per guardar comentaris a localStorage
+  const saveCommentsToStorage = (updatedComments: Comment[]) => {
+    try {
+      localStorage.setItem(COMMENTS_STORAGE_KEY, JSON.stringify(updatedComments));
+      console.log('saveCommentsToStorage: Guardats', updatedComments.length, 'comentaris');
+    } catch (error) {
+      console.error('Error saving comments to localStorage:', error);
+      toast({
+        title: "Error",
+        description: "No s'han pogut guardar els comentaris.",
         variant: "destructive"
       });
     }
@@ -66,9 +82,35 @@ export const useCorrectiveActions = () => {
     }
   };
 
+  // Funció per carregar comentaris del localStorage
+  const loadComments = () => {
+    try {
+      console.log('loadComments: Carregant comentaris del localStorage...');
+      const savedComments = localStorage.getItem(COMMENTS_STORAGE_KEY);
+      
+      if (savedComments) {
+        const parsedComments = JSON.parse(savedComments);
+        if (Array.isArray(parsedComments)) {
+          setComments(parsedComments);
+          console.log('loadComments: Carregats', parsedComments.length, 'comentaris del localStorage');
+        } else {
+          console.warn('loadComments: Dades invàlides al localStorage per comentaris, inicialitzant amb array buit');
+          setComments([]);
+        }
+      } else {
+        console.log('loadComments: No hi ha comentaris guardats, inicialitzant amb array buit');
+        setComments([]);
+      }
+    } catch (error) {
+      console.error('loadComments: Error carregant comentaris del localStorage:', error);
+      setComments([]);
+    }
+  };
+
   // Carregar dades del localStorage a l'inici
   useEffect(() => {
     loadActions();
+    loadComments();
   }, []);
 
   // Comprovar retards i venciments cada vegada que canvien les accions
@@ -394,7 +436,13 @@ export const useCorrectiveActions = () => {
       id: Date.now().toString(),
       createdAt: new Date().toISOString()
     };
-    setComments(prev => [...prev, newComment]);
+    
+    const updatedComments = [...comments, newComment];
+    setComments(updatedComments);
+    saveCommentsToStorage(updatedComments);
+    
+    console.log('addComment: Comentari afegit i guardat:', newComment);
+    
     return newComment;
   };
 
@@ -403,9 +451,10 @@ export const useCorrectiveActions = () => {
     setComments([]);
     try {
       localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem(COMMENTS_STORAGE_KEY);
       toast({
         title: "Accions eliminades",
-        description: "Totes les accions correctives han estat eliminades correctament."
+        description: "Totes les accions correctives i comentaris han estat eliminats correctament."
       });
     } catch (error) {
       console.error('Error clearing localStorage:', error);
