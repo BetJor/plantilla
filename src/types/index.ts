@@ -1,4 +1,3 @@
-
 export interface User {
   id: string;
   name: string;
@@ -44,7 +43,6 @@ export interface CorrectiveAction {
   
   // Nous camps segons requeriments
   origen?: 'Auditoria' | 'Incidencias' | 'Seguimiento Indicadores/objetivos' | 'Revisión del sistema' | 'Otros'; // Nou camp origen
-  assumpte?: string; // Nou camp assumpte
   auditDate?: string; // Data d'auditoria/origen
   sector?: string; // Sector/Àrea
   areasImplicadas?: string[]; // Àrees funcionals implicades

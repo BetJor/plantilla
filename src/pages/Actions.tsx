@@ -50,7 +50,6 @@ const Actions = () => {
     priority: 'mitjana' as const,
     centre: '',
     origen: '' as CorrectiveAction['origen'],
-    assumpte: '',
     areasImplicadas: [] as string[],
     areasHospital: [] as string[],
     responsableAnalisis: '',
@@ -132,7 +131,7 @@ const Actions = () => {
       console.warn('handleFindSimilarActions: Títol o descripció buits');
       toast({
         title: "Camps obligatoris",
-        description: "Cal omplir l'assumpte i la descripció abans de buscar accions similars.",
+        description: "Cal omplir el títol i la descripció abans de buscar accions similars.",
         variant: "destructive"
       });
       return;
@@ -187,12 +186,6 @@ const Actions = () => {
     const submitButtons = form.querySelectorAll('button');
     submitButtons.forEach(btn => btn.disabled = true);
     
-    // Validar que origen sigui un valor vàlid si està definit
-    const validatedOrigen = formData.origen && 
-      ['Auditoria', 'Incidencias', 'Seguimiento Indicadores/objetivos', 'Revisión del sistema', 'Otros'].includes(formData.origen) 
-      ? formData.origen 
-      : undefined;
-    
     addAction({
       title: formData.title,
       description: formData.description,
@@ -201,8 +194,7 @@ const Actions = () => {
       subCategory: formData.subCategory,
       priority: formData.priority,
       centre: formData.centre,
-      origen: validatedOrigen,
-      assumpte: formData.assumpte,
+      origen: formData.origen,
       areasImplicadas: formData.areasImplicadas,
       areasHospital: formData.areasHospital,
       responsableAnalisis: formData.responsableAnalisis,
@@ -224,7 +216,6 @@ const Actions = () => {
       priority: 'mitjana',
       centre: '',
       origen: '' as CorrectiveAction['origen'],
-      assumpte: '',
       areasImplicadas: [],
       areasHospital: [],
       responsableAnalisis: '',
@@ -250,12 +241,6 @@ const Actions = () => {
     const submitButtons = form.querySelectorAll('button');
     submitButtons.forEach(btn => btn.disabled = true);
     
-    // Validar que origen sigui un valor vàlid si està definit
-    const validatedOrigen = formData.origen && 
-      ['Auditoria', 'Incidencias', 'Seguimiento Indicadores/objetivos', 'Revisión del sistema', 'Otros'].includes(formData.origen) 
-      ? formData.origen 
-      : undefined;
-    
     addAction({
       title: formData.title,
       description: formData.description,
@@ -264,8 +249,7 @@ const Actions = () => {
       subCategory: formData.subCategory,
       priority: formData.priority,
       centre: formData.centre,
-      origen: validatedOrigen,
-      assumpte: formData.assumpte,
+      origen: formData.origen,
       areasImplicadas: formData.areasImplicadas,
       areasHospital: formData.areasHospital,
       responsableAnalisis: formData.responsableAnalisis,
@@ -286,7 +270,6 @@ const Actions = () => {
       priority: 'mitjana',
       centre: '',
       origen: '' as CorrectiveAction['origen'],
-      assumpte: '',
       areasImplicadas: [],
       areasHospital: [],
       responsableAnalisis: '',
@@ -313,7 +296,7 @@ const Actions = () => {
 
   const getTooltipMessage = () => {
     if (!formData.title.trim() || !formData.description.trim()) {
-      return "Cal omplir l'assumpte i la descripció";
+      return "Cal omplir el títol i la descripció";
     }
     if (actions.filter(action => action.status !== 'Borrador').length === 0) {
       return "No hi ha accions existents per comparar";
@@ -378,23 +361,13 @@ const Actions = () => {
                 actionType={formData.type}
                 centre={formData.centre}
                 department=""
-                origin={formData.origen}
+                origen={formData.origen}
                 areasImplicadas={formData.areasImplicadas}
                 areasHospital={formData.areasHospital}
                 onFieldChange={handleFieldChange}
                 user={mockUser}
                 isDraft={true}
               />
-
-              <div>
-                <Label htmlFor="assumpte" className="text-gray-700 font-medium">Assumpte</Label>
-                <Input
-                  id="assumpte"
-                  value={formData.assumpte}
-                  onChange={(e) => updateFormData({ assumpte: e.target.value })}
-                  className="mt-1"
-                />
-              </div>
 
               <div>
                 <Label htmlFor="title" className="text-gray-700 font-medium">Títol</Label>

@@ -25,8 +25,7 @@ interface DescriptionSectionProps {
 }
 
 const DescriptionSection = ({ action, onUpdate, readOnly = false }: DescriptionSectionProps) => {
-  const [origen, setOrigen] = React.useState(action.origen || '');
-  const [assumpte, setAssumpte] = React.useState(action.assumpte || '');
+  const [origen, setOrigen] = React.useState<CorrectiveAction['origen']>(action.origen);
   const [description, setDescription] = React.useState(action.description);
   const [selectedType, setSelectedType] = React.useState(action.type || '');
   const [selectedCategory, setSelectedCategory] = React.useState(action.category || '');
@@ -39,8 +38,11 @@ const DescriptionSection = ({ action, onUpdate, readOnly = false }: DescriptionS
 
   // Carregar dades des de l'acció quan canviï
   React.useEffect(() => {
-    setOrigen(action.origen || '');
-    setAssumpte(action.assumpte || '');
+    console.log('DescriptionSection useEffect: action changed', { 
+      actionId: action.id, 
+      actionOrigen: action.origen 
+    });
+    setOrigen(action.origen);
     setDescription(action.description);
     setSelectedType(action.type || '');
     setSelectedCategory(action.category || '');
@@ -61,12 +63,9 @@ const DescriptionSection = ({ action, onUpdate, readOnly = false }: DescriptionS
   ];
 
   const handleSave = () => {
-    // Validar que origen sigui un valor vàlid
-    const validatedOrigen = origen && origenOptions.includes(origen) ? origen as CorrectiveAction['origen'] : undefined;
-    
+    console.log('DescriptionSection handleSave: saving with origen:', origen);
     onUpdate({ 
-      origen: validatedOrigen,
-      assumpte,
+      origen,
       description,
       type: selectedType,
       category: selectedCategory,
@@ -85,8 +84,7 @@ const DescriptionSection = ({ action, onUpdate, readOnly = false }: DescriptionS
                     action.subCategory.trim().length > 0 &&
                     action.responsableAnalisis;
   
-  const hasChanges = origen !== (action.origen || '') ||
-                    assumpte !== (action.assumpte || '') ||
+  const hasChanges = origen !== action.origen ||
                     description !== action.description ||
                     selectedType !== action.type ||
                     selectedCategory !== (action.category || '') ||
@@ -119,7 +117,14 @@ const DescriptionSection = ({ action, onUpdate, readOnly = false }: DescriptionS
       <CardContent className="space-y-4">
         <div>
           <Label htmlFor="origen">Origen</Label>
-          <Select value={origen} onValueChange={setOrigen} disabled={readOnly}>
+          <Select 
+            value={origen || ''} 
+            onValueChange={(value) => {
+              console.log('DescriptionSection: origen changed to:', value);
+              setOrigen(value as CorrectiveAction['origen']);
+            }} 
+            disabled={readOnly}
+          >
             <SelectTrigger>
               <SelectValue placeholder="Seleccionar origen..." />
             </SelectTrigger>
@@ -131,18 +136,6 @@ const DescriptionSection = ({ action, onUpdate, readOnly = false }: DescriptionS
               ))}
             </SelectContent>
           </Select>
-        </div>
-
-        <div>
-          <Label htmlFor="assumpte">Assumpte</Label>
-          <Input
-            id="assumpte"
-            value={assumpte}
-            onChange={(e) => setAssumpte(e.target.value)}
-            placeholder="Assumpte de l'acció correctiva..."
-            disabled={readOnly}
-            className={readOnly ? 'bg-gray-100' : ''}
-          />
         </div>
 
         <CategorySelectors
