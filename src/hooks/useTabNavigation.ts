@@ -44,8 +44,12 @@ export const useTabNavigation = () => {
   const location = useLocation();
   const { openTab, setActiveTab, tabs } = useTabsContext();
 
+  console.log('useTabNavigation: Current location:', location.pathname);
+  console.log('useTabNavigation: Current tabs:', tabs.map(t => ({ id: t.id, title: t.title })));
+
   useEffect(() => {
     const currentPath = location.pathname;
+    console.log('useTabNavigation: Processing path:', currentPath);
     
     // Configuració especial per a detalls d'accions
     if (currentPath.startsWith('/actions/') && currentPath !== '/actions') {
@@ -57,6 +61,7 @@ export const useTabNavigation = () => {
         icon: Eye,
         closable: true
       };
+      console.log('useTabNavigation: Opening action tab:', tab);
       openTab(tab);
       return;
     }
@@ -68,6 +73,7 @@ export const useTabNavigation = () => {
         id: currentPath,
         ...routeInfo
       };
+      console.log('useTabNavigation: Opening route tab:', tab);
       openTab(tab);
     }
   }, [location.pathname, openTab]);
@@ -82,10 +88,15 @@ export const useTabNavigation = () => {
       tabId = `action-${actionId}`;
     }
     
+    console.log('useTabNavigation: Attempting to activate tab:', tabId);
+    
     // Sempre intentar activar el tab corresponent
     const existingTab = tabs.find(tab => tab.id === tabId);
     if (existingTab) {
+      console.log('useTabNavigation: Found existing tab, activating:', existingTab.title);
       setActiveTab(tabId);
+    } else {
+      console.log('useTabNavigation: Tab not found in existing tabs');
     }
   }, [location.pathname, tabs, setActiveTab]);
 };
