@@ -11,6 +11,9 @@ import { CorrectiveAction } from '@/types';
 import DescriptionSection from '@/components/ActionFormSections/DescriptionSection';
 import AnalysisSection from '@/components/ActionFormSections/AnalysisSection';
 import ClosureSection from '@/components/ActionFormSections/ClosureSection';
+import AttachmentsFormSection from '@/components/ActionFormSections/AttachmentsFormSection';
+import CommentsDisplaySection from '@/components/ActionFormSections/CommentsDisplaySection';
+import AttachmentsSection from '@/components/ActionFormSections/AttachmentsSection';
 import StatusProgress from '@/components/ActionFormSections/StatusProgress';
 import StatusControls from '@/components/ActionFormSections/StatusControls';
 
@@ -93,6 +96,10 @@ const ActionDetail = () => {
 
   const handleActionUpdate = (updates: Partial<CorrectiveAction>) => {
     updateAction(action.id, updates);
+  };
+
+  const handleAttachmentsUpdate = (attachments: string[]) => {
+    updateAction(action.id, { attachments });
   };
 
   const renderCumulativeSections = () => {
@@ -179,6 +186,12 @@ const ActionDetail = () => {
         <div className="lg:col-span-2 space-y-6">
           {renderCumulativeSections()}
 
+          <AttachmentsFormSection
+            action={action}
+            onUpdate={handleActionUpdate}
+            readOnly={['Cerrado', 'Anulada'].includes(action.status)}
+          />
+
           <Card>
             <CardHeader>
               <CardTitle>Comentaris</CardTitle>
@@ -257,20 +270,15 @@ const ActionDetail = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {action.attachments.length > 0 ? (
-                <div className="space-y-2">
-                  {action.attachments.map((attachment, index) => (
-                    <div key={index} className="flex items-center space-x-2 p-2 border rounded-lg">
-                      <Paperclip className="w-4 h-4 text-gray-500" />
-                      <span className="text-sm text-gray-700">{attachment}</span>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-sm text-gray-500">No hi ha adjunts</p>
-              )}
+              <AttachmentsSection
+                attachments={action.attachments}
+                onUpdate={handleAttachmentsUpdate}
+                readOnly={['Cerrado', 'Anulada'].includes(action.status)}
+              />
             </CardContent>
           </Card>
+
+          <CommentsDisplaySection actionId={action.id} />
         </div>
       </div>
     </div>

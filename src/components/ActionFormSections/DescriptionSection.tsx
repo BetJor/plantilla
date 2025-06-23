@@ -9,7 +9,6 @@ import { FileText, Clock, User } from 'lucide-react';
 import { CorrectiveAction } from '@/types';
 import CategorySelectors from './CategorySelectors';
 import MultiFunctionalAreas from './MultiFunctionalAreas';
-import AttachmentsSection from './AttachmentsSection';
 import {
   Select,
   SelectContent,
@@ -34,7 +33,6 @@ const DescriptionSection = ({ action, onUpdate, readOnly = false }: DescriptionS
   const [sector, setSector] = React.useState(action.sector || '');
   const [selectedAreas, setSelectedAreas] = React.useState<string[]>(action.areasImplicadas || []);
   const [responsableAnalisis, setResponsableAnalisis] = React.useState(action.responsableAnalisis || '');
-  const [attachments, setAttachments] = React.useState<string[]>(action.attachments || []);
 
   // Carregar dades des de l'acció quan canviï
   React.useEffect(() => {
@@ -51,7 +49,6 @@ const DescriptionSection = ({ action, onUpdate, readOnly = false }: DescriptionS
     setSector(action.sector || '');
     setSelectedAreas(action.areasImplicadas || []);
     setResponsableAnalisis(action.responsableAnalisis || '');
-    setAttachments(action.attachments || []);
   }, [action]);
 
   const origenOptions = [
@@ -73,8 +70,7 @@ const DescriptionSection = ({ action, onUpdate, readOnly = false }: DescriptionS
       auditDate,
       sector,
       areasImplicadas: selectedAreas,
-      responsableAnalisis,
-      attachments
+      responsableAnalisis
     });
   };
 
@@ -92,8 +88,7 @@ const DescriptionSection = ({ action, onUpdate, readOnly = false }: DescriptionS
                     auditDate !== (action.auditDate || '') ||
                     sector !== (action.sector || '') ||
                     JSON.stringify(selectedAreas) !== JSON.stringify(action.areasImplicadas || []) ||
-                    responsableAnalisis !== (action.responsableAnalisis || '') ||
-                    JSON.stringify(attachments) !== JSON.stringify(action.attachments || []);
+                    responsableAnalisis !== (action.responsableAnalisis || '');
 
   return (
     <Card className={`${readOnly ? 'bg-gray-50' : ''} ${isComplete ? 'border-green-200' : ''}`}>
@@ -204,12 +199,6 @@ const DescriptionSection = ({ action, onUpdate, readOnly = false }: DescriptionS
             className={readOnly ? 'bg-gray-100' : ''}
           />
         </div>
-
-        <AttachmentsSection
-          attachments={attachments}
-          onUpdate={setAttachments}
-          readOnly={readOnly}
-        />
 
         {!readOnly && (
           <Button onClick={handleSave} disabled={!hasChanges}>
