@@ -13,8 +13,8 @@ import ClosureSection from '@/components/ActionFormSections/ClosureSection';
 import AttachmentsSection from '@/components/ActionFormSections/AttachmentsSection';
 import CommentsSection from '@/components/ActionFormSections/CommentsSection';
 import StatusProgress from '@/components/ActionFormSections/StatusProgress';
-import StatusControls from '@/components/ActionFormSections/StatusControls';
 import ControlPanelSection from '@/components/ControlPanelSection';
+import FloatingActionButtons from '@/components/FloatingActionButtons';
 
 const ActionDetail = () => {
   const { id } = useParams();
@@ -145,7 +145,7 @@ const ActionDetail = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-20">
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
           <Button variant="outline" onClick={() => navigate('/actions')}>
@@ -174,11 +174,6 @@ const ActionDetail = () => {
 
         <div className="space-y-6">
           <StatusProgress action={action} />
-          
-          <StatusControls 
-            action={action} 
-            onStatusChange={handleStatusChange}
-          />
 
           <ControlPanelSection 
             action={action} 
@@ -207,6 +202,12 @@ const ActionDetail = () => {
           />
         </div>
       </div>
+
+      {/* Botons flotants per les accions d'estat */}
+      <FloatingActionButtons 
+        action={action}
+        onStatusChange={handleStatusChange}
+      />
     </div>
   );
 };
