@@ -11,7 +11,8 @@ import {
   Lightbulb
 } from 'lucide-react';
 import { CorrectiveAction } from '@/types';
-import ActionPreviewDialog from './ActionPreviewDialog';
+import { useTabsContext } from '@/contexts/TabsContext';
+import { useNavigate } from 'react-router-dom';
 
 interface SimilarAction {
   action: CorrectiveAction;
@@ -32,7 +33,8 @@ const SimilarActionsPanel = ({
   hasHighSimilarity,
   onClearDetection
 }: SimilarActionsPanelProps) => {
-  const [previewActionId, setPreviewActionId] = useState<string | null>(null);
+  const { openTab } = useTabsContext();
+  const navigate = useNavigate();
 
   const getSimilarityColor = (similarity: number) => {
     if (similarity >= 80) return 'text-red-600 bg-red-50 border-red-200';
@@ -45,6 +47,19 @@ const SimilarActionsPanel = ({
     if (similarity >= 80) return <AlertTriangle className="w-4 h-4" />;
     if (similarity >= 60) return <AlertTriangle className="w-4 h-4" />;
     return <CheckCircle className="w-4 h-4" />;
+  };
+
+  const handleViewAction = (action: CorrectiveAction) => {
+    const tab = {
+      id: `action-${action.id}`,
+      title: `Acció ${action.id}`,
+      path: `/actions/${action.id}`,
+      icon: Eye,
+      closable: true
+    };
+    
+    openTab(tab);
+    navigate(`/actions/${action.id}`);
   };
 
   if (isDetecting) {
@@ -65,89 +80,81 @@ const SimilarActionsPanel = ({
   }
 
   return (
-    <>
-      <div className="space-y-4">
-        {hasHighSimilarity && (
-          <Alert className="border-red-200 bg-red-50">
-            <AlertTriangle className="h-4 w-4 text-red-600" />
-            <AlertDescription className="text-red-800">
-              <strong>Atenció:</strong> S'han detectat accions molt similars (&gt;80%). 
-              Revisa aquestes accions abans de continuar.
-            </AlertDescription>
-          </Alert>
-        )}
+    <div className="space-y-4">
+      {hasHighSimilarity && (
+        <Alert className="border-red-200 bg-red-50">
+          <AlertTriangle className="h-4 w-4 text-red-600" />
+          <AlertDescription className="text-red-800">
+            <strong>Atenció:</strong> S'han detectat accions molt similars (&gt;80%). 
+            Revisa aquestes accions abans de continuar.
+          </AlertDescription>
+        </Alert>
+      )}
 
-        <Card className="border-orange-200">
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="flex items-center gap-2 text-orange-800">
-                <Lightbulb className="w-5 h-5" />
-                Accions similars detectades ({similarActions.length})
-              </CardTitle>
-              <Button variant="ghost" size="sm" onClick={onClearDetection}>
-                ✕
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {similarActions.map((similar) => (
-              <Card key={similar.action.id} className="border-l-4 border-l-orange-400">
-                <CardContent className="p-4">
-                  <div className="space-y-3">
-                    {/* Títol i percentatge sense botó */}
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <h4 className="font-medium text-gray-900">
-                          {similar.action.title}
-                        </h4>
-                        <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium border ${getSimilarityColor(similar.similarity)}`}>
-                          {getSimilarityIcon(similar.similarity)}
-                          {similar.similarity}%
-                        </div>
-                      </div>
-                      <div className="text-sm text-gray-600">
-                        <span className="font-medium">Codi:</span> {similar.action.id}
+      <Card className="border-orange-200">
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2 text-orange-800">
+              <Lightbulb className="w-5 h-5" />
+              Accions similars detectades ({similarActions.length})
+            </CardTitle>
+            <Button variant="ghost" size="sm" onClick={onClearDetection}>
+              ✕
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {similarActions.map((similar) => (
+            <Card key={similar.action.id} className="border-l-4 border-l-orange-400">
+              <CardContent className="p-4">
+                <div className="space-y-3">
+                  {/* Títol i percentatge */}
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-2">
+                      <h4 className="font-medium text-gray-900">
+                        {similar.action.title}
+                      </h4>
+                      <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium border ${getSimilarityColor(similar.similarity)}`}>
+                        {getSimilarityIcon(similar.similarity)}
+                        {similar.similarity}%
                       </div>
                     </div>
-
-                    {/* Similituds detectades */}
-                    <div className="bg-blue-50 border border-blue-200 rounded p-3">
-                      <p className="text-xs font-medium text-blue-800 mb-2">Similituds detectades:</p>
-                      <ul className="text-xs text-blue-700 space-y-1">
-                        {similar.reasons.map((reason, idx) => (
-                          <li key={idx} className="flex items-start gap-1">
-                            <span className="text-blue-500 mt-0.5">•</span>
-                            {reason}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-
-                    {/* Botó Veure a sota de tot */}
-                    <div className="flex justify-end">
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={() => setPreviewActionId(similar.action.id)}
-                      >
-                        <Eye className="w-3 h-3 mr-1" />
-                        Veure
-                      </Button>
+                    <div className="text-sm text-gray-600">
+                      <span className="font-medium">Codi:</span> {similar.action.id}
                     </div>
                   </div>
-                </CardContent>
-              </Card>
-            ))}
-          </CardContent>
-        </Card>
-      </div>
 
-      <ActionPreviewDialog
-        open={!!previewActionId}
-        onOpenChange={(open) => !open && setPreviewActionId(null)}
-        actionId={previewActionId}
-      />
-    </>
+                  {/* Similituds detectades */}
+                  <div className="bg-blue-50 border border-blue-200 rounded p-3">
+                    <p className="text-xs font-medium text-blue-800 mb-2">Similituds detectades:</p>
+                    <ul className="text-xs text-blue-700 space-y-1">
+                      {similar.reasons.map((reason, idx) => (
+                        <li key={idx} className="flex items-start gap-1">
+                          <span className="text-blue-500 mt-0.5">•</span>
+                          {reason}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  {/* Botó Veure a sota de tot */}
+                  <div className="flex justify-end">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => handleViewAction(similar.action)}
+                    >
+                      <Eye className="w-3 h-3 mr-1" />
+                      Veure
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </CardContent>
+      </Card>
+    </div>
   );
 };
 
