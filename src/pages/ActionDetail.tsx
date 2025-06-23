@@ -4,7 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Calendar, User, Building, AlertCircle, Paperclip } from 'lucide-react';
+import { ArrowLeft, AlertCircle, Paperclip } from 'lucide-react';
 import { useCorrectiveActions } from '@/hooks/useCorrectiveActions';
 import { CorrectiveAction } from '@/types';
 import DescriptionSection from '@/components/ActionFormSections/DescriptionSection';
@@ -14,6 +14,7 @@ import AttachmentsSection from '@/components/ActionFormSections/AttachmentsSecti
 import CommentsSection from '@/components/ActionFormSections/CommentsSection';
 import StatusProgress from '@/components/ActionFormSections/StatusProgress';
 import StatusControls from '@/components/ActionFormSections/StatusControls';
+import ControlPanelSection from '@/components/ControlPanelSection';
 
 const ActionDetail = () => {
   const { id } = useParams();
@@ -179,46 +180,10 @@ const ActionDetail = () => {
             onStatusChange={handleStatusChange}
           />
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <User className="w-5 h-5 mr-2" />
-                Informació General
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center space-x-3">
-                <Calendar className="w-4 h-4 text-gray-500" />
-                <div>
-                  <p className="text-sm font-medium text-gray-700">Data Límit</p>
-                  <p className="text-sm text-gray-900">{new Date(action.dueDate).toLocaleDateString('ca-ES')}</p>
-                </div>
-              </div>
-              <div className="flex items-center space-x-3">
-                <User className="w-4 h-4 text-gray-500" />
-                <div>
-                  <p className="text-sm font-medium text-gray-700">Assignat a</p>
-                  <p className="text-sm text-gray-900">{action.assignedTo}</p>
-                </div>
-              </div>
-              <div className="flex items-center space-x-3">
-                <Building className="w-4 h-4 text-gray-500" />
-                <div>
-                  <p className="text-sm font-medium text-gray-700">Centre</p>
-                  <p className="text-sm text-gray-900">{action.centre}</p>
-                </div>
-              </div>
-              {action.department && (
-                <div className="flex items-center space-x-3">
-                  <Building className="w-4 h-4 text-gray-500" />
-                  <div>
-                    <p className="text-sm font-medium text-gray-700">Departament</p>
-                    <p className="text-sm text-gray-900">{action.department}</p>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          <ControlPanelSection 
+            action={action} 
+            onUpdate={handleActionUpdate}
+          />
 
           <Card>
             <CardHeader>
