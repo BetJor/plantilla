@@ -19,7 +19,16 @@ const TabsNavigation = () => {
   const handleCloseTab = (e: React.MouseEvent, tabId: string) => {
     e.preventDefault();
     e.stopPropagation();
-    closeTab(tabId);
+    
+    closeTab(tabId, (nextActiveTab) => {
+      if (nextActiveTab) {
+        // Navegar automàticament a la pestanya que es converteix en activa
+        navigate(nextActiveTab.path);
+      } else {
+        // No queden pestanyes, navegar al dashboard
+        navigate('/');
+      }
+    });
   };
 
   return (

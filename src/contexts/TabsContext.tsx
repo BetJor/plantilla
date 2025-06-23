@@ -13,9 +13,9 @@ interface TabsContextType {
   tabs: Tab[];
   activeTabId: string | null;
   openTab: (tab: Tab) => void;
-  closeTab: (tabId: string) => void;
+  closeTab: (tabId: string, onTabClosed?: (nextActiveTab: Tab | null) => void) => void;
   setActiveTab: (tabId: string) => void;
-  closeAllTabs: () => void;
+  closeAllTabs: (onAllTabsClosed?: () => void) => void;
 }
 
 const TabsContext = createContext<TabsContextType | undefined>(undefined);
@@ -49,15 +49,29 @@ export const TabsProvider = ({ children }: TabsProviderProps) => {
     });
   };
 
-  const closeTab = (tabId: string) => {
+  const closeTab = (tabId: string, onTabClosed?: (nextActiveTab: Tab | null) => void) => {
     setTabs(prevTabs => {
+      const currentIndex = prevTabs.findIndex(tab => tab.id === tabId);
       const updatedTabs = prevTabs.filter(tab => tab.id !== tabId);
+      
+      let nextActiveTab: Tab | null = null;
       
       // Si tanquem la pestanya activa, activem la següent disponible
       if (activeTabId === tabId) {
-        const currentIndex = prevTabs.findIndex(tab => tab.id === tabId);
-        const nextTab = updatedTabs[currentIndex] || updatedTabs[currentIndex - 1];
-        setActiveTabId(nextTab ? nextTab.id : null);
+        if (updatedTabs.length > 0) {
+          // Prioritzar la pestanya anterior (índex - 1) abans que la següent
+          nextActiveTab = updatedTabs[currentIndex - 1] || updatedTabs[currentIndex] || updatedTabs[0];
+          setActiveTabId(nextActiveTab.id);
+        } else {
+          // No queden pestanyes
+          setActiveTabId(null);
+          nextActiveTab = null;
+        }
+      }
+      
+      // Cridar el callback amb la pestanya que es converteix en activa
+      if (onTabClosed) {
+        onTabClosed(nextActiveTab);
       }
       
       return updatedTabs;
@@ -68,9 +82,14 @@ export const TabsProvider = ({ children }: TabsProviderProps) => {
     setActiveTabId(tabId);
   };
 
-  const closeAllTabs = () => {
+  const closeAllTabs = (onAllTabsClosed?: () => void) => {
     setTabs([]);
     setActiveTabId(null);
+    
+    // Cridar el callback quan es tanquin totes les pestanyes
+    if (onAllTabsClosed) {
+      onAllTabsClosed();
+    }
   };
 
   return (
