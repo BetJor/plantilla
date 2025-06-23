@@ -43,7 +43,8 @@ const AppSidebar = () => {
             <SidebarMenu>
               {navigationItems.map((item) => {
                 const Icon = item.icon;
-                const isActive = location.pathname === item.href;
+                const isActive = location.pathname === item.href || 
+                  (item.href === '/actions' && location.pathname.startsWith('/actions/'));
                 
                 return (
                   <SidebarMenuItem key={item.href}>

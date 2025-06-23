@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import React, { createContext, useContext, useState, ReactNode } from 'react';
 import { Home } from 'lucide-react';
 
 export interface Tab {
@@ -37,20 +37,6 @@ export const TabsProvider = ({ children }: TabsProviderProps) => {
   const [tabs, setTabs] = useState<Tab[]>([]);
   const [activeTabId, setActiveTabId] = useState<string | null>(null);
 
-  // Inicialitzar automàticament el Dashboard
-  useEffect(() => {
-    const dashboardTab = {
-      id: '/',
-      title: 'Dashboard',
-      path: '/',
-      icon: Home,
-      closable: false
-    };
-    
-    setTabs([dashboardTab]);
-    setActiveTabId('/');
-  }, []);
-
   const openTab = (newTab: Tab) => {
     setTabs(prevTabs => {
       const existingTab = prevTabs.find(tab => tab.path === newTab.path);
@@ -76,7 +62,7 @@ export const TabsProvider = ({ children }: TabsProviderProps) => {
         if (updatedTabs.length > 0) {
           // Prioritzar la pestanya anterior (índex - 1) abans que la següent
           nextActiveTab = updatedTabs[currentIndex - 1] || updatedTabs[currentIndex] || updatedTabs[0];
-          setActiveTabId(nextActiveTab.id);
+          setActiveTab(nextActiveTab.id);
         } else {
           // No queden pestanyes
           setActiveTabId(null);
@@ -98,17 +84,8 @@ export const TabsProvider = ({ children }: TabsProviderProps) => {
   };
 
   const closeAllTabs = (onAllTabsClosed?: () => void) => {
-    // Mantenir sempre el Dashboard
-    const dashboardTab = {
-      id: '/',
-      title: 'Dashboard',
-      path: '/',
-      icon: Home,
-      closable: false
-    };
-    
-    setTabs([dashboardTab]);
-    setActiveTabId('/');
+    setTabs([]);
+    setActiveTabId(null);
     
     // Cridar el callback quan es tanquin totes les pestanyes
     if (onAllTabsClosed) {

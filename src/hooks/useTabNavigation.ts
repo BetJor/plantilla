@@ -82,6 +82,7 @@ export const useTabNavigation = () => {
       tabId = `action-${actionId}`;
     }
     
+    // Sempre intentar activar el tab corresponent
     const existingTab = tabs.find(tab => tab.id === tabId);
     if (existingTab) {
       setActiveTab(tabId);
