@@ -1,5 +1,6 @@
 
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import { Home } from 'lucide-react';
 
 export interface Tab {
   id: string;
@@ -35,6 +36,20 @@ interface TabsProviderProps {
 export const TabsProvider = ({ children }: TabsProviderProps) => {
   const [tabs, setTabs] = useState<Tab[]>([]);
   const [activeTabId, setActiveTabId] = useState<string | null>(null);
+
+  // Inicialitzar automàticament el Dashboard
+  useEffect(() => {
+    const dashboardTab = {
+      id: '/',
+      title: 'Dashboard',
+      path: '/',
+      icon: Home,
+      closable: false
+    };
+    
+    setTabs([dashboardTab]);
+    setActiveTabId('/');
+  }, []);
 
   const openTab = (newTab: Tab) => {
     setTabs(prevTabs => {
@@ -83,8 +98,17 @@ export const TabsProvider = ({ children }: TabsProviderProps) => {
   };
 
   const closeAllTabs = (onAllTabsClosed?: () => void) => {
-    setTabs([]);
-    setActiveTabId(null);
+    // Mantenir sempre el Dashboard
+    const dashboardTab = {
+      id: '/',
+      title: 'Dashboard',
+      path: '/',
+      icon: Home,
+      closable: false
+    };
+    
+    setTabs([dashboardTab]);
+    setActiveTabId('/');
     
     // Cridar el callback quan es tanquin totes les pestanyes
     if (onAllTabsClosed) {
