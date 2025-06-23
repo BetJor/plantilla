@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { CorrectiveAction } from '@/types';
 import { toast } from '@/hooks/use-toast';
@@ -10,12 +11,12 @@ import { useDashboardMetrics } from './useDashboardMetrics';
 export const useCorrectiveActions = () => {
   const [loading, setLoading] = useState(false);
   const { checkOverdueAndUpcoming } = useNotifications();
-  const { loadActions, clearAllStorage } = useActionStorage();
+  const { loadActions: loadActionsFromStorage, clearAllStorage } = useActionStorage();
   const { 
     actions, 
     addAction, 
     updateAction, 
-    clearAllActions, 
+    clearAllActions: clearActions, 
     initializeActions 
   } = useActionCRUD();
   const { 
@@ -28,7 +29,7 @@ export const useCorrectiveActions = () => {
 
   // Carregar dades del localStorage a l'inici
   useEffect(() => {
-    const loadedActions = loadActions();
+    const loadedActions = loadActionsFromStorage();
     initializeActions(loadedActions);
     initializeComments();
   }, []);
@@ -248,13 +249,13 @@ export const useCorrectiveActions = () => {
   };
 
   const clearAllActions = () => {
-    clearAllActions();
+    clearActions();
     clearComments();
     clearAllStorage();
   };
 
   const loadActions = () => {
-    const loadedActions = loadActions();
+    const loadedActions = loadActionsFromStorage();
     initializeActions(loadedActions);
   };
 

@@ -1,9 +1,10 @@
+
 import React, { useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, AlertCircle, Paperclip, MessageSquare, Activity } from 'lucide-react';
+import { ArrowLeft, AlertCircle, Paperclip, MessageSquare, Activity, TrendingUp } from 'lucide-react';
 import { useCorrectiveActions } from '@/hooks/useCorrectiveActions';
 import { CorrectiveAction } from '@/types';
 import DescriptionSection from '@/components/ActionFormSections/DescriptionSection';
@@ -210,6 +211,7 @@ const ActionDetail = () => {
     {
       id: 'status-progress',
       title: 'Progrés de l\'Acció',
+      icon: <TrendingUp className="w-5 h-5" />,
       defaultOpen: true,
       summary: <span>Estat actual: <strong>{action.status}</strong></span>,
       content: <StatusProgress action={action} />
