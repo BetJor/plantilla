@@ -260,16 +260,14 @@ const Actions = () => {
           )}
         </div>
         <div className="flex gap-2">
-          {actions.length === 0 && (
-            <Button 
-              onClick={addTestActions} 
-              variant="outline" 
-              className="bg-green-50 hover:bg-green-100 border-green-200 text-green-700"
-            >
-              <Database className="w-4 h-4 mr-2" />
-              Carregar dades de prova
-            </Button>
-          )}
+          <Button 
+            onClick={addTestActions} 
+            variant="outline" 
+            className="bg-green-50 hover:bg-green-100 border-green-200 text-green-700"
+          >
+            <Database className="w-4 h-4 mr-2" />
+            {actions.length === 0 ? 'Carregar dades de prova' : 'Afegir més dades de prova'}
+          </Button>
           <Button onClick={() => setShowCreateForm(true)} className="bg-blue-600 hover:bg-blue-700">
             <Plus className="w-4 h-4 mr-2" />
             Nova Acció
