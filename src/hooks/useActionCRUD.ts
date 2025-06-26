@@ -128,12 +128,31 @@ export const useActionCRUD = () => {
       if (updates.status === 'Pendiente de Cierre' && updates.tipoCierre === 'no-conforme') {
         notifyDirectorReviewRequired(updatedAction);
       }
+    }
+
+    // Comprovar si s'ha de generar una acció BIS
+    // Això pot passar en dos casos:
+    // 1. L'estat canvia a 'Cerrado' i ja té tipoCierre 'no-conforme'
+    // 2. El tipoCierre canvia a 'no-conforme' i ja està en estat 'Cerrado'
+    const shouldGenerateBis = (
+      // Cas 1: estat canvia a Cerrado i ja té tipoCierre no-conforme
+      (updates.status === 'Cerrado' && updatedAction.tipoCierre === 'no-conforme') ||
+      // Cas 2: tipoCierre canvia a no-conforme i ja està Cerrado
+      (updates.tipoCierre === 'no-conforme' && updatedAction.status === 'Cerrado')
+    ) && !updatedAction.esBis; // No generar BIS d'una acció que ja és BIS
+
+    if (shouldGenerateBis) {
+      // Verificar que no existeixi ja una acció BIS per aquesta acció
+      const existingBisAction = actions.find(a => a.esBis && a.accionOriginal === updatedAction.id);
       
-      if (updates.status === 'Cerrado' && updates.tipoCierre === 'no-conforme') {
+      if (!existingBisAction) {
+        console.log('🔄 Generant acció BIS per tancament NO CONFORME:', updatedAction.id);
         const bisAction = createBisAction(updatedAction, addAction);
         if (bisAction) {
-          checkMultipleBisActions(updatedActions, bisAction);
+          checkMultipleBisActions([...updatedActions, bisAction], bisAction);
         }
+      } else {
+        console.log('ℹ️ Ja existeix una acció BIS per aquesta acció:', updatedAction.id);
       }
     }
 
