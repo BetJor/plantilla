@@ -38,8 +38,8 @@ const AppContent = () => {
           <Header />
         </div>
         
-        {/* Pestanyes que ocupen tota la segona fila */}
-        <div style={{ gridColumn: '1 / -1', gridRow: '2' }}>
+        {/* Pestanyes que només ocupen la columna dreta */}
+        <div style={{ gridColumn: '2', gridRow: '2' }}>
           <TabsNavigation />
         </div>
         
