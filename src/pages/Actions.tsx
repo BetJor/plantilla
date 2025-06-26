@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Plus, Search, Filter, Eye, Database } from 'lucide-react';
+import { Plus, Eye, Database } from 'lucide-react';
 import { useCorrectiveActions } from '@/hooks/useCorrectiveActions';
 import { usePermissions } from '@/hooks/usePermissions';
 import { toast } from '@/hooks/use-toast';
@@ -16,6 +16,7 @@ import CategorySelectors from '@/components/ActionFormSections/CategorySelectors
 import ResponsibleAssignment from '@/components/ActionFormSections/ResponsibleAssignment';
 import SpecificFields from '@/components/ActionFormSections/SpecificFields';
 import AttachmentsSection from '@/components/ActionFormSections/AttachmentsSection';
+import AdvancedFilters from '@/components/AdvancedFilters';
 import { CorrectiveAction } from '@/types';
 
 const Actions = () => {
@@ -35,7 +36,7 @@ const Actions = () => {
   const { allowedActionTypes } = usePermissions({ user: mockUser });
   
   const [showCreateForm, setShowCreateForm] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [filteredActions, setFilteredActions] = useState<CorrectiveAction[]>(actions);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -50,6 +51,20 @@ const Actions = () => {
     responsableAnalisis: '',
     attachments: [] as string[]
   });
+
+  // Update filtered actions when actions change
+  React.useEffect(() => {
+    setFilteredActions(actions);
+  }, [actions]);
+
+  const handleFiltersChange = (filtered: CorrectiveAction[]) => {
+    setFilteredActions(filtered);
+  };
+
+  const handleFilterStateChange = (filters: any) => {
+    // This callback can be used to sync filter state if needed
+    console.log('Filter state changed:', filters);
+  };
 
   const updateFormData = (updates: Partial<typeof formData>) => {
     setFormData(prev => ({ ...prev, ...updates }));
@@ -214,11 +229,6 @@ const Actions = () => {
     }, 1000);
   };
 
-  const filteredActions = actions.filter(action =>
-    action.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    action.description.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -335,78 +345,79 @@ const Actions = () => {
       )}
 
       {!showCreateForm && (
-        <Card className="border-blue-200">
-          <CardHeader className="bg-blue-50">
-            <div className="flex justify-between items-center">
-              <CardTitle className="text-blue-800">Llistat d'Accions Correctives</CardTitle>
-              <div className="flex gap-2">
-                <div className="relative">
-                  <Search className="w-4 h-4 absolute left-3 top-3 text-gray-400" />
-                  <Input
-                    placeholder="Cercar accions..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10"
-                  />
+        <>
+          {/* Advanced Filters Component */}
+          {actions.length > 0 && (
+            <AdvancedFilters
+              actions={actions}
+              onFiltersChange={handleFiltersChange}
+              onFilterStateChange={handleFilterStateChange}
+            />
+          )}
+
+          <Card className="border-blue-200">
+            <CardHeader className="bg-blue-50">
+              <CardTitle className="text-blue-800">
+                Llistat d'Accions Correctives
+                {filteredActions.length !== actions.length && (
+                  <Badge variant="secondary" className="ml-2">
+                    {filteredActions.length} de {actions.length}
+                  </Badge>
+                )}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {actions.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  <div className="mb-4">
+                    <Database className="w-16 h-16 mx-auto text-gray-300 mb-2" />
+                    <p className="text-lg font-medium mb-2">No hi ha accions correctives</p>
+                    <p className="text-sm">Pots carregar dades de prova o crear la primera acció per començar.</p>
+                  </div>
                 </div>
-                <Button variant="outline">
-                  <Filter className="w-4 h-4 mr-2" />
-                  Filtres
-                </Button>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {actions.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                <div className="mb-4">
-                  <Database className="w-16 h-16 mx-auto text-gray-300 mb-2" />
-                  <p className="text-lg font-medium mb-2">No hi ha accions correctives</p>
-                  <p className="text-sm">Pots carregar dades de prova o crear la primera acció per començar.</p>
-                </div>
-              </div>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Títol</TableHead>
-                    <TableHead>Tipus</TableHead>
-                    <TableHead>Assignat a</TableHead>
-                    <TableHead>Prioritat</TableHead>
-                    <TableHead>Estat</TableHead>
-                    <TableHead>Accions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredActions.map((action) => (
-                    <TableRow key={action.id} className="hover:bg-blue-50">
-                      <TableCell className="font-medium">{action.title}</TableCell>
-                      <TableCell>{getTypeDisplayName(action.type)}</TableCell>
-                      <TableCell>{action.assignedTo}</TableCell>
-                      <TableCell>
-                        <Badge variant={getPriorityVariant(action.priority)}>
-                          {action.priority}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className={getStatusBadgeStyle(action.status)}>
-                          {action.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Button variant="ghost" size="sm" asChild>
-                          <Link to={`/actions/${action.id}`}>
-                            <Eye className="w-4 h-4" />
-                          </Link>
-                        </Button>
-                      </TableCell>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Títol</TableHead>
+                      <TableHead>Tipus</TableHead>
+                      <TableHead>Assignat a</TableHead>
+                      <TableHead>Prioritat</TableHead>
+                      <TableHead>Estat</TableHead>
+                      <TableHead>Accions</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
-          </CardContent>
-        </Card>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredActions.map((action) => (
+                      <TableRow key={action.id} className="hover:bg-blue-50">
+                        <TableCell className="font-medium">{action.title}</TableCell>
+                        <TableCell>{getTypeDisplayName(action.type)}</TableCell>
+                        <TableCell>{action.assignedTo}</TableCell>
+                        <TableCell>
+                          <Badge variant={getPriorityVariant(action.priority)}>
+                            {action.priority}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className={getStatusBadgeStyle(action.status)}>
+                            {action.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Button variant="ghost" size="sm" asChild>
+                            <Link to={`/actions/${action.id}`}>
+                              <Eye className="w-4 h-4" />
+                            </Link>
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        </>
       )}
     </div>
   );
