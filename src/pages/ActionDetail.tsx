@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, AlertCircle, Paperclip, MessageSquare, Activity, TrendingUp, Search } from 'lucide-react';
+import { ArrowLeft, AlertCircle, Paperclip, MessageSquare, Activity, TrendingUp, Search, Network } from 'lucide-react';
 import { useCorrectiveActions } from '@/hooks/useCorrectiveActions';
 import { CorrectiveAction } from '@/types';
 import DescriptionSection from '@/components/ActionFormSections/DescriptionSection';
@@ -27,6 +27,7 @@ import ResponsibleAssignment from '@/components/ActionFormSections/ResponsibleAs
 import SpecificFields from '@/components/ActionFormSections/SpecificFields';
 import SimilarActionsPanel from '@/components/SimilarActionsPanel';
 import StatusControls from '@/components/ActionFormSections/StatusControls';
+import BisActionChain from '@/components/BisActionChain';
 
 const ActionDetail = () => {
   const { id } = useParams();
@@ -244,6 +245,29 @@ const ActionDetail = () => {
   const attachmentCount = action.attachments.length;
   const commentCount = actionComments.length;
 
+  // Detectar si hi ha una cadena d'accions BIS
+  const hasBisChain = action.esBis || actions.some(a => a.esBis && a.accionOriginal === action.id);
+  const bisChainActions = hasBisChain ? (() => {
+    const relatedActions = [];
+    
+    // Si és BIS, trobar l'original
+    if (action.esBis && action.accionOriginal) {
+      const original = actions.find(a => a.id === action.accionOriginal);
+      if (original) relatedActions.push(original);
+    } else {
+      relatedActions.push(action);
+    }
+    
+    // Trobar totes les accions BIS derivades
+    const bisActions = actions.filter(a => 
+      a.esBis && (a.accionOriginal === action.id || 
+        (action.esBis && a.accionOriginal === action.accionOriginal))
+    );
+    
+    relatedActions.push(...bisActions);
+    return relatedActions;
+  })() : [];
+
   // Configurar seccions per drag & drop
   const sidebarSections: SectionConfig[] = [
     {
@@ -278,7 +302,29 @@ const ActionDetail = () => {
           />
         </div>
       )
-    },
+    }
+  ];
+
+  // Afegir secció de cadena BIS si és rellevant
+  if (hasBisChain) {
+    sidebarSections.push({
+      id: 'bis-chain',
+      title: 'Cadena d\'Accions BIS',
+      icon: <Network className="w-5 h-5" />,
+      badge: bisChainActions.length > 1 ? 
+        <Badge variant={bisChainActions.filter(a => a.esBis).length > 1 ? "destructive" : "orange"} className="ml-2">
+          {bisChainActions.length}
+        </Badge> : undefined,
+      defaultOpen: true,
+      summary: bisChainActions.length > 1 ? 
+        `${bisChainActions.length} accions relacionades` : 
+        'Acció individual',
+      content: <BisActionChain actions={actions} currentActionId={action.id} />
+    });
+  }
+
+  // Afegir resta de seccions
+  sidebarSections.push(
     {
       id: 'attachments',
       title: 'Adjunts',
@@ -308,11 +354,11 @@ const ActionDetail = () => {
         />
       )
     }
-  ];
+  );
 
   // Afegir secció d'accions similars si és necessari
   if (action.status === 'Pendiente de Análisis' && (similarActions.length > 0 || isDetecting)) {
-    sidebarSections.splice(2, 0, {
+    sidebarSections.splice(-2, 0, {
       id: 'similar-actions',
       title: 'Accions Similars',
       icon: <Search className="w-5 h-5" />,
