@@ -32,31 +32,34 @@ const AppContent = () => {
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen w-full bg-gradient-to-br from-gray-50 to-blue-50 flex">
-        {/* Sidebar */}
-        <AppSidebar />
-        
-        {/* Contingut principal */}
-        <div className="flex-1 flex flex-col">
-          {/* Header */}
+      <div className="min-h-screen w-full bg-gradient-to-br from-gray-50 to-blue-50" style={{ display: 'grid', gridTemplateRows: '80px auto 1fr', gridTemplateColumns: 'auto 1fr' }}>
+        {/* Header que ocupa tota la fila superior */}
+        <div style={{ gridColumn: '1 / -1', gridRow: '1' }}>
           <Header />
-          
-          {/* Pestanyes - aquestes començaran després de la sidebar */}
-          <TabsNavigation />
-          
-          {/* Contingut de les pàgines */}
-          <main className="flex-1 p-6">
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/actions" element={<Actions />} />
-              <Route path="/actions/:id" element={<ActionDetail />} />
-              <Route path="/reports" element={<Reports />} />
-              <Route path="/users" element={<Users />} />
-              <Route path="/settings" element={<Settings />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </main>
         </div>
+        
+        {/* Pestanyes que ocupen tota la segona fila */}
+        <div style={{ gridColumn: '1 / -1', gridRow: '2' }}>
+          <TabsNavigation />
+        </div>
+        
+        {/* Sidebar a la columna esquerra, fila inferior */}
+        <div style={{ gridColumn: '1', gridRow: '3' }}>
+          <AppSidebar />
+        </div>
+        
+        {/* Contingut principal a la columna dreta, fila inferior */}
+        <main className="p-6" style={{ gridColumn: '2', gridRow: '3' }}>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/actions" element={<Actions />} />
+            <Route path="/actions/:id" element={<ActionDetail />} />
+            <Route path="/reports" element={<Reports />} />
+            <Route path="/users" element={<Users />} />
+            <Route path="/settings" element={<Settings />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </main>
       </div>
     </SidebarProvider>
   );
@@ -65,15 +68,15 @@ const AppContent = () => {
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
-      <BrowserRouter>
-        <TabsProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
+      <TabsProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
             <AppContent />
-          </TooltipProvider>
-        </TabsProvider>
-      </BrowserRouter>
+          </BrowserRouter>
+        </TooltipProvider>
+      </TabsProvider>
     </AuthProvider>
   </QueryClientProvider>
 );

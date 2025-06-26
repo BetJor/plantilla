@@ -10,8 +10,6 @@ import { Label } from '@/components/ui/label';
 import { Plus, Search, Filter, Eye, Database } from 'lucide-react';
 import { useCorrectiveActions } from '@/hooks/useCorrectiveActions';
 import { usePermissions } from '@/hooks/usePermissions';
-import { useTabsContext } from '@/contexts/TabsContext';
-import { useNavigate } from 'react-router-dom';
 import { toast } from '@/hooks/use-toast';
 import { ACTION_TYPES } from '@/types/categories';
 import CategorySelectors from '@/components/ActionFormSections/CategorySelectors';
@@ -22,8 +20,6 @@ import { CorrectiveAction } from '@/types';
 
 const Actions = () => {
   const { actions, addAction, addTestActions, updateAction } = useCorrectiveActions();
-  const { openTab } = useTabsContext();
-  const navigate = useNavigate();
   
   // Mock user per testing - en una implementació real vindria del context d'autenticació
   const mockUser = {
@@ -81,20 +77,6 @@ const Actions = () => {
 
   const handleAttachmentsChange = (attachments: string[]) => {
     updateFormData({ attachments });
-  };
-
-  // Nova funció per obrir una acció en un tab
-  const handleViewAction = (action: CorrectiveAction) => {
-    console.log('handleViewAction: opening action', action.id);
-    const tab = {
-      id: `action-${action.id}`,
-      title: `Acció ${action.id}`,
-      path: `/actions/${action.id}`,
-      icon: Eye,
-      closable: true
-    };
-    openTab(tab);
-    navigate(`/actions/${action.id}`);
   };
 
   const getStatusBadgeStyle = (status: string) => {
@@ -412,12 +394,10 @@ const Actions = () => {
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          onClick={() => handleViewAction(action)}
-                        >
-                          <Eye className="w-4 h-4" />
+                        <Button variant="ghost" size="sm" asChild>
+                          <Link to={`/actions/${action.id}`}>
+                            <Eye className="w-4 h-4" />
+                          </Link>
                         </Button>
                       </TableCell>
                     </TableRow>

@@ -1,6 +1,5 @@
 
 import React, { createContext, useContext, useState, ReactNode } from 'react';
-import { Home } from 'lucide-react';
 
 export interface Tab {
   id: string;
@@ -14,9 +13,9 @@ interface TabsContextType {
   tabs: Tab[];
   activeTabId: string | null;
   openTab: (tab: Tab) => void;
-  closeTab: (tabId: string, onTabClosed?: (nextActiveTab: Tab | null) => void) => void;
+  closeTab: (tabId: string) => void;
   setActiveTab: (tabId: string) => void;
-  closeAllTabs: (onAllTabsClosed?: () => void) => void;
+  closeAllTabs: () => void;
 }
 
 const TabsContext = createContext<TabsContextType | undefined>(undefined);
@@ -50,29 +49,15 @@ export const TabsProvider = ({ children }: TabsProviderProps) => {
     });
   };
 
-  const closeTab = (tabId: string, onTabClosed?: (nextActiveTab: Tab | null) => void) => {
+  const closeTab = (tabId: string) => {
     setTabs(prevTabs => {
-      const currentIndex = prevTabs.findIndex(tab => tab.id === tabId);
       const updatedTabs = prevTabs.filter(tab => tab.id !== tabId);
-      
-      let nextActiveTab: Tab | null = null;
       
       // Si tanquem la pestanya activa, activem la següent disponible
       if (activeTabId === tabId) {
-        if (updatedTabs.length > 0) {
-          // Prioritzar la pestanya anterior (índex - 1) abans que la següent
-          nextActiveTab = updatedTabs[currentIndex - 1] || updatedTabs[currentIndex] || updatedTabs[0];
-          setActiveTab(nextActiveTab.id);
-        } else {
-          // No queden pestanyes
-          setActiveTabId(null);
-          nextActiveTab = null;
-        }
-      }
-      
-      // Cridar el callback amb la pestanya que es converteix en activa
-      if (onTabClosed) {
-        onTabClosed(nextActiveTab);
+        const currentIndex = prevTabs.findIndex(tab => tab.id === tabId);
+        const nextTab = updatedTabs[currentIndex] || updatedTabs[currentIndex - 1];
+        setActiveTabId(nextTab ? nextTab.id : null);
       }
       
       return updatedTabs;
@@ -83,14 +68,9 @@ export const TabsProvider = ({ children }: TabsProviderProps) => {
     setActiveTabId(tabId);
   };
 
-  const closeAllTabs = (onAllTabsClosed?: () => void) => {
+  const closeAllTabs = () => {
     setTabs([]);
     setActiveTabId(null);
-    
-    // Cridar el callback quan es tanquin totes les pestanyes
-    if (onAllTabsClosed) {
-      onAllTabsClosed();
-    }
   };
 
   return (
