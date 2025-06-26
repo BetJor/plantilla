@@ -30,13 +30,6 @@ const ClosureSection = ({
 
   // Actualitzar immediatament quan canvien els valors
   React.useEffect(() => {
-    console.log('ClosureSection: Actualitzant dades automàticament', {
-      closureNotes,
-      effectivenessEvaluation,
-      isConforme,
-      tipoCierre: isConforme ? 'conforme' : 'no-conforme'
-    });
-    
     if (closureNotes || effectivenessEvaluation) {
       onUpdate({
         closureData: {
@@ -50,14 +43,7 @@ const ClosureSection = ({
     }
   }, [closureNotes, effectivenessEvaluation, isConforme]);
 
-  const handleSave = () => {
-    console.log('ClosureSection: Guardant i signant', {
-      closureNotes,
-      effectivenessEvaluation,
-      isConforme,
-      tipoCierre: isConforme ? 'conforme' : 'no-conforme'
-    });
-    
+  const handleSave = () => {    
     onUpdate({
       closureData: {
         ...action.closureData,
@@ -73,14 +59,7 @@ const ClosureSection = ({
     });
   };
 
-  const handleSaveOnly = () => {
-    console.log('ClosureSection: Guardant només sense signar', {
-      closureNotes,
-      effectivenessEvaluation,
-      isConforme,
-      tipoCierre: isConforme ? 'conforme' : 'no-conforme'
-    });
-    
+  const handleSaveOnly = () => {    
     onUpdate({
       closureData: {
         ...action.closureData,
@@ -122,18 +101,6 @@ const ClosureSection = ({
   const hasChanges = closureNotes !== (action.closureData?.closureNotes || '') || 
                      effectivenessEvaluation !== (action.closureData?.effectivenessEvaluation || '') ||
                      isConforme !== (action.closureData?.isConforme ?? true);
-
-  // Debug log per verificar l'estat actual
-  React.useEffect(() => {
-    console.log('ClosureSection: Estat actual', {
-      actionTipoCierre: action.tipoCierre,
-      closureNotesLength: closureNotes.length,
-      effectivenessLength: effectivenessEvaluation.length,
-      isConforme,
-      isFormValid,
-      hasChanges
-    });
-  }, [action.tipoCierre, closureNotes, effectivenessEvaluation, isConforme, isFormValid, hasChanges]);
 
   return (
     <Card className={`${readOnly ? 'bg-gray-50' : ''} ${isComplete ? 'border-green-200' : ''}`}>
@@ -220,17 +187,6 @@ const ClosureSection = ({
             className={readOnly ? 'bg-gray-100' : ''}
           />
         </div>
-
-        {/* Debug info - només visible en desenvolupament */}
-        {process.env.NODE_ENV === 'development' && (
-          <div className="mt-4 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs">
-            <strong>Debug Info:</strong>
-            <div>tipoCierre: {action.tipoCierre || 'undefined'}</div>
-            <div>closureNotes: {closureNotes.length} chars</div>
-            <div>effectiveness: {effectivenessEvaluation.length} chars</div>
-            <div>isFormValid: {isFormValid.toString()}</div>
-          </div>
-        )}
 
         {readOnly && action.closureData?.signedBy && (
           <div className="bg-blue-50 p-3 rounded-lg">
