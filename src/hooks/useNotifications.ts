@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { CorrectiveAction } from '@/types';
 import { toast } from '@/hooks/use-toast';
@@ -6,13 +5,14 @@ import { toast } from '@/hooks/use-toast';
 export interface Notification {
   id: string;
   actionId: string;
-  type: 'pendiente-analisis' | 'pendiente-comprobacion' | 'pendiente-cierre' | 'cerrada' | 'retraso' | 'proximo-vencimiento';
+  type: 'pendiente-analisis' | 'pendiente-comprobacion' | 'pendiente-cierre' | 'cerrada' | 'retraso' | 'proximo-vencimiento' | 'bis-generated' | 'multiple-bis-warning' | 'director-review-required';
   title: string;
   message: string;
   recipient: string;
   isRead: boolean;
   createdAt: string;
   actionTitle?: string;
+  priority?: 'low' | 'medium' | 'high' | 'critical';
 }
 
 const STORAGE_KEY = 'notifications-data';
@@ -60,7 +60,8 @@ export const useNotifications = () => {
     actionId: string,
     type: Notification['type'],
     recipient: string,
-    actionTitle?: string
+    actionTitle?: string,
+    priority: Notification['priority'] = 'medium'
   ) => {
     const getNotificationContent = (type: Notification['type'], actionTitle?: string) => {
       switch (type) {
@@ -94,6 +95,21 @@ export const useNotifications = () => {
             title: 'Acció amb venciment proper',
             message: `L'acció "${actionTitle}" venç en els propers 10 dies.`
           };
+        case 'bis-generated':
+          return {
+            title: 'Acció BIS generada automàticament',
+            message: `S'ha generat automàticament l'acció BIS "${actionTitle}" degut al tancament NO CONFORME d'una acció relacionada.`
+          };
+        case 'multiple-bis-warning':
+          return {
+            title: '⚠️ Múltiples accions BIS detectades',
+            message: `S'han detectat múltiples accions BIS per "${actionTitle}". Cal revisar el patró d'incidències.`
+          };
+        case 'director-review-required':
+          return {
+            title: '👔 Revisió de direcció requerida',
+            message: `L'acció "${actionTitle}" requereix revisió de direcció abans del tancament com a NO CONFORME.`
+          };
         default:
           return {
             title: 'Notificació',
@@ -112,7 +128,8 @@ export const useNotifications = () => {
       recipient,
       isRead: false,
       createdAt: new Date().toISOString(),
-      actionTitle
+      actionTitle,
+      priority
     };
 
     const updatedNotifications = [...notifications, notification];
@@ -121,6 +138,63 @@ export const useNotifications = () => {
 
     return notification;
   }, [notifications, saveNotifications, simulateEmailSend]);
+
+  // Notificar generació d'acció BIS
+  const notifyBisGenerated = useCallback((originalAction: CorrectiveAction, bisAction: CorrectiveAction) => {
+    // Notificar al responsable de l'acció original
+    if (originalAction.createdBy) {
+      createNotification(
+        bisAction.id, 
+        'bis-generated', 
+        originalAction.createdBy, 
+        bisAction.title, 
+        'high'
+      );
+    }
+    
+    // Notificar al responsable de la nova acció BIS
+    if (bisAction.assignedTo && bisAction.assignedTo !== originalAction.createdBy) {
+      createNotification(
+        bisAction.id, 
+        'bis-generated', 
+        bisAction.assignedTo, 
+        bisAction.title, 
+        'high'
+      );
+    }
+  }, [createNotification]);
+
+  // Detectar múltiples accions BIS
+  const checkMultipleBisActions = useCallback((actions: CorrectiveAction[], newBisAction: CorrectiveAction) => {
+    const relatedBisActions = actions.filter(action => 
+      action.esBis && 
+      (action.type === newBisAction.type || 
+       action.department === newBisAction.department ||
+       action.centre === newBisAction.centre)
+    );
+
+    if (relatedBisActions.length >= 2) {
+      // Notificar a la direcció
+      createNotification(
+        newBisAction.id,
+        'multiple-bis-warning',
+        'direccio-qualitat',
+        `${newBisAction.type} - ${newBisAction.centre}`,
+        'critical'
+      );
+    }
+  }, [createNotification]);
+
+  // Notificar necessitat de revisió de direcció
+  const notifyDirectorReviewRequired = useCallback((action: CorrectiveAction) => {
+    createNotification(
+      action.id,
+      'director-review-required',
+      'direccio-qualitat',
+      action.title,
+      'high'
+    );
+  }, [createNotification]);
 
   // Marcar com a llegida
   const markAsRead = useCallback((notificationId: string) => {
@@ -221,6 +295,9 @@ export const useNotifications = () => {
   return {
     notifications,
     createNotification,
+    notifyBisGenerated,
+    checkMultipleBisActions,
+    notifyDirectorReviewRequired,
     markAsRead,
     markAllAsRead,
     deleteNotification,

@@ -1,10 +1,10 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { XCircle, Clock, User, CheckCircle, AlertCircle } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { XCircle, Clock, User, CheckCircle, AlertTriangle } from 'lucide-react';
 import { CorrectiveAction } from '@/types';
 
 interface ClosureSectionProps {
@@ -27,6 +27,7 @@ const ClosureSection = ({
   const [closureNotes, setClosureNotes] = React.useState(action.closureData?.closureNotes || '');
   const [effectivenessEvaluation, setEffectivenessEvaluation] = React.useState(action.closureData?.effectivenessEvaluation || '');
   const [isConforme, setIsConforme] = React.useState(action.closureData?.isConforme ?? true);
+  const [nonConformanceJustification, setNonConformanceJustification] = React.useState('');
 
   // Actualitzar immediatament quan canvien els valors
   React.useEffect(() => {
@@ -83,6 +84,15 @@ const ClosureSection = ({
 
   const handleConformeChange = (newIsConforme: boolean) => {
     setIsConforme(newIsConforme);
+    if (!newIsConforme) {
+      // Resetear justificació quan es canvia a no conforme
+      setNonConformanceJustification('');
+    }
+    if (onChangesDetected) onChangesDetected();
+  };
+
+  const handleJustificationChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setNonConformanceJustification(e.target.value);
     if (onChangesDetected) onChangesDetected();
   };
 
@@ -96,7 +106,9 @@ const ClosureSection = ({
     }
   }, [saveRef, saveOnlyRef, closureNotes, effectivenessEvaluation, isConforme]);
 
-  const isFormValid = closureNotes.trim() && effectivenessEvaluation.trim();
+  const isFormValid = closureNotes.trim() && 
+                     effectivenessEvaluation.trim() && 
+                     (isConforme || nonConformanceJustification.trim());
   const isComplete = action.closureData?.closureNotes && action.closureData?.effectivenessEvaluation;
   const hasChanges = closureNotes !== (action.closureData?.closureNotes || '') || 
                      effectivenessEvaluation !== (action.closureData?.effectivenessEvaluation || '') ||
@@ -147,11 +159,22 @@ const ClosureSection = ({
                 className="form-radio"
               />
               <div className="flex items-center">
-                <AlertCircle className="w-4 h-4 text-red-500 mr-1" />
+                <AlertTriangle className="w-4 h-4 text-red-500 mr-1" />
                 <span>No Conforme</span>
               </div>
             </label>
           </div>
+          
+          {/* Alerta per tancament no conforme */}
+          {!isConforme && !readOnly && (
+            <Alert className="mt-3 border-orange-200 bg-orange-50">
+              <AlertTriangle className="h-4 w-4 text-orange-600" />
+              <AlertDescription className="text-orange-800">
+                <strong>Atenció:</strong> El tancament com a NO CONFORME generarà automàticament una nova acció BIS (Business Improvement System) 
+                que requerirà un nou anàlisi i implementació.
+              </AlertDescription>
+            </Alert>
+          )}
           
           {readOnly && action.closureData?.isConforme !== undefined && (
             <Badge 
@@ -162,6 +185,27 @@ const ClosureSection = ({
             </Badge>
           )}
         </div>
+
+        {/* Camp de justificació per tancament no conforme */}
+        {!isConforme && !readOnly && (
+          <div>
+            <Label htmlFor="nonConformanceJustification" className="text-red-700 font-medium">
+              Justificació del tancament NO CONFORME *
+            </Label>
+            <Textarea
+              id="nonConformanceJustification"
+              value={nonConformanceJustification}
+              onChange={handleJustificationChange}
+              placeholder="Explica detalladament per què aquesta acció no es pot considerar conforme i quines circumstàncies ho justifiquen..."
+              rows={4}
+              className="mt-1 border-red-200 focus:border-red-400"
+              required
+            />
+            <p className="text-sm text-red-600 mt-1">
+              Aquest camp és obligatori per justificar el tancament no conforme
+            </p>
+          </div>
+        )}
 
         <div>
           <Label htmlFor="closureNotes">Notes de tancament</Label>
@@ -187,6 +231,16 @@ const ClosureSection = ({
             className={readOnly ? 'bg-gray-100' : ''}
           />
         </div>
+
+        {/* Mostrar justificació en mode només lectura */}
+        {readOnly && !action.closureData?.isConforme && nonConformanceJustification && (
+          <div>
+            <Label className="text-red-700 font-medium">Justificació del tancament NO CONFORME</Label>
+            <div className="mt-1 p-3 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-red-800">{nonConformanceJustification}</p>
+            </div>
+          </div>
+        )}
 
         {readOnly && action.closureData?.signedBy && (
           <div className="bg-blue-50 p-3 rounded-lg">

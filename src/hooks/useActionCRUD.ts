@@ -10,7 +10,12 @@ import { useBisActions } from '@/hooks/useBisActions';
 export const useActionCRUD = () => {
   const [actions, setActions] = useState<CorrectiveAction[]>([]);
   const { saveToStorage } = useActionStorage();
-  const { notifyStatusChange } = useNotifications();
+  const { 
+    notifyStatusChange,
+    notifyBisGenerated,
+    checkMultipleBisActions,
+    notifyDirectorReviewRequired
+  } = useNotifications();
   const { 
     logActionCreated, 
     logActionUpdated, 
@@ -45,13 +50,23 @@ export const useActionCRUD = () => {
     
     logActionCreated(newAction, newAction.createdBy, 'System User');
     
-    if (newAction.status === 'Pendiente de Análisis' && newAction.responsableAnalisis) {
+    // Notificacions BIS específiques
+    if (newAction.esBis) {
+      // Trobar l'acció original per notificar correctament
+      const originalAction = actions.find(a => a.id === newAction.accionOriginal);
+      if (originalAction) {
+        notifyBisGenerated(originalAction, newAction);
+        checkMultipleBisActions(updatedActions, newAction);
+      }
+    } else if (newAction.status === 'Pendiente de Análisis' && newAction.responsableAnalisis) {
       notifyStatusChange(newAction, 'Pendiente de Análisis');
     }
     
     toast({
-      title: "Acció creada",
-      description: "L'acció correctiva s'ha creat correctament."
+      title: newAction.esBis ? "Acció BIS creada" : "Acció creada",
+      description: newAction.esBis 
+        ? "L'acció BIS s'ha creat automàticament degut al tancament NO CONFORME."
+        : "L'acció correctiva s'ha creat correctament."
     });
     
     return newAction;
@@ -109,8 +124,16 @@ export const useActionCRUD = () => {
       logStatusChanged(id, originalAction.status, updates.status, 'current-user', 'Current User');
       notifyStatusChange(updatedAction, updates.status);
       
+      // Notificar si es requereix revisió de direcció per tancament no conforme
+      if (updates.status === 'Pendiente de Cierre' && updates.tipoCierre === 'no-conforme') {
+        notifyDirectorReviewRequired(updatedAction);
+      }
+      
       if (updates.status === 'Cerrado' && updates.tipoCierre === 'no-conforme') {
-        createBisAction(updatedAction, addAction);
+        const bisAction = createBisAction(updatedAction, addAction);
+        if (bisAction) {
+          checkMultipleBisActions(updatedActions, bisAction);
+        }
       }
     }
 

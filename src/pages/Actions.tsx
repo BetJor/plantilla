@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Plus, Eye, Database } from 'lucide-react';
+import { Plus, Eye, Database, AlertTriangle } from 'lucide-react';
 import { useCorrectiveActions } from '@/hooks/useCorrectiveActions';
 import { usePermissions } from '@/hooks/usePermissions';
 import { toast } from '@/hooks/use-toast';
@@ -18,6 +18,7 @@ import SpecificFields from '@/components/ActionFormSections/SpecificFields';
 import AttachmentsSection from '@/components/ActionFormSections/AttachmentsSection';
 import AdvancedFilters from '@/components/AdvancedFilters';
 import { CorrectiveAction } from '@/types';
+import BisActionChain from '@/components/BisActionChain';
 
 const Actions = () => {
   const { actions, addAction, addTestActions, updateAction } = useCorrectiveActions();
@@ -51,6 +52,18 @@ const Actions = () => {
     responsableAnalisis: '',
     attachments: [] as string[]
   });
+
+  // Calcular estadístiques BIS
+  const bisStats = React.useMemo(() => {
+    const bisActions = actions.filter(a => a.esBis);
+    const nonConformeActions = actions.filter(a => a.tipoCierre === 'no-conforme');
+    
+    return {
+      totalBis: bisActions.length,
+      totalNonConforme: nonConformeActions.length,
+      bisRate: actions.length > 0 ? ((bisActions.length / actions.length) * 100).toFixed(1) : '0'
+    };
+  }, [actions]);
 
   // Update filtered actions when actions change
   React.useEffect(() => {
@@ -235,6 +248,16 @@ const Actions = () => {
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Accions Correctives</h1>
           <p className="text-gray-600">Gestiona les accions correctives i preventives</p>
+          {bisStats.totalBis > 0 && (
+            <div className="flex items-center mt-2 space-x-4">
+              <Badge variant="destructive" className="bg-orange-500">
+                {bisStats.totalBis} Accions BIS
+              </Badge>
+              <Badge variant="outline" className="text-orange-700 border-orange-300">
+                {bisStats.bisRate}% Taxa BIS
+              </Badge>
+            </div>
+          )}
         </div>
         <div className="flex gap-2">
           {actions.length === 0 && (
@@ -253,6 +276,24 @@ const Actions = () => {
           </Button>
         </div>
       </div>
+
+      {/* Mostrar alerta si hi ha múltiples accions BIS */}
+      {bisStats.totalBis > 2 && (
+        <Card className="border-red-200 bg-red-50">
+          <CardContent className="pt-6">
+            <div className="flex items-start space-x-3">
+              <AlertTriangle className="w-6 h-6 text-red-600 mt-0.5" />
+              <div>
+                <h3 className="font-semibold text-red-800">Atenció: Múltiples accions BIS detectades</h3>
+                <p className="text-red-700 mt-1">
+                  S'han detectat {bisStats.totalBis} accions BIS en el sistema. Això pot indicar un patró 
+                  d'incidències recurrents que requereix atenció de la direcció.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {showCreateForm && (
         <Card className="border-blue-200">
@@ -389,8 +430,22 @@ const Actions = () => {
                   </TableHeader>
                   <TableBody>
                     {filteredActions.map((action) => (
-                      <TableRow key={action.id} className="hover:bg-blue-50">
-                        <TableCell className="font-medium">{action.title}</TableCell>
+                      <TableRow key={action.id} className={`hover:bg-blue-50 ${action.esBis ? 'bg-orange-25' : ''}`}>
+                        <TableCell className="font-medium">
+                          <div className="flex items-center space-x-2">
+                            {action.esBis && (
+                              <Badge variant="destructive" className="bg-orange-500 text-xs">
+                                BIS
+                              </Badge>
+                            )}
+                            <span>{action.title}</span>
+                          </div>
+                          {action.esBis && action.accionOriginal && (
+                            <div className="text-xs text-gray-500 mt-1">
+                              Derivada de: {action.accionOriginal}
+                            </div>
+                          )}
+                        </TableCell>
                         <TableCell>{getTypeDisplayName(action.type)}</TableCell>
                         <TableCell>{action.assignedTo}</TableCell>
                         <TableCell>
@@ -399,9 +454,16 @@ const Actions = () => {
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          <Badge variant="outline" className={getStatusBadgeStyle(action.status)}>
-                            {action.status}
-                          </Badge>
+                          <div className="space-y-1">
+                            <Badge variant="outline" className={getStatusBadgeStyle(action.status)}>
+                              {action.status}
+                            </Badge>
+                            {action.tipoCierre === 'no-conforme' && (
+                              <Badge variant="destructive" className="text-xs block w-fit">
+                                NO CONFORME
+                              </Badge>
+                            )}
+                          </div>
                         </TableCell>
                         <TableCell>
                           <Button variant="ghost" size="sm" asChild>
