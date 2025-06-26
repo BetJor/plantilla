@@ -1,5 +1,6 @@
 
 import React, { createContext, useContext, useState, ReactNode } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 export interface Tab {
   id: string;
@@ -35,6 +36,7 @@ interface TabsProviderProps {
 export const TabsProvider = ({ children }: TabsProviderProps) => {
   const [tabs, setTabs] = useState<Tab[]>([]);
   const [activeTabId, setActiveTabId] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   const openTab = (newTab: Tab) => {
     setTabs(prevTabs => {
@@ -53,11 +55,19 @@ export const TabsProvider = ({ children }: TabsProviderProps) => {
     setTabs(prevTabs => {
       const updatedTabs = prevTabs.filter(tab => tab.id !== tabId);
       
-      // Si tanquem la pestanya activa, activem la següent disponible
+      // Si tanquem la pestanya activa, activem la següent disponible i naveguem
       if (activeTabId === tabId) {
         const currentIndex = prevTabs.findIndex(tab => tab.id === tabId);
         const nextTab = updatedTabs[currentIndex] || updatedTabs[currentIndex - 1];
-        setActiveTabId(nextTab ? nextTab.id : null);
+        
+        if (nextTab) {
+          setActiveTabId(nextTab.id);
+          navigate(nextTab.path);
+        } else {
+          // Si no queden tabs, anar al Dashboard
+          setActiveTabId(null);
+          navigate('/');
+        }
       }
       
       return updatedTabs;
@@ -71,6 +81,7 @@ export const TabsProvider = ({ children }: TabsProviderProps) => {
   const closeAllTabs = () => {
     setTabs([]);
     setActiveTabId(null);
+    navigate('/');
   };
 
   return (
