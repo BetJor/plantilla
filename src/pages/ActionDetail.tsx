@@ -48,7 +48,7 @@ const ActionDetail = () => {
   
   const action = actions.find(a => a.id === id);
   
-  // Hook per a la detecció d'accions similars durant l'anàlisi
+  // Hook per a la detecció d'accions similars durant l'anàlisi (exclou accions BIS)
   const {
     similarActions,
     isDetecting,
@@ -58,8 +58,8 @@ const ActionDetail = () => {
     clearDetection,
     markAsReviewed
   } = useAnalysisSimilarDetection({
-    action: action, // Remove the ! to allow undefined
-    isEnabled: !!action && action.status === 'Pendiente de Análisis'
+    action: action,
+    isEnabled: !!action && action.status === 'Pendiente de Análisis' && !action.esBis
   });
   
   console.log('ActionDetail: Acció trobada:', action ? `${action.id} - ${action.title}` : 'No trobada');
@@ -356,8 +356,8 @@ const ActionDetail = () => {
     }
   );
 
-  // Afegir secció d'accions similars si és necessari
-  if (action.status === 'Pendiente de Análisis' && (similarActions.length > 0 || isDetecting)) {
+  // Afegir secció d'accions similars si és necessari (només per accions no-BIS)
+  if (action.status === 'Pendiente de Análisis' && !action.esBis && (similarActions.length > 0 || isDetecting)) {
     sidebarSections.splice(-2, 0, {
       id: 'similar-actions',
       title: 'Accions Similars',

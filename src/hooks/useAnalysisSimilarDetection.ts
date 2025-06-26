@@ -20,8 +20,11 @@ export const useAnalysisSimilarDetection = ({ action, isEnabled }: UseAnalysisSi
   const [isDetecting, setIsDetecting] = useState(false);
   const { findSimilarActions, isLoading } = useSimilarActions();
 
+  // No detectar similituds per accions BIS
+  const shouldDetect = isEnabled && action && action.status === 'Pendiente de Análisis' && !action.esBis;
+
   const detectSimilarActions = async () => {
-    if (!isEnabled || hasCheckedSimilarity || !action || action.status !== 'Pendiente de Análisis') {
+    if (!shouldDetect || hasCheckedSimilarity) {
       return;
     }
 
@@ -35,7 +38,7 @@ export const useAnalysisSimilarDetection = ({ action, isEnabled }: UseAnalysisSi
         category: action.category,
         centre: action.centre,
         department: action.department,
-        excludeActionId: action.id // Excloure l'acció actual per evitar auto-similitud
+        excludeActionId: action.id
       });
 
       setSimilarActions(results);
@@ -58,16 +61,16 @@ export const useAnalysisSimilarDetection = ({ action, isEnabled }: UseAnalysisSi
 
   const hasHighSimilarity = similarActions.some(sa => sa.similarity >= 80);
 
-  // Auto-detect quan es carrega una acció en estat "Pendiente de Análisis"
+  // Auto-detect quan es carrega una acció en estat "Pendiente de Análisis" (però no BIS)
   useEffect(() => {
-    if (isEnabled && action && action.status === 'Pendiente de Análisis' && !hasCheckedSimilarity) {
+    if (shouldDetect && !hasCheckedSimilarity) {
       const timer = setTimeout(() => {
         detectSimilarActions();
       }, 1000);
 
       return () => clearTimeout(timer);
     }
-  }, [action?.id, action?.status, isEnabled, hasCheckedSimilarity]);
+  }, [action?.id, action?.status, action?.esBis, shouldDetect, hasCheckedSimilarity]);
 
   return {
     similarActions,

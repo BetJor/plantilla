@@ -3,9 +3,8 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, RotateCcw, AlertTriangle } from 'lucide-react';
+import { Network, ExternalLink } from 'lucide-react';
 import { CorrectiveAction } from '@/types';
-import { Link } from 'react-router-dom';
 
 interface BisActionChainProps {
   actions: CorrectiveAction[];
@@ -24,20 +23,16 @@ const BisActionChain = ({ actions, currentActionId }: BisActionChainProps) => {
     if (currentAction.esBis && currentAction.accionOriginal) {
       const originalAction = actions.find(a => a.id === currentAction.accionOriginal);
       if (originalAction) {
-        chain.push(...findActionChain(originalAction.id));
+        chain.push(originalAction);
       }
     } else {
       chain.push(currentAction);
     }
     
-    // Afegir l'acció actual si no està ja a la cadena
-    if (!chain.some(a => a.id === currentAction.id)) {
-      chain.push(currentAction);
-    }
-    
     // Trobar totes les accions BIS derivades
     const bisActions = actions.filter(a => 
-      a.esBis && a.accionOriginal === actionId
+      a.esBis && (a.accionOriginal === actionId || 
+        (currentAction.esBis && a.accionOriginal === currentAction.accionOriginal))
     ).sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
     
     chain.push(...bisActions);
@@ -48,91 +43,73 @@ const BisActionChain = ({ actions, currentActionId }: BisActionChainProps) => {
   const actionChain = findActionChain(currentActionId);
   
   if (actionChain.length <= 1) {
-    return null; // No mostrar si no hi ha cadena
+    return null;
   }
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'Cerrado': return 'bg-green-100 text-green-800';
-      case 'Anulada': return 'bg-red-100 text-red-800';
-      case 'Borrador': return 'bg-purple-100 text-purple-800';
-      default: return 'bg-blue-100 text-blue-800';
+      case 'Cerrado': return 'bg-green-500';
+      case 'Anulada': return 'bg-red-500';
+      case 'Borrador': return 'bg-purple-500';
+      default: return 'bg-blue-500';
     }
   };
 
+  const handleViewAction = (actionId: string) => {
+    window.open(`/actions/${actionId}`, '_blank');
+  };
+
   return (
-    <Card className="border-orange-200 bg-orange-50">
-      <CardHeader>
-        <CardTitle className="flex items-center text-orange-800">
-          <RotateCcw className="w-5 h-5 mr-2" />
-          Cadena d'Accions BIS
-          {actionChain.filter(a => a.esBis).length > 1 && (
-            <Badge variant="destructive" className="ml-2">
-              <AlertTriangle className="w-3 h-3 mr-1" />
-              Múltiples BIS
-            </Badge>
-          )}
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          {actionChain.map((action, index) => (
-            <div key={action.id} className="flex items-center space-x-4">
-              <div className="flex-1">
-                <div className="flex items-center space-x-2">
+    <div className="space-y-3">
+      {actionChain.map((action) => (
+        <Card key={action.id} className={`${action.id === currentActionId ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-2">
                   {action.esBis && (
-                    <Badge variant="destructive" className="bg-orange-500">
+                    <Badge variant="destructive" className="text-xs">
                       BIS
                     </Badge>
                   )}
-                  <Badge className={getStatusColor(action.status)}>
+                  <Badge className={`${getStatusColor(action.status)} text-white text-xs`}>
                     {action.status}
                   </Badge>
-                  <span className="font-medium">
-                    {action.id === currentActionId ? (
-                      action.title
-                    ) : (
-                      <Button variant="link" asChild className="p-0 h-auto text-blue-600">
-                        <Link to={`/actions/${action.id}`}>
-                          {action.title}
-                        </Link>
-                      </Button>
-                    )}
-                  </span>
-                </div>
-                <div className="text-sm text-gray-600 mt-1">
-                  Creat: {new Date(action.createdAt).toLocaleDateString('ca-ES')}
-                  {action.tipoCierre && (
-                    <span className={`ml-2 ${action.tipoCierre === 'no-conforme' ? 'text-red-600' : 'text-green-600'}`}>
-                      • {action.tipoCierre === 'no-conforme' ? 'NO CONFORME' : 'CONFORME'}
-                    </span>
+                  {action.id === currentActionId && (
+                    <Badge variant="outline" className="text-xs">
+                      Actual
+                    </Badge>
                   )}
                 </div>
-              </div>
-              
-              {index < actionChain.length - 1 && (
-                <ArrowRight className="w-4 h-4 text-gray-400" />
-              )}
-            </div>
-          ))}
-        </div>
-        
-        {actionChain.filter(a => a.esBis).length > 0 && (
-          <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-            <div className="flex items-start space-x-2">
-              <AlertTriangle className="w-5 h-5 text-yellow-600 mt-0.5" />
-              <div className="text-sm">
-                <p className="font-medium text-yellow-800">Patró d'accions no conformes detectat</p>
-                <p className="text-yellow-700 mt-1">
-                  Aquesta cadena conté {actionChain.filter(a => a.esBis).length} acció(ns) BIS. 
-                  Considera revisar les causes arrel per prevenir futures incidències.
+                <h4 className="font-medium text-sm truncate mb-1">{action.title}</h4>
+                <p className="text-xs text-gray-500">
+                  ID: {action.id} • {new Date(action.createdAt).toLocaleDateString('ca-ES')}
                 </p>
               </div>
+              {action.id !== currentActionId && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleViewAction(action.id)}
+                  className="ml-2 flex-shrink-0"
+                >
+                  <ExternalLink className="w-3 h-3 mr-1" />
+                  Veure
+                </Button>
+              )}
             </div>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+          </CardContent>
+        </Card>
+      ))}
+      
+      {actionChain.filter(a => a.esBis).length > 0 && (
+        <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+          <p className="text-sm text-yellow-800">
+            <strong>Patró detectat:</strong> Aquesta cadena conté {actionChain.filter(a => a.esBis).length} acció(ns) BIS.
+          </p>
+        </div>
+      )}
+    </div>
   );
 };
 
