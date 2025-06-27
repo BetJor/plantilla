@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -32,6 +33,7 @@ const StatusControls = ({
   isCheckingSimilarity = false
 }: StatusControlsProps) => {
   const [isAnnulDialogOpen, setIsAnnulDialogOpen] = useState(false);
+  const [isValidationPopoverOpen, setIsValidationPopoverOpen] = useState(false);
   const { canEditInStatus } = useWorkflow({ user, action });
 
   // Debug logs detallats
@@ -275,31 +277,37 @@ const StatusControls = ({
                 {getNextActionText()}
               </Button>
               {!canProceed && (
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="flex-shrink-0 w-10 h-10 p-0 bg-orange-100 hover:bg-orange-200 border-2 border-orange-300 text-orange-700 hover:text-orange-800 rounded-full"
-                      title="Passa el cursor per veure els detalls de validació"
+                <div 
+                  className="relative flex-shrink-0"
+                  onMouseEnter={() => setIsValidationPopoverOpen(true)}
+                  onMouseLeave={() => setIsValidationPopoverOpen(false)}
+                >
+                  <Popover open={isValidationPopoverOpen} onOpenChange={setIsValidationPopoverOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="w-10 h-10 p-0 bg-orange-100 hover:bg-orange-200 border-2 border-orange-300 text-orange-700 hover:text-orange-800 rounded-full"
+                        title="Passa el cursor per veure els detalls de validació"
+                      >
+                        <Info className="w-5 h-5" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent 
+                      side="top" 
+                      className="w-80 bg-orange-50 border-orange-200 z-50"
+                      sideOffset={8}
                     >
-                      <Info className="w-5 h-5" />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent 
-                    side="top" 
-                    className="w-80 bg-orange-50 border-orange-200 z-50"
-                    sideOffset={8}
-                  >
-                    <div className="flex items-start space-x-3">
-                      <AlertTriangle className="w-5 h-5 text-orange-600 mt-0.5 flex-shrink-0" />
-                      <div>
-                        <p className="text-sm font-semibold mb-1 text-orange-900">No es pot continuar</p>
-                        <p className="text-sm text-orange-800">{getValidationMessage()}</p>
+                      <div className="flex items-start space-x-3">
+                        <AlertTriangle className="w-5 h-5 text-orange-600 mt-0.5 flex-shrink-0" />
+                        <div>
+                          <p className="text-sm font-semibold mb-1 text-orange-900">No es pot continuar</p>
+                          <p className="text-sm text-orange-800">{getValidationMessage()}</p>
+                        </div>
                       </div>
-                    </div>
-                  </PopoverContent>
-                </Popover>
+                    </PopoverContent>
+                  </Popover>
+                </div>
               )}
             </div>
             {!canProceed && (
