@@ -283,6 +283,45 @@ const ActionDetail = () => {
     return relatedActions;
   })() : [];
 
+  // Helper function to determine if control panel should be open by default
+  const shouldControlPanelBeOpen = () => {
+    if (!action) return false;
+    
+    // Always open if there are pending changes or validation issues
+    if (hasPendingChanges) return true;
+    
+    // Open by default for states that commonly have validation issues
+    switch (action.status) {
+      case 'Borrador':
+        return !action.description.trim() || !action.type || !action.category || !action.subCategory.trim() || !action.responsableAnalisis;
+      case 'Pendiente de Análisis':
+        const hasRootCauses = !!(action.analysisData?.rootCauses?.trim());
+        const proposedActions = action.analysisData?.proposedActions || [];
+        const hasValidProposedActions = proposedActions.length > 0 && 
+          proposedActions.every(proposedAction => 
+            proposedAction.description?.trim() &&
+            proposedAction.assignedTo?.trim() &&
+            proposedAction.dueDate
+          );
+        const needsSimilarityCheck = !action.esBis;
+        const similarityCheckPassed = !needsSimilarityCheck || hasCheckedSimilarity;
+        
+        return !(hasRootCauses && hasValidProposedActions && similarityCheckPassed);
+      case 'Pendiente de Comprobación':
+        const proposedActionsForVerification = action.analysisData?.proposedActions || [];
+        const allActionsVerified = proposedActionsForVerification.every(proposedAction => 
+          proposedAction.verificationStatus && proposedAction.verificationStatus !== 'not-verified'
+        );
+        return !(allActionsVerified && proposedActionsForVerification.length > 0);
+      case 'Pendiente de Cierre':
+        return !(action.closureData?.closureNotes && 
+                action.closureData?.effectivenessEvaluation &&
+                action.tipoCierre);
+      default:
+        return false;
+    }
+  };
+
   // Configurar seccions per drag & drop
   const sidebarSections: SectionConfig[] = [
     {
@@ -297,7 +336,7 @@ const ActionDetail = () => {
       id: 'control-panel',
       title: 'Control Panel',
       icon: <Activity className="w-5 h-5" />,
-      defaultOpen: false,
+      defaultOpen: shouldControlPanelBeOpen(), // Use the helper function
       summary: (
         <div className="flex items-center gap-4 text-sm">
           <span>Assignat: <strong>{action.assignedTo}</strong></span>

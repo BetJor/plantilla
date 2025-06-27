@@ -10,7 +10,7 @@ import {
   DialogTitle, 
   DialogTrigger 
 } from '@/components/ui/dialog';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
 import { ArrowRight, XCircle, AlertTriangle, Search } from 'lucide-react';
 import { CorrectiveAction } from '@/types';
 import { useWorkflow } from '@/hooks/useWorkflow';
@@ -196,6 +196,15 @@ const StatusControls = ({
   const canProceed = canAdvance() && canEditInStatus(action.status);
   const canAnnul = !['Cerrado', 'Anulada'].includes(action.status) && canEditInStatus(action.status);
 
+  // Debug tooltip condition
+  console.log('StatusControls: Button state debug', {
+    nextStatus,
+    canProceed,
+    canAdvance: canAdvance(),
+    canEditInStatus: canEditInStatus(action.status),
+    validationMessage: getValidationMessage()
+  });
+
   const handleAdvance = () => {
     if (nextStatus && canProceed) {
       onStatusChange(nextStatus);
@@ -229,106 +238,113 @@ const StatusControls = ({
   }
 
   return (
-    <TooltipProvider delayDuration={300}>
-      <Card>
-        <CardHeader>
-          <CardTitle>Accions d'Estat</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {/* Botó de revisió de similituds per a "Pendiente de Análisis" i no-BIS */}
-          {action.status === 'Pendiente de Análisis' && !action.esBis && onCheckSimilarity && (
-            <div className="space-y-2">
-              <Button 
-                onClick={onCheckSimilarity}
-                disabled={isCheckingSimilarity}
-                variant={hasCheckedSimilarity ? "secondary" : "outline"}
-                className="w-full"
-              >
-                <Search className="w-4 h-4 mr-2" />
-                {isCheckingSimilarity ? 'Cercant...' : hasCheckedSimilarity ? 'Similituds Revisades' : 'Revisar Accions Similars'}
-              </Button>
-              {!hasCheckedSimilarity && (
-                <p className="text-sm text-orange-600 flex items-center">
-                  <AlertTriangle className="w-4 h-4 mr-1" />
-                  Cal revisar accions similars abans de continuar
-                </p>
-              )}
-            </div>
-          )}
+    <Card>
+      <CardHeader>
+        <CardTitle>Accions d'Estat</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {/* Botó de revisió de similituds per a "Pendiente de Análisis" i no-BIS */}
+        {action.status === 'Pendiente de Análisis' && !action.esBis && onCheckSimilarity && (
+          <div className="space-y-2">
+            <Button 
+              onClick={onCheckSimilarity}
+              disabled={isCheckingSimilarity}
+              variant={hasCheckedSimilarity ? "secondary" : "outline"}
+              className="w-full"
+            >
+              <Search className="w-4 h-4 mr-2" />
+              {isCheckingSimilarity ? 'Cercant...' : hasCheckedSimilarity ? 'Similituds Revisades' : 'Revisar Accions Similars'}
+            </Button>
+            {!hasCheckedSimilarity && (
+              <p className="text-sm text-orange-600 flex items-center">
+                <AlertTriangle className="w-4 h-4 mr-1" />
+                Cal revisar accions similars abans de continuar
+              </p>
+            )}
+          </div>
+        )}
 
-          {nextStatus && (
-            <div className="space-y-2">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button 
-                    onClick={handleAdvance}
-                    disabled={!canProceed}
-                    className="w-full"
-                  >
-                    <ArrowRight className="w-4 h-4 mr-2" />
-                    {getNextActionText()}
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent 
-                  side="top" 
-                  className="max-w-sm bg-gray-900 text-white p-3 rounded-lg shadow-lg border border-gray-700"
-                  sideOffset={5}
+        {nextStatus && (
+          <div className="space-y-2">
+            <HoverCard openDelay={200} closeDelay={100}>
+              <HoverCardTrigger asChild>
+                <Button 
+                  onClick={handleAdvance}
+                  disabled={!canProceed}
+                  className="w-full"
                 >
-                  {!canProceed ? (
-                    <div className="flex items-start space-x-2">
-                      <AlertTriangle className="w-4 h-4 text-yellow-400 mt-0.5 flex-shrink-0" />
-                      <p className="text-sm font-medium">{getValidationMessage()}</p>
-                    </div>
-                  ) : (
-                    <p className="text-sm">Continuar amb el següent estat</p>
-                  )}
-                </TooltipContent>
-              </Tooltip>
-              {!canProceed && (
-                <p className="text-sm text-red-600 flex items-center">
-                  <AlertTriangle className="w-4 h-4 mr-1" />
-                  {getValidationMessage()}
-                </p>
-              )}
-            </div>
-          )}
-          
-          {canAnnul && (
-            <Dialog open={isAnnulDialogOpen} onOpenChange={setIsAnnulDialogOpen}>
-              <DialogTrigger asChild>
-                <Button variant="destructive" className="w-full">
-                  <XCircle className="w-4 h-4 mr-2" />
-                  Anul·lar Acció
+                  <ArrowRight className="w-4 h-4 mr-2" />
+                  {getNextActionText()}
                 </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Confirmar Anul·lació</DialogTitle>
-                  <DialogDescription>
-                    Estàs segur que vols anul·lar aquesta acció correctiva? 
-                    Aquesta acció no es pot desfer i l'acció quedarà marcada com a anul·lada.
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="flex space-x-2 justify-end">
-                  <Button 
-                    variant="outline" 
-                    onClick={() => setIsAnnulDialogOpen(false)}
-                  >
-                    Cancel·lar
-                  </Button>
-                  <Button 
-                    variant="destructive" 
-                    onClick={handleAnnul}
-                  >
-                    Confirmar Anul·lació
-                  </Button>
-                </div>
-              </DialogContent>
-            </Dialog>
-          )}
-        </CardContent>
-      </Card>
-    </TooltipProvider>
+              </HoverCardTrigger>
+              <HoverCardContent 
+                side="top" 
+                className="w-80 bg-gray-900 text-white p-4 rounded-lg shadow-lg border border-gray-700"
+                sideOffset={8}
+              >
+                {!canProceed ? (
+                  <div className="flex items-start space-x-3">
+                    <AlertTriangle className="w-5 h-5 text-yellow-400 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="text-sm font-semibold mb-1">No es pot continuar</p>
+                      <p className="text-sm text-gray-300">{getValidationMessage()}</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-start space-x-3">
+                    <ArrowRight className="w-5 h-5 text-green-400 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="text-sm font-semibold mb-1">Continuar</p>
+                      <p className="text-sm text-gray-300">Avançar al següent estat del flux de treball</p>
+                    </div>
+                  </div>
+                )}
+              </HoverCardContent>
+            </HoverCard>
+            {!canProceed && (
+              <p className="text-sm text-red-600 flex items-center">
+                <AlertTriangle className="w-4 h-4 mr-1" />
+                {getValidationMessage()}
+              </p>
+            )}
+          </div>
+        )}
+        
+        {canAnnul && (
+          <Dialog open={isAnnulDialogOpen} onOpenChange={setIsAnnulDialogOpen}>
+            <DialogTrigger asChild>
+              <Button variant="destructive" className="w-full">
+                <XCircle className="w-4 h-4 mr-2" />
+                Anul·lar Acció
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Confirmar Anul·lació</DialogTitle>
+                <DialogDescription>
+                  Estàs segur que vols anul·lar aquesta acció correctiva? 
+                  Aquesta acció no es pot desfer i l'acció quedarà marcada com a anul·lada.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="flex space-x-2 justify-end">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setIsAnnulDialogOpen(false)}
+                >
+                  Cancel·lar
+                </Button>
+                <Button 
+                  variant="destructive" 
+                  onClick={handleAnnul}
+                >
+                  Confirmar Anul·lació
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+        )}
+      </CardContent>
+    </Card>
   );
 };
 
