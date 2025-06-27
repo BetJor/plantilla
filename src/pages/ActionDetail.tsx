@@ -33,7 +33,7 @@ const ActionDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { actions, updateAction, comments } = useCorrectiveActions();
+  const { actions, updateAction, comments, initializeComments } = useCorrectiveActions();
   const [hasPendingChanges, setHasPendingChanges] = useState(false);
   
   // Refs to access save functions from child components
@@ -47,6 +47,11 @@ const ActionDetail = () => {
   console.log('ActionDetail: Accions disponibles:', actions.map(a => ({ id: a.id, title: a.title })));
   
   const action = actions.find(a => a.id === id);
+  
+  // Initialize comments when component mounts
+  React.useEffect(() => {
+    initializeComments();
+  }, []);
   
   // Hook per a la detecció d'accions similars durant l'anàlisi (exclou accions BIS)
   const {
@@ -240,10 +245,17 @@ const ActionDetail = () => {
     return sections;
   };
 
-  // Get counts for summaries
-  const actionComments = comments.filter(c => c.actionId === action.id);
+  // Get counts for summaries - make sure comments are properly filtered
+  const actionComments = React.useMemo(() => 
+    comments.filter(c => c.actionId === action.id), 
+    [comments, action.id]
+  );
   const attachmentCount = action.attachments.length;
   const commentCount = actionComments.length;
+
+  console.log('ActionDetail: Total comments:', comments.length);
+  console.log('ActionDetail: Action comments for', action.id, ':', actionComments);
+  console.log('ActionDetail: Comment count:', commentCount);
 
   // Detectar si hi ha una cadena d'accions BIS
   const hasBisChain = action.esBis || actions.some(a => a.esBis && a.accionOriginal === action.id);
@@ -323,7 +335,7 @@ const ActionDetail = () => {
     });
   }
 
-  // Afegir resta de seccions
+  // Update the comments section configuration
   sidebarSections.push(
     {
       id: 'attachments',
