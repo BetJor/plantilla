@@ -32,7 +32,6 @@ const StatusControls = ({
   isCheckingSimilarity = false
 }: StatusControlsProps) => {
   const [isAnnulDialogOpen, setIsAnnulDialogOpen] = useState(false);
-  const [isValidationPopoverOpen, setIsValidationPopoverOpen] = useState(false);
   const { canEditInStatus } = useWorkflow({ user, action });
 
   // Debug logs detallats
@@ -216,13 +215,6 @@ const StatusControls = ({
     setIsAnnulDialogOpen(false);
   };
 
-  // Debug function for popover interactions
-  const handleInfoIconClick = () => {
-    console.log('Info icon clicked! Popover should open.');
-    console.log('Current validation message:', getValidationMessage());
-    setIsValidationPopoverOpen(!isValidationPopoverOpen);
-  };
-
   if (['Cerrado', 'Anulada'].includes(action.status)) {
     return null;
   }
@@ -283,14 +275,13 @@ const StatusControls = ({
                 {getNextActionText()}
               </Button>
               {!canProceed && (
-                <Popover open={isValidationPopoverOpen} onOpenChange={setIsValidationPopoverOpen}>
+                <Popover>
                   <PopoverTrigger asChild>
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={handleInfoIconClick}
                       className="flex-shrink-0 w-10 h-10 p-0 bg-orange-100 hover:bg-orange-200 border-2 border-orange-300 text-orange-700 hover:text-orange-800 rounded-full"
-                      title="Fes clic per veure els detalls de validació"
+                      title="Passa el cursor per veure els detalls de validació"
                     >
                       <Info className="w-5 h-5" />
                     </Button>
