@@ -269,6 +269,7 @@ export const useCorrectiveActions = () => {
     clearAllActions,
     getDashboardMetrics,
     loadActions,
-    addTestActions
+    addTestActions,
+    initializeComments
   };
 };
