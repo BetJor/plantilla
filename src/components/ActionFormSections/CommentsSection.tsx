@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -10,16 +10,30 @@ import { useCorrectiveActions } from '@/hooks/useCorrectiveActions';
 interface CommentsSectionProps {
   actionId: string;
   readOnly?: boolean;
+  onCommentCountChange?: (count: number) => void;
 }
 
-const CommentsSection = ({ actionId, readOnly = false }: CommentsSectionProps) => {
+const CommentsSection = ({ actionId, readOnly = false, onCommentCountChange }: CommentsSectionProps) => {
   const { comments, addComment } = useCorrectiveActions();
   const [newComment, setNewComment] = useState('');
   
+  console.log('CommentsSection: actionId received:', actionId);
+  console.log('CommentsSection: All comments:', comments.map(c => ({ id: c.id, actionId: c.actionId })));
+  
   const actionComments = comments.filter(c => c.actionId === actionId);
+  
+  console.log('CommentsSection: Filtered comments for action:', actionComments.length);
+
+  // Notificar canvis en el recompte de comentaris
+  useEffect(() => {
+    if (onCommentCountChange) {
+      onCommentCountChange(actionComments.length);
+    }
+  }, [actionComments.length, onCommentCountChange]);
 
   const handleAddComment = () => {
     if (newComment.trim()) {
+      console.log('CommentsSection: Adding comment to actionId:', actionId);
       addComment({
         actionId: actionId,
         userId: 'current-user',

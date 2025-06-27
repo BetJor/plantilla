@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -35,6 +34,7 @@ const ActionDetail = () => {
   const { toast } = useToast();
   const { actions, updateAction, comments } = useCorrectiveActions();
   const [hasPendingChanges, setHasPendingChanges] = useState(false);
+  const [commentCount, setCommentCount] = useState(0);
   
   // Refs to access save functions from child components
   const descriptionSaveRef = useRef<(() => void) | null>(null);
@@ -69,6 +69,13 @@ const ActionDetail = () => {
   }, [comments, action?.id]);
   
   console.log('ActionDetail: Acció trobada:', action ? `${action.id} - ${action.title}` : 'No trobada');
+  console.log('ActionDetail: Comment count from state:', commentCount);
+
+  // Callback per actualitzar el recompte de comentaris
+  const handleCommentCountChange = (count: number) => {
+    console.log('ActionDetail: Comment count updated to:', count);
+    setCommentCount(count);
+  };
 
   if (!action) {
     return (
@@ -248,11 +255,10 @@ const ActionDetail = () => {
 
   // Get counts for summaries
   const attachmentCount = action.attachments.length;
-  const commentCount = actionComments.length;
 
   console.log('ActionDetail: Total comments:', comments.length);
   console.log('ActionDetail: Action comments for', action.id, ':', actionComments);
-  console.log('ActionDetail: Comment count:', commentCount);
+  console.log('ActionDetail: Using comment count:', commentCount);
 
   // Detectar si hi ha una cadena d'accions BIS
   const hasBisChain = action.esBis || actions.some(a => a.esBis && a.accionOriginal === action.id);
@@ -332,7 +338,7 @@ const ActionDetail = () => {
     });
   }
 
-  // Add attachments and comments sections
+  // Add attachments and comments sections with corrected comment count
   sidebarSections.push(
     {
       id: 'attachments',
@@ -360,6 +366,7 @@ const ActionDetail = () => {
         <CommentsSection 
           actionId={action.id} 
           readOnly={['Cerrado', 'Anulada'].includes(action.status)}
+          onCommentCountChange={handleCommentCountChange}
         />
       )
     }
