@@ -10,10 +10,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Settings, Bell, Shield, Database, Info, Save } from 'lucide-react';
+import { Settings as SettingsIcon, Bell, Shield, Database, Info, Save } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
-const Settings = () => {
+const SettingsPage = () => {
   const [emailNotifications, setEmailNotifications] = useState(true);
   const [pushNotifications, setPushNotifications] = useState(false);
   const [systemMaintenance, setSystemMaintenance] = useState(false);
@@ -47,7 +47,7 @@ const Settings = () => {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Settings className="h-5 w-5" />
+                <SettingsIcon className="h-5 w-5" />
                 Configuració General
               </CardTitle>
               <CardDescription>
@@ -266,4 +266,4 @@ const Settings = () => {
   );
 };
 
-export default Settings;
+export default SettingsPage;

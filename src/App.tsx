@@ -26,17 +26,14 @@ const AppContent = () => {
   return (
     <SidebarProvider>
       <div className="min-h-screen w-full bg-gradient-to-br from-gray-50 to-blue-50" style={{ display: 'grid', gridTemplateRows: '80px 1fr', gridTemplateColumns: 'auto 1fr' }}>
-        {/* Header que ocupa tota la fila superior */}
         <div style={{ gridColumn: '1 / -1', gridRow: '1' }}>
           <Header />
         </div>
         
-        {/* Sidebar a la columna esquerra */}
         <div style={{ gridColumn: '1', gridRow: '2' }}>
           <AppSidebar />
         </div>
         
-        {/* Contingut principal a la columna dreta */}
         <main className="p-6" style={{ gridColumn: '2', gridRow: '2' }}>
           <Routes>
             <Route path="/" element={<Dashboard />} />
