@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -217,6 +216,13 @@ const StatusControls = ({
     setIsAnnulDialogOpen(false);
   };
 
+  // Debug function for popover interactions
+  const handleInfoIconClick = () => {
+    console.log('Info icon clicked! Popover should open.');
+    console.log('Current validation message:', getValidationMessage());
+    setIsValidationPopoverOpen(!isValidationPopoverOpen);
+  };
+
   if (['Cerrado', 'Anulada'].includes(action.status)) {
     return null;
   }
@@ -281,15 +287,17 @@ const StatusControls = ({
                   <PopoverTrigger asChild>
                     <Button
                       variant="ghost"
-                      size="icon"
-                      className="flex-shrink-0 text-orange-600 hover:text-orange-700 hover:bg-orange-50"
+                      size="sm"
+                      onClick={handleInfoIconClick}
+                      className="flex-shrink-0 w-10 h-10 p-0 bg-orange-100 hover:bg-orange-200 border-2 border-orange-300 text-orange-700 hover:text-orange-800 rounded-full"
+                      title="Fes clic per veure els detalls de validació"
                     >
-                      <Info className="w-4 h-4" />
+                      <Info className="w-5 h-5" />
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent 
                     side="top" 
-                    className="w-80 bg-orange-50 border-orange-200"
+                    className="w-80 bg-orange-50 border-orange-200 z-50"
                     sideOffset={8}
                   >
                     <div className="flex items-start space-x-3">
