@@ -229,7 +229,7 @@ const StatusControls = ({
   }
 
   return (
-    <TooltipProvider>
+    <TooltipProvider delayDuration={300}>
       <Card>
         <CardHeader>
           <CardTitle>Accions d'Estat</CardTitle>
@@ -269,11 +269,20 @@ const StatusControls = ({
                     {getNextActionText()}
                   </Button>
                 </TooltipTrigger>
-                {!canProceed && (
-                  <TooltipContent side="top" className="max-w-sm">
-                    <p className="text-sm">{getValidationMessage()}</p>
-                  </TooltipContent>
-                )}
+                <TooltipContent 
+                  side="top" 
+                  className="max-w-sm bg-gray-900 text-white p-3 rounded-lg shadow-lg border border-gray-700"
+                  sideOffset={5}
+                >
+                  {!canProceed ? (
+                    <div className="flex items-start space-x-2">
+                      <AlertTriangle className="w-4 h-4 text-yellow-400 mt-0.5 flex-shrink-0" />
+                      <p className="text-sm font-medium">{getValidationMessage()}</p>
+                    </div>
+                  ) : (
+                    <p className="text-sm">Continuar amb el següent estat</p>
+                  )}
+                </TooltipContent>
               </Tooltip>
               {!canProceed && (
                 <p className="text-sm text-red-600 flex items-center">
