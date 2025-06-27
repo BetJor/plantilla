@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -269,8 +270,7 @@ const FloatingActionButtons = ({
                       variant="destructive" 
                       className="
                         h-6 w-6 rounded-full p-0 flex items-center justify-center text-xs 
-                        animate-pulse hover:animate-none hover:scale-110 
-                        transition-all duration-200 cursor-help
+                        hover:scale-110 transition-all duration-200 cursor-help
                         hover:bg-red-600 hover:shadow-lg
                       "
                     >
