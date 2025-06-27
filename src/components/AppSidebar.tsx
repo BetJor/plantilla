@@ -24,8 +24,7 @@ const AppSidebar = () => {
   const location = useLocation();
 
   const navigationItems = [
-    { href: '/', label: 'Dashboard', icon: Home },
-    { href: '/actions', label: 'Accions Correctives', icon: FileText },
+    { href: '/', label: 'Dashboard', icon: Home },    
     { href: '/reports', label: 'Informes', icon: BarChart3 },
     ...(user?.role === 'admin' ? [{ href: '/users', label: 'Usuaris', icon: Users }] : []),
     { href: '/settings', label: 'Configuració', icon: Settings }
