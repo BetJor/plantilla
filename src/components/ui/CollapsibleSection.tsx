@@ -37,15 +37,14 @@ const CollapsibleSection = ({
     }
   }, [id]);
 
-  const handleToggle = () => {
-    const newState = !isOpen;
-    setIsOpen(newState);
-    localStorage.setItem(`collapsible-${id}`, JSON.stringify(newState));
+  const handleOpenChange = (newOpen: boolean) => {
+    setIsOpen(newOpen);
+    localStorage.setItem(`collapsible-${id}`, JSON.stringify(newOpen));
   };
 
   return (
     <Card className={className}>
-      <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+      <Collapsible open={isOpen} onOpenChange={handleOpenChange}>
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2">
@@ -57,7 +56,6 @@ const CollapsibleSection = ({
               <Button 
                 variant="ghost" 
                 size="sm" 
-                onClick={handleToggle}
                 className="p-1 h-8 w-8"
               >
                 {isOpen ? (
