@@ -10,8 +10,8 @@ import {
   DialogTitle, 
   DialogTrigger 
 } from '@/components/ui/dialog';
-import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
-import { ArrowRight, XCircle, AlertTriangle, Search } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { ArrowRight, XCircle, AlertTriangle, Search, Info } from 'lucide-react';
 import { CorrectiveAction } from '@/types';
 import { useWorkflow } from '@/hooks/useWorkflow';
 
@@ -33,6 +33,7 @@ const StatusControls = ({
   isCheckingSimilarity = false
 }: StatusControlsProps) => {
   const [isAnnulDialogOpen, setIsAnnulDialogOpen] = useState(false);
+  const [isValidationPopoverOpen, setIsValidationPopoverOpen] = useState(false);
   const { canEditInStatus } = useWorkflow({ user, action });
 
   // Debug logs detallats
@@ -266,41 +267,42 @@ const StatusControls = ({
 
         {nextStatus && (
           <div className="space-y-2">
-            <HoverCard openDelay={200} closeDelay={100}>
-              <HoverCardTrigger asChild>
-                <Button 
-                  onClick={handleAdvance}
-                  disabled={!canProceed}
-                  className="w-full"
-                >
-                  <ArrowRight className="w-4 h-4 mr-2" />
-                  {getNextActionText()}
-                </Button>
-              </HoverCardTrigger>
-              <HoverCardContent 
-                side="top" 
-                className="w-80 bg-gray-900 text-white p-4 rounded-lg shadow-lg border border-gray-700"
-                sideOffset={8}
+            <div className="flex items-center gap-2">
+              <Button 
+                onClick={handleAdvance}
+                disabled={!canProceed}
+                className="flex-1"
               >
-                {!canProceed ? (
-                  <div className="flex items-start space-x-3">
-                    <AlertTriangle className="w-5 h-5 text-yellow-400 mt-0.5 flex-shrink-0" />
-                    <div>
-                      <p className="text-sm font-semibold mb-1">No es pot continuar</p>
-                      <p className="text-sm text-gray-300">{getValidationMessage()}</p>
+                <ArrowRight className="w-4 h-4 mr-2" />
+                {getNextActionText()}
+              </Button>
+              {!canProceed && (
+                <Popover open={isValidationPopoverOpen} onOpenChange={setIsValidationPopoverOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="flex-shrink-0 text-orange-600 hover:text-orange-700 hover:bg-orange-50"
+                    >
+                      <Info className="w-4 h-4" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent 
+                    side="top" 
+                    className="w-80 bg-orange-50 border-orange-200"
+                    sideOffset={8}
+                  >
+                    <div className="flex items-start space-x-3">
+                      <AlertTriangle className="w-5 h-5 text-orange-600 mt-0.5 flex-shrink-0" />
+                      <div>
+                        <p className="text-sm font-semibold mb-1 text-orange-900">No es pot continuar</p>
+                        <p className="text-sm text-orange-800">{getValidationMessage()}</p>
+                      </div>
                     </div>
-                  </div>
-                ) : (
-                  <div className="flex items-start space-x-3">
-                    <ArrowRight className="w-5 h-5 text-green-400 mt-0.5 flex-shrink-0" />
-                    <div>
-                      <p className="text-sm font-semibold mb-1">Continuar</p>
-                      <p className="text-sm text-gray-300">Avançar al següent estat del flux de treball</p>
-                    </div>
-                  </div>
-                )}
-              </HoverCardContent>
-            </HoverCard>
+                  </PopoverContent>
+                </Popover>
+              )}
+            </div>
             {!canProceed && (
               <p className="text-sm text-red-600 flex items-center">
                 <AlertTriangle className="w-4 h-4 mr-1" />
