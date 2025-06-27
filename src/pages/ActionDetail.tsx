@@ -1,4 +1,5 @@
-import React, { useState, useRef } from 'react';
+
+import React, { useState, useRef, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -17,7 +18,6 @@ import FloatingActionButtons from '@/components/FloatingActionButtons';
 import DraggableSections from '@/components/DraggableSections';
 import { SectionConfig } from '@/hooks/useDraggableSections';
 import { useToast } from '@/hooks/use-toast';
-import { useAutoSimilarDetection } from '@/hooks/useAutoSimilarDetection';
 import { useAnalysisSimilarDetection } from '@/hooks/useAnalysisSimilarDetection';
 import { usePermissions } from '@/hooks/usePermissions';
 import { toast } from '@/hooks/use-toast';
@@ -33,7 +33,7 @@ const ActionDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { actions, updateAction, comments, initializeComments } = useCorrectiveActions();
+  const { actions, updateAction, comments } = useCorrectiveActions();
   const [hasPendingChanges, setHasPendingChanges] = useState(false);
   
   // Refs to access save functions from child components
@@ -48,12 +48,7 @@ const ActionDetail = () => {
   
   const action = actions.find(a => a.id === id);
   
-  // Initialize comments when component mounts
-  React.useEffect(() => {
-    initializeComments();
-  }, []);
-  
-  // Hook per a la detecció d'accions similars durant l'anàlisi (exclou accions BIS)
+  // Hook per a la detecció d'accions similars (sempre cridat)
   const {
     similarActions,
     isDetecting,
@@ -64,8 +59,14 @@ const ActionDetail = () => {
     markAsReviewed
   } = useAnalysisSimilarDetection({
     action: action,
-    isEnabled: !!action && action.status === 'Pendiente de Análisis' && !action.esBis
+    isEnabled: true // Always enabled, logic moved inside the hook
   });
+  
+  // Stable comment filtering with useMemo
+  const actionComments = useMemo(() => {
+    if (!action || !comments) return [];
+    return comments.filter(c => c.actionId === action.id);
+  }, [comments, action?.id]);
   
   console.log('ActionDetail: Acció trobada:', action ? `${action.id} - ${action.title}` : 'No trobada');
 
@@ -245,11 +246,7 @@ const ActionDetail = () => {
     return sections;
   };
 
-  // Get counts for summaries - make sure comments are properly filtered
-  const actionComments = React.useMemo(() => 
-    comments.filter(c => c.actionId === action.id), 
-    [comments, action.id]
-  );
+  // Get counts for summaries
   const attachmentCount = action.attachments.length;
   const commentCount = actionComments.length;
 
@@ -335,7 +332,7 @@ const ActionDetail = () => {
     });
   }
 
-  // Update the comments section configuration
+  // Add attachments and comments sections
   sidebarSections.push(
     {
       id: 'attachments',
@@ -368,8 +365,9 @@ const ActionDetail = () => {
     }
   );
 
-  // Afegir secció d'accions similars si és necessari (només per accions no-BIS)
-  if (action.status === 'Pendiente de Análisis' && !action.esBis && (similarActions.length > 0 || isDetecting)) {
+  // Afegir secció d'accions similars si és necessari (només per accions no-BIS en estat d'anàlisi)
+  const shouldShowSimilar = action.status === 'Pendiente de Análisis' && !action.esBis && (similarActions.length > 0 || isDetecting);
+  if (shouldShowSimilar) {
     sidebarSections.splice(-2, 0, {
       id: 'similar-actions',
       title: 'Accions Similars',

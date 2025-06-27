@@ -20,8 +20,11 @@ export const useAnalysisSimilarDetection = ({ action, isEnabled }: UseAnalysisSi
   const [isDetecting, setIsDetecting] = useState(false);
   const { findSimilarActions, isLoading } = useSimilarActions();
 
-  // No detectar similituds per accions BIS
-  const shouldDetect = isEnabled && action && action.status === 'Pendiente de Análisis' && !action.esBis;
+  // Determine if we should actually detect - moved logic inside the hook
+  const shouldDetect = action && 
+    action.status === 'Pendiente de Análisis' && 
+    !action.esBis && 
+    isEnabled;
 
   const detectSimilarActions = async () => {
     if (!shouldDetect || hasCheckedSimilarity) {
@@ -61,16 +64,26 @@ export const useAnalysisSimilarDetection = ({ action, isEnabled }: UseAnalysisSi
 
   const hasHighSimilarity = similarActions.some(sa => sa.similarity >= 80);
 
-  // Auto-detect quan es carrega una acció en estat "Pendiente de Análisis" (però no BIS)
+  // Auto-detect when action changes to eligible state
   useEffect(() => {
-    if (shouldDetect && !hasCheckedSimilarity) {
+    // Reset state when action changes
+    if (action?.id) {
+      setSimilarActions([]);
+      setHasCheckedSimilarity(false);
+      setIsDetecting(false);
+    }
+  }, [action?.id]);
+
+  // Auto-detect for eligible actions
+  useEffect(() => {
+    if (shouldDetect && !hasCheckedSimilarity && !isDetecting) {
       const timer = setTimeout(() => {
         detectSimilarActions();
       }, 1000);
 
       return () => clearTimeout(timer);
     }
-  }, [action?.id, action?.status, action?.esBis, shouldDetect, hasCheckedSimilarity]);
+  }, [shouldDetect, hasCheckedSimilarity, isDetecting]);
 
   return {
     similarActions,
