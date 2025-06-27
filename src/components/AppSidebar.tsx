@@ -1,7 +1,12 @@
-
-import { BarChart3, Settings, FileText } from "lucide-react";
-import { NavLink, useLocation } from "react-router-dom";
-
+import { 
+  Home, 
+  FileText, 
+  Users, 
+  BarChart3, 
+  Settings
+} from 'lucide-react';
+import { Link, useLocation } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
 import {
   Sidebar,
   SidebarContent,
@@ -11,71 +16,59 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  useSidebar,
-} from "@/components/ui/sidebar";
+} from '@/components/ui/sidebar';
+import { cn } from '@/lib/utils';
 
-import { 
-  useSidebarPersistence, 
-  useResponsiveSidebar, 
-  useSidebarKeyboardShortcuts 
-} from "@/hooks/useSidebarEnhancements";
-
-const items = [
-  {
-    title: "Dashboard",
-    url: "/",
-    icon: BarChart3,
-  },
-  {
-    title: "Informes",
-    url: "/reports",
-    icon: FileText,
-  },
-  {
-    title: "Configuració",
-    url: "/settings",
-    icon: Settings,
-  },
-];
-
-export default function AppSidebar() {
-  const { state } = useSidebar();
+const AppSidebar = () => {
+  const { user } = useAuth();
   const location = useLocation();
-  const currentPath = location.pathname;
 
-  // Use enhanced sidebar hooks
-  useSidebarPersistence();
-  useResponsiveSidebar();
-  useSidebarKeyboardShortcuts();
-
-  const isActive = (path: string) => {
-    if (path === "/") {
-      return currentPath === "/";
-    }
-    return currentPath.startsWith(path);
-  };
+  const navigationItems = [
+    { href: '/', label: 'Dashboard', icon: Home },
+    { href: '/actions', label: 'Accions Correctives', icon: FileText },
+    { href: '/reports', label: 'Informes', icon: BarChart3 },
+    ...(user?.role === 'admin' ? [{ href: '/users', label: 'Usuaris', icon: Users }] : []),
+    { href: '/settings', label: 'Configuració', icon: Settings }
+  ];
 
   return (
-    <Sidebar variant="inset" className="transition-all duration-300">
-      <SidebarContent>
+    <Sidebar className="border-r border-blue-200 top-20 h-[calc(100vh-80px)]">
+      <SidebarContent className="bg-white">
         <SidebarGroup>
-          <SidebarGroupLabel>Aplicació</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-blue-800 font-semibold">
+            Àrea de trabajo
+          </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {items.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild isActive={isActive(item.url)}>
-                    <NavLink to={item.url} className="transition-colors">
-                      <item.icon />
-                      <span>{item.title}</span>
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+              {navigationItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = location.pathname === item.href;
+                
+                return (
+                  <SidebarMenuItem key={item.href}>
+                    <SidebarMenuButton 
+                      asChild
+                      className={cn(
+                        "transition-all duration-200",
+                        isActive
+                          ? "bg-blue-100 text-blue-800 border-r-2 border-blue-600"
+                          : "text-gray-700 hover:bg-blue-50 hover:text-blue-700"
+                      )}
+                    >
+                      <Link to={item.href}>
+                        <Icon className="w-4 h-4" />
+                        <span className="font-medium">{item.label}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
     </Sidebar>
   );
-}
+};
+
+export default AppSidebar;
