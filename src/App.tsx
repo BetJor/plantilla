@@ -30,34 +30,25 @@ const AppContent = () => {
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen w-full bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-900 dark:to-gray-800 transition-colors" 
-           style={{ 
-             display: 'grid', 
-             gridTemplateRows: '80px auto 1fr', 
-             gridTemplateColumns: 'auto 1fr' 
-           }}>
+      <div className="min-h-screen flex w-full bg-gradient-to-br from-background to-muted/20">
+        <AppSidebar />
         
-        <div style={{ gridColumn: '1 / -1', gridRow: '1' }}>
+        <div className="flex-1 flex flex-col overflow-hidden">
           <Header />
-        </div>
-        
-        <div style={{ gridColumn: '2', gridRow: '2' }}>
           <TabsNavigation />
+          
+          <main className="flex-1 overflow-auto">
+            <div className="container mx-auto p-6">
+              <Breadcrumbs />
+              <Routes>
+                <Route path="/" element={<Dashboard />} />
+                <Route path="/reports" element={<Reports />} />
+                <Route path="/settings" element={<Settings />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </div>
+          </main>
         </div>
-        
-        <div style={{ gridColumn: '1', gridRow: '3' }}>
-          <AppSidebar />
-        </div>
-        
-        <main className="p-6 overflow-auto" style={{ gridColumn: '2', gridRow: '3' }}>
-          <Breadcrumbs />
-          <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/reports" element={<Reports />} />
-            <Route path="/settings" element={<Settings />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </main>
       </div>
     </SidebarProvider>
   );

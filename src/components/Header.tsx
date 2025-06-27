@@ -15,26 +15,26 @@ const Header = () => {
   };
 
   return (
-    <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-6 py-4 transition-colors">
-      <div className="flex items-center justify-between">
+    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="container flex h-16 max-w-screen-2xl items-center px-6">
         <div className="flex items-center space-x-4">
-          <SidebarTrigger />
+          <SidebarTrigger className="h-8 w-8" />
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+            <h1 className="text-xl font-bold text-foreground">
               Portal de Gestió
             </h1>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
+            <p className="text-sm text-muted-foreground">
               Sistema de gestió integral
             </p>
           </div>
         </div>
 
-        <div className="flex items-center space-x-4">
+        <div className="ml-auto flex items-center space-x-4">
           <ThemeToggle />
           
           <div className="flex items-center space-x-2">
-            <User className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-            <span className="text-sm text-gray-700 dark:text-gray-300">{user?.name || 'Usuari'}</span>
+            <User className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm text-foreground">{user?.name || 'Usuari'}</span>
             {user?.role && (
               <Badge variant="secondary" className="text-xs">
                 {user.role}
@@ -46,9 +46,9 @@ const Header = () => {
             variant="ghost"
             size="sm"
             onClick={handleLogout}
-            className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
+            className="text-muted-foreground hover:text-foreground"
           >
-            <LogOut className="w-4 h-4 mr-2" />
+            <LogOut className="h-4 w-4 mr-2" />
             Sortir
           </Button>
         </div>
