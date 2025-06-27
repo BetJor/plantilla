@@ -14,6 +14,12 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 
+import { 
+  useSidebarPersistence, 
+  useResponsiveSidebar, 
+  useSidebarKeyboardShortcuts 
+} from "@/hooks/useSidebarEnhancements";
+
 const items = [
   {
     title: "Dashboard",
@@ -37,6 +43,11 @@ export default function AppSidebar() {
   const location = useLocation();
   const currentPath = location.pathname;
 
+  // Use enhanced sidebar hooks
+  useSidebarPersistence();
+  useResponsiveSidebar();
+  useSidebarKeyboardShortcuts();
+
   const isActive = (path: string) => {
     if (path === "/") {
       return currentPath === "/";
@@ -45,7 +56,7 @@ export default function AppSidebar() {
   };
 
   return (
-    <Sidebar variant="inset">
+    <Sidebar variant="inset" className="transition-all duration-300">
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel>Aplicació</SidebarGroupLabel>
@@ -54,7 +65,7 @@ export default function AppSidebar() {
               {items.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild isActive={isActive(item.url)}>
-                    <NavLink to={item.url}>
+                    <NavLink to={item.url} className="transition-colors">
                       <item.icon />
                       <span>{item.title}</span>
                     </NavLink>
