@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -105,6 +104,62 @@ const FloatingActionButtons = ({
     }
   };
 
+  const getDetailedValidationMessage = (): string => {
+    const missingFields: string[] = [];
+    
+    switch (action.status) {
+      case 'Borrador':
+        if (!action.description.trim()) missingFields.push('Descripció');
+        if (!action.type) missingFields.push('Tipus d\'acció');
+        if (!action.category) missingFields.push('Categoria');
+        if (!action.subCategory.trim()) missingFields.push('Subcategoria');
+        if (!action.responsableAnalisis) missingFields.push('Responsable d\'anàlisi');
+        break;
+        
+      case 'Pendiente de Análisis':
+        if (!action.analysisData?.rootCauses?.trim()) {
+          missingFields.push('Anàlisi de causes arrel');
+        }
+        
+        const proposedActions = action.analysisData?.proposedActions || [];
+        if (proposedActions.length === 0) {
+          missingFields.push('Almenys una acció proposada');
+        } else {
+          proposedActions.forEach((proposedAction, index) => {
+            if (!proposedAction.description?.trim()) {
+              missingFields.push(`Descripció de l'acció ${index + 1}`);
+            }
+            if (!proposedAction.assignedTo?.trim()) {
+              missingFields.push(`Responsable de l'acció ${index + 1}`);
+            }
+            if (!proposedAction.dueDate) {
+              missingFields.push(`Data límit de l'acció ${index + 1}`);
+            }
+          });
+        }
+        break;
+        
+      case 'Pendiente de Comprobación':
+        const proposedActionsForVerification = action.analysisData?.proposedActions || [];
+        proposedActionsForVerification.forEach((proposedAction, index) => {
+          if (!proposedAction.verificationStatus || proposedAction.verificationStatus === 'not-verified') {
+            missingFields.push(`Verificació de l'acció ${index + 1}`);
+          }
+        });
+        break;
+        
+      case 'Pendiente de Cierre':
+        if (!action.closureData?.closureNotes) missingFields.push('Notes de tancament');
+        if (!action.closureData?.effectivenessEvaluation) missingFields.push('Avaluació d\'eficàcia');
+        if (!action.tipoCierre) missingFields.push('Tipus de tancament');
+        break;
+    }
+    
+    if (missingFields.length === 0) return '';
+    
+    return `Camps pendents:\n• ${missingFields.join('\n• ')}`;
+  };
+
   const getValidationErrors = (): number => {
     let errors = 0;
     switch (action.status) {
@@ -145,6 +200,7 @@ const FloatingActionButtons = ({
   const canAnnul = !['Cerrado', 'Anulada'].includes(action.status) && canEditInStatus(action.status);
   const validationErrors = getValidationErrors();
   const hasPermissions = canEditInStatus(action.status);
+  const detailedValidationMessage = getDetailedValidationMessage();
 
   const handleAdvance = () => {
     if (nextStatus && canProceed) {
@@ -204,14 +260,40 @@ const FloatingActionButtons = ({
               </TooltipContent>
             </Tooltip>
             
-            {/* Badge d'errors de validació */}
-            {validationErrors > 0 && hasPermissions && (
-              <Badge 
-                variant="destructive" 
-                className="absolute -top-2 -right-2 h-6 w-6 rounded-full p-0 flex items-center justify-center text-xs animate-pulse"
-              >
-                {validationErrors}
-              </Badge>
+            {/* Badge d'errors de validació amb tooltip */}
+            {validationErrors > 0 && hasPermissions && detailedValidationMessage && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="absolute -top-2 -right-2">
+                    <Badge 
+                      variant="destructive" 
+                      className="
+                        h-6 w-6 rounded-full p-0 flex items-center justify-center text-xs 
+                        animate-pulse hover:animate-none hover:scale-110 
+                        transition-all duration-200 cursor-help
+                        hover:bg-red-600 hover:shadow-lg
+                      "
+                    >
+                      {validationErrors}
+                    </Badge>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent 
+                  side="left" 
+                  className="max-w-sm bg-red-50 border-red-200 text-red-800"
+                  sideOffset={12}
+                >
+                  <div className="space-y-2">
+                    <div className="flex items-center space-x-2">
+                      <AlertTriangle className="w-4 h-4 text-red-600" />
+                      <p className="font-semibold text-sm">Camps pendents per completar</p>
+                    </div>
+                    <div className="text-xs whitespace-pre-line leading-relaxed">
+                      {detailedValidationMessage}
+                    </div>
+                  </div>
+                </TooltipContent>
+              </Tooltip>
             )}
           </div>
         )}
