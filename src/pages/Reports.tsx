@@ -1,465 +1,228 @@
 
-import React, { useState, useMemo } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import React, { useState } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, Area, AreaChart } from 'recharts';
-import { Download, FileText, Calendar, TrendingUp, Users, AlertTriangle, CheckCircle, Clock } from 'lucide-react';
-import { useCorrectiveActions } from '@/hooks/useCorrectiveActions';
-import { useBisActions } from '@/hooks/useBisActions';
-import { useAuditHistory } from '@/hooks/useAuditHistory';
-import { useAuth } from '@/contexts/AuthContext';
-import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { FileText, Download, Filter, Calendar } from 'lucide-react';
 
 const Reports = () => {
-  const { getDashboardMetrics, actions } = useCorrectiveActions();
-  const { getBisMetrics } = useBisActions();
-  const { getActivityMetrics } = useAuditHistory();
-  const { user } = useAuth();
-  
   const [selectedPeriod, setSelectedPeriod] = useState('last-month');
-  const [selectedCentre, setSelectedCentre] = useState('all');
-  const [selectedType, setSelectedType] = useState('all');
+  const [selectedCategory, setSelectedCategory] = useState('all');
 
-  const metrics = getDashboardMetrics();
-  const bisMetrics = getBisMetrics(actions);
-  const activityMetrics = getActivityMetrics();
+  // Dades d'exemple per als gràfics
+  const barData = [
+    { name: 'Gen', value: 65 },
+    { name: 'Feb', value: 59 },
+    { name: 'Mar', value: 80 },
+    { name: 'Abr', value: 81 },
+    { name: 'Mai', value: 56 },
+    { name: 'Jun', value: 55 },
+  ];
 
-  // Filter data based on selected period
-  const filteredActions = useMemo(() => {
-    let filtered = actions;
-    
-    // Filter by period
-    const now = new Date();
-    let startDate: Date;
-    
-    switch (selectedPeriod) {
-      case 'this-month':
-        startDate = startOfMonth(now);
-        break;
-      case 'last-month':
-        startDate = startOfMonth(subMonths(now, 1));
-        break;
-      case 'last-3-months':
-        startDate = startOfMonth(subMonths(now, 3));
-        break;
-      case 'last-6-months':
-        startDate = startOfMonth(subMonths(now, 6));
-        break;
-      case 'this-year':
-        startDate = new Date(now.getFullYear(), 0, 1);
-        break;
-      default:
-        startDate = startOfMonth(subMonths(now, 1));
-    }
-    
-    filtered = filtered.filter(action => new Date(action.createdAt) >= startDate);
-    
-    // Filter by centre
-    if (selectedCentre !== 'all') {
-      filtered = filtered.filter(action => action.centre === selectedCentre);
-    }
-    
-    // Filter by type
-    if (selectedType !== 'all') {
-      filtered = filtered.filter(action => action.type === selectedType);
-    }
-    
-    return filtered;
-  }, [actions, selectedPeriod, selectedCentre, selectedType]);
+  const pieData = [
+    { name: 'Categoria A', value: 400, color: '#0088FE' },
+    { name: 'Categoria B', value: 300, color: '#00C49F' },
+    { name: 'Categoria C', value: 300, color: '#FFBB28' },
+    { name: 'Categoria D', value: 200, color: '#FF8042' },
+  ];
 
-  // Get unique centres and types for filters
-  const uniqueCentres = [...new Set(actions.map(a => a.centre))];
-  const uniqueTypes = [...new Set(actions.map(a => a.type))];
-
-  // Calculate filtered metrics
-  const filteredMetrics = useMemo(() => {
-    const totalActions = filteredActions.length;
-    const pendingActions = filteredActions.filter(a => 
-      ['Pendiente de Análisis', 'Pendiente de Comprobación', 'Pendiente de Cierre'].includes(a.status)
-    ).length;
-    const overdueActions = filteredActions.filter(a => 
-      new Date(a.dueDate) < new Date() && a.status !== 'Cerrado'
-    ).length;
-    const closedActions = filteredActions.filter(a => a.status === 'Cerrado').length;
-
-    const actionsByStatus = Object.entries(
-      filteredActions.reduce((acc, action) => {
-        acc[action.status] = (acc[action.status] || 0) + 1;
-        return acc;
-      }, {} as Record<string, number>)
-    ).map(([status, count]) => ({ status, count }));
-
-    const actionsByType = Object.entries(
-      filteredActions.reduce((acc, action) => {
-        acc[action.type] = (acc[action.type] || 0) + 1;
-        return acc;
-      }, {} as Record<string, number>)
-    ).map(([type, count]) => ({ type, count }));
-
-    const actionsByCentre = Object.entries(
-      filteredActions.reduce((acc, action) => {
-        acc[action.centre] = (acc[action.centre] || 0) + 1;
-        return acc;
-      }, {} as Record<string, number>)
-    ).map(([centre, count]) => ({ centre, count }));
-
-    return {
-      totalActions,
-      pendingActions,
-      overdueActions,
-      closedActions,
-      actionsByStatus,
-      actionsByType,
-      actionsByCentre
-    };
-  }, [filteredActions]);
-
-  // Monthly trend data
-  const monthlyTrend = useMemo(() => {
-    const last6Months = Array.from({ length: 6 }, (_, i) => {
-      const date = subMonths(new Date(), i);
-      const monthStart = startOfMonth(date);
-      const monthEnd = endOfMonth(date);
-      
-      const monthActions = actions.filter(action => {
-        const actionDate = new Date(action.createdAt);
-        return actionDate >= monthStart && actionDate <= monthEnd;
-      });
-
-      const closedActions = monthActions.filter(a => a.status === 'Cerrado');
-      
-      return {
-        month: format(date, 'MMM yyyy'),
-        created: monthActions.length,
-        closed: closedActions.length,
-        pending: monthActions.length - closedActions.length
-      };
-    }).reverse();
-
-    return last6Months;
-  }, [actions]);
-
-  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
-
-  const exportData = () => {
-    // Simulate export functionality
-    console.log('Exporting report data...', {
-      period: selectedPeriod,
-      centre: selectedCentre,
-      type: selectedType,
-      metrics: filteredMetrics
-    });
-    
-    // In a real implementation, this would generate a PDF or Excel file
-    alert('Funcionalitat d\'exportació implementada - vegeu la consola per als detalls');
+  const handleExportReport = () => {
+    console.log('Exportant informe...');
+    // Aquí aniria la lògica d'exportació
   };
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Informes i Analítica Avançada</h1>
-          <p className="text-gray-600">Visualitza estadístiques detallades i genera informes personalitzats</p>
+          <h1 className="text-3xl font-bold tracking-tight">Informes</h1>
+          <p className="text-muted-foreground">
+            Genera i visualitza informes del sistema
+          </p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={exportData}>
-            <Download className="w-4 h-4 mr-2" />
-            Exportar Informe
-          </Button>
-        </div>
+        <Button onClick={handleExportReport} className="flex items-center gap-2">
+          <Download className="h-4 w-4" />
+          Exportar Informe
+        </Button>
       </div>
 
-      {/* Filters */}
+      {/* Filtres */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center">
-            <Calendar className="w-5 h-5 mr-2" />
-            Filtres d'Informe
+          <CardTitle className="flex items-center gap-2">
+            <Filter className="h-5 w-5" />
+            Filtres
           </CardTitle>
+          <CardDescription>
+            Personalitza els paràmetres de l'informe
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className="text-sm font-medium mb-2 block">Període</label>
+          <div className="grid gap-4 md:grid-cols-4">
+            <div className="space-y-2">
+              <Label htmlFor="period">Període</Label>
               <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
                 <SelectTrigger>
-                  <SelectValue />
+                  <SelectValue placeholder="Selecciona període" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="this-month">Aquest mes</SelectItem>
-                  <SelectItem value="last-month">Mes passat</SelectItem>
-                  <SelectItem value="last-3-months">Últims 3 mesos</SelectItem>
-                  <SelectItem value="last-6-months">Últims 6 mesos</SelectItem>
-                  <SelectItem value="this-year">Aquest any</SelectItem>
+                  <SelectItem value="last-week">Última setmana</SelectItem>
+                  <SelectItem value="last-month">Últim mes</SelectItem>
+                  <SelectItem value="last-quarter">Últim trimestre</SelectItem>
+                  <SelectItem value="last-year">Últim any</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="category">Categoria</Label>
+              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecciona categoria" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Totes les categories</SelectItem>
+                  <SelectItem value="category-a">Categoria A</SelectItem>
+                  <SelectItem value="category-b">Categoria B</SelectItem>
+                  <SelectItem value="category-c">Categoria C</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
-            <div>
-              <label className="text-sm font-medium mb-2 block">Centre</label>
-              <Select value={selectedCentre} onValueChange={setSelectedCentre}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tots els centres</SelectItem>
-                  {uniqueCentres.map(centre => (
-                    <SelectItem key={centre} value={centre}>{centre}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div className="space-y-2">
+              <Label htmlFor="date-from">Data d'inici</Label>
+              <Input type="date" id="date-from" />
             </div>
 
-            <div>
-              <label className="text-sm font-medium mb-2 block">Tipus d'Acció</label>
-              <Select value={selectedType} onValueChange={setSelectedType}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tots els tipus</SelectItem>
-                  {uniqueTypes.map(type => (
-                    <SelectItem key={type} value={type}>{type}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div className="space-y-2">
+              <Label htmlFor="date-to">Data de fi</Label>
+              <Input type="date" id="date-to" />
             </div>
+          </div>
+          
+          <div className="flex gap-2 mt-4">
+            <Button variant="default">Aplicar Filtres</Button>
+            <Button variant="outline">Netejar</Button>
           </div>
         </CardContent>
       </Card>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* Targetes de resum */}
+      <div className="grid gap-4 md:grid-cols-4">
         <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center">
-              <FileText className="h-8 w-8 text-blue-600" />
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Total Accions</p>
-                <p className="text-2xl font-bold text-gray-900">{filteredMetrics.totalActions}</p>
-              </div>
-            </div>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Elements</CardTitle>
+            <FileText className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">1,234</div>
+            <p className="text-xs text-muted-foreground">
+              <Badge variant="secondary" className="mr-2">+12%</Badge>
+              respecte al període anterior
+            </p>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center">
-              <Clock className="h-8 w-8 text-yellow-600" />
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Pendents</p>
-                <p className="text-2xl font-bold text-gray-900">{filteredMetrics.pendingActions}</p>
-              </div>
-            </div>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Processats</CardTitle>
+            <Calendar className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">987</div>
+            <p className="text-xs text-muted-foreground">
+              <Badge variant="secondary" className="mr-2">+8%</Badge>
+              respecte al període anterior
+            </p>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center">
-              <AlertTriangle className="h-8 w-8 text-red-600" />
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Vençudes</p>
-                <p className="text-2xl font-bold text-gray-900">{filteredMetrics.overdueActions}</p>
-              </div>
-            </div>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Pendents</CardTitle>
+            <FileText className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">247</div>
+            <p className="text-xs text-red-600">
+              <Badge variant="destructive" className="mr-2">-3%</Badge>
+              respecte al període anterior
+            </p>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center">
-              <CheckCircle className="h-8 w-8 text-green-600" />
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Tancades</p>
-                <p className="text-2xl font-bold text-gray-900">{filteredMetrics.closedActions}</p>
-              </div>
-            </div>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Taxa d'Eficàcia</CardTitle>
+            <Calendar className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">79.9%</div>
+            <p className="text-xs text-green-600">
+              <Badge variant="secondary" className="mr-2">+2.1%</Badge>
+              respecte al període anterior
+            </p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Advanced Analytics Tabs */}
-      <Tabs defaultValue="trends" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="trends">Tendències</TabsTrigger>
-          <TabsTrigger value="distribution">Distribució</TabsTrigger>
-          <TabsTrigger value="performance">Rendiment</TabsTrigger>
-          <TabsTrigger value="activity">Activitat</TabsTrigger>
-        </TabsList>
+      {/* Gràfics */}
+      <div className="grid gap-4 md:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle>Evolució Mensual</CardTitle>
+            <CardDescription>
+              Progressió dels elements al llarg del temps
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={barData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                <Bar dataKey="value" fill="#8884d8" />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
 
-        <TabsContent value="trends">
-          <div className="grid grid-cols-1 lg:grid-cols-1 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <TrendingUp className="w-5 h-5 mr-2" />
-                  Tendència Mensual d'Accions
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={400}>
-                  <AreaChart data={monthlyTrend}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="month" />
-                    <YAxis />
-                    <Tooltip />
-                    <Legend />
-                    <Area type="monotone" dataKey="created" stackId="1" stroke="#8884d8" fill="#8884d8" name="Creades" />
-                    <Area type="monotone" dataKey="closed" stackId="1" stroke="#82ca9d" fill="#82ca9d" name="Tancades" />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="distribution">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Distribució per Estat</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <PieChart>
-                    <Pie
-                      data={filteredMetrics.actionsByStatus}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      label={({ status, count }) => `${status}: ${count}`}
-                      outerRadius={80}
-                      fill="#8884d8"
-                      dataKey="count"
-                    >
-                      {filteredMetrics.actionsByStatus.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                  </PieChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Distribució per Tipus</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={filteredMetrics.actionsByType}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="type" />
-                    <YAxis />
-                    <Tooltip />
-                    <Bar dataKey="count" fill="#8884d8" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="performance">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Mètriques d'Accions BIS</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium">Total Accions BIS</span>
-                    <Badge variant="outline">{bisMetrics.totalBisActions}</Badge>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium">Accions Originals amb BIS</span>
-                    <Badge variant="outline">{bisMetrics.originalActionsWithBis}</Badge>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium">Taxa d'Eficàcia</span>
-                    <Badge variant={bisMetrics.effectivenessRate > 80 ? 'default' : 'destructive'}>
-                      {bisMetrics.effectivenessRate.toFixed(1)}%
-                    </Badge>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Accions per Centre</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={filteredMetrics.actionsByCentre} layout="horizontal">
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis type="number" />
-                    <YAxis dataKey="centre" type="category" width={100} />
-                    <Tooltip />
-                    <Bar dataKey="count" fill="#82ca9d" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="activity">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Users className="w-5 h-5 mr-2" />
-                  Activitat del Sistema
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium">Total Entrades d'Auditoria</span>
-                    <Badge variant="outline">{activityMetrics.totalEntries}</Badge>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium">Aquesta Setmana</span>
-                    <Badge variant="outline">{activityMetrics.thisWeek}</Badge>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium">Aquest Mes</span>
-                    <Badge variant="outline">{activityMetrics.thisMonth}</Badge>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Usuaris Més Actius</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {activityMetrics.mostActiveUsers.map(([userName, count], index) => (
-                    <div key={userName} className="flex justify-between items-center">
-                      <div className="flex items-center">
-                        <span className="text-sm font-medium text-gray-600 w-6">
-                          #{index + 1}
-                        </span>
-                        <span className="text-sm font-medium">{userName}</span>
-                      </div>
-                      <Badge variant="outline">{count} accions</Badge>
-                    </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>Distribució per Categories</CardTitle>
+            <CardDescription>
+              Percentatge d'elements per categoria
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie
+                  data={pieData}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                  outerRadius={80}
+                  fill="#8884d8"
+                  dataKey="value"
+                >
+                  {pieData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-      </Tabs>
+                </Pie>
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };
