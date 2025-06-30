@@ -1,7 +1,6 @@
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { Home, FileText, BarChart3, Settings, Eye } from 'lucide-react';
+import React, { createContext, useContext, useState, ReactNode } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 export interface Tab {
   id: string;
@@ -20,7 +19,7 @@ interface TabsContextType {
   closeAllTabs: () => void;
 }
 
-const TabsContext = createContext<TabsContextType | null>(null);
+const TabsContext = createContext<TabsContextType | undefined>(undefined);
 
 export const useTabsContext = () => {
   const context = useContext(TabsContext);
@@ -30,27 +29,8 @@ export const useTabsContext = () => {
   return context;
 };
 
-const routeConfig: Record<string, Omit<Tab, 'id'>> = {
-  '/': {
-    title: 'Dashboard',
-    path: '/',
-    icon: Home,
-    closable: false
-  },
-  '/reports': {
-    title: 'Informes',
-    path: '/reports',
-    icon: BarChart3
-  },
-  '/settings': {
-    title: 'Configuració',
-    path: '/settings',
-    icon: Settings
-  }
-};
-
 interface TabsProviderProps {
-  children: React.ReactNode;
+  children: ReactNode;
 }
 
 export const TabsProvider = ({ children }: TabsProviderProps) => {
@@ -75,6 +55,7 @@ export const TabsProvider = ({ children }: TabsProviderProps) => {
     setTabs(prevTabs => {
       const updatedTabs = prevTabs.filter(tab => tab.id !== tabId);
       
+      // Si tanquem la pestanya activa, activem la següent disponible i naveguem
       if (activeTabId === tabId) {
         const currentIndex = prevTabs.findIndex(tab => tab.id === tabId);
         const nextTab = updatedTabs[currentIndex] || updatedTabs[currentIndex - 1];
@@ -83,6 +64,7 @@ export const TabsProvider = ({ children }: TabsProviderProps) => {
           setActiveTabId(nextTab.id);
           navigate(nextTab.path);
         } else {
+          // Si no queden tabs, anar al Dashboard
           setActiveTabId(null);
           navigate('/');
         }
@@ -92,6 +74,10 @@ export const TabsProvider = ({ children }: TabsProviderProps) => {
     });
   };
 
+  const setActiveTab = (tabId: string) => {
+    setActiveTabId(tabId);
+  };
+
   const closeAllTabs = () => {
     setTabs([]);
     setActiveTabId(null);
@@ -99,34 +85,15 @@ export const TabsProvider = ({ children }: TabsProviderProps) => {
   };
 
   return (
-    <TabsContext.Provider value={{ tabs, activeTabId, openTab, closeTab, setActiveTab: setActiveTabId, closeAllTabs }}>
+    <TabsContext.Provider value={{
+      tabs,
+      activeTabId,
+      openTab,
+      closeTab,
+      setActiveTab,
+      closeAllTabs
+    }}>
       {children}
     </TabsContext.Provider>
   );
-};
-
-export const useTabNavigation = () => {
-  const location = useLocation();
-  const { openTab, setActiveTab, tabs } = useTabsContext();
-
-  useEffect(() => {
-    const currentPath = location.pathname;
-    
-    const routeInfo = routeConfig[currentPath];
-    if (routeInfo) {
-      const tab: Tab = {
-        id: currentPath,
-        ...routeInfo
-      };
-      openTab(tab);
-    }
-  }, [location.pathname, openTab]);
-
-  useEffect(() => {
-    const currentPath = location.pathname;
-    const existingTab = tabs.find(tab => tab.id === currentPath);
-    if (existingTab) {
-      setActiveTab(currentPath);
-    }
-  }, [location.pathname, tabs, setActiveTab]);
 };
