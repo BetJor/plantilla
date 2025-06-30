@@ -31,25 +31,32 @@ const AppContent = () => {
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-gradient-to-br from-background to-muted/20">
-        <AppSidebar />
-        
-        <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="min-h-screen w-full bg-gradient-to-br from-gray-50 to-blue-50" style={{ display: 'grid', gridTemplateRows: '80px auto 1fr', gridTemplateColumns: 'auto 1fr' }}>
+        {/* Header que ocupa tota la fila superior */}
+        <div style={{ gridColumn: '1 / -1', gridRow: '1' }}>
           <Header />
-          <TabsNavigation />
-          
-          <main className="flex-1 overflow-auto">
-            <div className="container mx-auto p-6">
-              <Breadcrumbs />
-              <Routes>
-                <Route path="/" element={<Dashboard />} />
-                <Route path="/reports" element={<Reports />} />
-                <Route path="/settings" element={<Settings />} />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </div>
-          </main>
         </div>
+        
+        {/* Pestanyes que només ocupen la columna dreta */}
+        <div style={{ gridColumn: '2', gridRow: '2' }}>
+          <TabsNavigation />
+        </div>
+        
+        {/* Sidebar a la columna esquerra, fila inferior */}
+        <div style={{ gridColumn: '1', gridRow: '3' }}>
+          <AppSidebar />
+        </div>
+        
+        {/* Contingut principal a la columna dreta, fila inferior */}
+        <main className="p-6" style={{ gridColumn: '2', gridRow: '3' }}>
+          <Routes>
+            <Route path="/" element={<Index />} />            
+            <Route path="/reports" element={<Reports />} />
+            <Route path="/users" element={<Users />} />
+            <Route path="/settings" element={<Settings />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </main>
       </div>
     </SidebarProvider>
   );
@@ -57,19 +64,17 @@ const AppContent = () => {
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <ThemeProvider>
-      <AuthProvider>
-        <BrowserRouter>
-          <TabsProvider>
-            <TooltipProvider>
-              <Toaster />
-              <Sonner />
-              <AppContent />
-            </TooltipProvider>
-          </TabsProvider>
-        </BrowserRouter>
-      </AuthProvider>
-    </ThemeProvider>
+    <AuthProvider>
+      <BrowserRouter>
+        <TabsProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <AppContent />
+          </TooltipProvider>
+        </TabsProvider>
+      </BrowserRouter>
+    </AuthProvider>
   </QueryClientProvider>
 );
 
