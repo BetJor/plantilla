@@ -50,9 +50,8 @@ const AppContent = () => {
         {/* Contingut principal a la columna dreta, fila inferior */}
         <main className="p-6" style={{ gridColumn: '2', gridRow: '3' }}>
           <Routes>
-            <Route path="/" element={<Index />} />            
-            <Route path="/reports" element={<Reports />} />
-            <Route path="/users" element={<Users />} />
+            <Route path="/" element={<Dashboard />} />            
+            <Route path="/reports" element={<Reports />} />            
             <Route path="/settings" element={<Settings />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
